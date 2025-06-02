@@ -20,7 +20,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     name: '',
     description: '',
     quantity: 0,
-    unit: '',
+    unit: 'm²',
     price: 0,
     supplier: ''
   };
@@ -52,19 +52,15 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     const newErrors: Partial<Record<keyof RawMaterialFormData, string>> = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = 'El nombre es requerido';
     }
-    
-    if (!formData.unit.trim()) {
-      newErrors.unit = 'Unit is required';
-    }
-    
+
     if (formData.quantity < 0) {
-      newErrors.quantity = 'Quantity cannot be negative';
+      newErrors.quantity = 'La cantidad no puede ser negativa';
     }
     
     if (formData.price < 0) {
-      newErrors.price = 'Price cannot be negative';
+      newErrors.price = 'El precio no puede ser negativo';
     }
     
     setErrors(newErrors);
@@ -83,32 +79,30 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     <form onSubmit={handleSubmit}>
       <div className="space-y-4">
         <Input
-          label="Name"
+          label="Nombre"
           value={formData.name}
           onChange={(e) => handleChange('name', e.target.value)}
-          placeholder="Enter material name"
+          placeholder="Ingresa el nombre del material"
           error={errors.name}
           required
           fullWidth
         />
         
         <Input
-          label="Description"
+          label="Descripción"
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
-          placeholder="Enter material description"
-          as="textarea"
-          rows={3}
+          placeholder="Ingresa una descripción del material"
           fullWidth
         />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Quantity"
+            label="Cantidad"
             type="number"
             value={formData.quantity.toString()}
             onChange={(e) => handleNumberChange('quantity', e.target.value)}
-            min="0"
+            min="1"
             step="1"
             error={errors.quantity}
             required
@@ -116,19 +110,17 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           />
           
           <Input
-            label="Unit"
-            value={formData.unit}
-            onChange={(e) => handleChange('unit', e.target.value)}
-            placeholder="g, kg, mL, etc."
-            error={errors.unit}
-            required
+            label="Unidad"
+            value="m²"
+            readOnly
             fullWidth
           />
+
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Price ($)"
+            label="Precio ($)"
             type="number"
             value={formData.price.toString()}
             onChange={(e) => handleNumberChange('price', e.target.value)}
@@ -140,10 +132,10 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           />
           
           <Input
-            label="Supplier"
+            label="Proveedor"
             value={formData.supplier}
             onChange={(e) => handleChange('supplier', e.target.value)}
-            placeholder="Enter supplier name"
+            placeholder="Ingresa el nombre del proveedor"
             fullWidth
           />
         </div>
@@ -155,14 +147,14 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           variant="outline" 
           onClick={onCancel}
         >
-          Cancel
+          Cancelar
         </Button>
         <Button 
           type="submit" 
           variant="primary" 
           isLoading={isSubmitting}
         >
-          {initialData ? 'Update Material' : 'Add Material'}
+          {initialData ? 'Actualizar Material' : 'Agregar Material'}
         </Button>
       </div>
     </form>

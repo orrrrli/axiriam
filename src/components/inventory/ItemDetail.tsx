@@ -36,18 +36,18 @@ const ItemDetail: React.FC<ItemDetailProps> = ({ item, rawMaterials }) => {
       
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 uppercase">Quantity</span>
+          <span className="block text-xs text-gray-500 uppercase">Cantidad</span>
           <span className="block mt-1 text-lg font-medium">{item.quantity}</span>
         </div>
         
         <div className="bg-gray-50 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 uppercase">Price</span>
+          <span className="block text-xs text-gray-500 uppercase">Precio</span>
           <span className="block mt-1 text-lg font-medium">{formatCurrency(item.price)}</span>
         </div>
       </div>
       
       <div className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-medium text-gray-900 mb-2">Raw Materials Used</h4>
+        <h4 className="text-sm font-medium text-gray-900 mb-2">Materiales usados</h4>
         {usedMaterials.length > 0 ? (
           <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
             {usedMaterials.map(material => (

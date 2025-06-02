@@ -146,7 +146,7 @@ const Items: React.FC = () => {
           onClick={() => setIsAddModalOpen(true)}
         >
           <PlusCircle className="w-5 h-5 mr-1" />
-          Add New Item
+          Agregar nuevo gorro
         </Button>
       </div>
       
@@ -176,7 +176,7 @@ const Items: React.FC = () => {
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        title="Add New Item"
+        title="Agregar nuevo gorro"
         size="lg"
       >
         <ItemForm
@@ -191,7 +191,7 @@ const Items: React.FC = () => {
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Edit Item"
+        title="Editar gorro"
         size="lg"
       >
         {currentItem && (
@@ -216,7 +216,7 @@ const Items: React.FC = () => {
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title="Item Details"
+        title="Detalles del gorro"
         size="md"
         footer={
           <>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { formatCurrency, getLowStockItems, formatDate } from '../utils/helpers';
-import { BarChart3, PackageSearch, ShoppingBag, AlertCircle } from 'lucide-react';
+import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope } from 'lucide-react';
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -177,7 +177,7 @@ const Dashboard: React.FC = () => {
       
       {/* Recent Activity */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Recent Activity</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Actividad Reciente</h3>
         
         <div className="space-y-4">
           {[...items, ...rawMaterials]
@@ -190,9 +190,9 @@ const Dashboard: React.FC = () => {
                 <div key={item.id} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
                   <div className={`p-2 rounded-full ${isRawMaterial ? 'bg-emerald-100 dark:bg-emerald-900' : 'bg-sky-100 dark:bg-sky-900'} mr-3`}>
                     {isRawMaterial ? (
-                      <PackageSearch className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
+                      <ScissorsSquare className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
                     ) : (
-                      <ShoppingBag className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
+                      <Stethoscope className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
                     )}
                   </div>
                   <div>

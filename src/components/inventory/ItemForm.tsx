@@ -21,7 +21,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
 }) => {
   const defaultFormData: ItemFormData = {
     name: '',
-    category: 'consumables',
+    category: 'sencillo',
     description: '',
     quantity: 0,
     price: 0,
@@ -101,26 +101,26 @@ const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const categoryOptions = [
-    { value: 'instruments', label: 'Instruments' },
-    { value: 'consumables', label: 'Consumables' },
-    { value: 'equipment', label: 'Equipment' }
+    { value: 'sencillo', label: 'Sencillo' },
+    { value: 'doble-vista', label: 'Doble vista' },
+    { value: 'completo-ajustable', label: 'Completo-Ajustable' }
   ];
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-4">
         <Input
-          label="Name"
+          label="Nombre del gorro"
           value={formData.name}
           onChange={(e) => handleChange('name', e.target.value)}
-          placeholder="Enter item name"
+          placeholder="Ingresa el nombre"
           error={errors.name}
           required
           fullWidth
         />
         
         <Select
-          label="Category"
+          label="Categoría"
           value={formData.category}
           onChange={(value) => handleChange('category', value)}
           options={categoryOptions}
@@ -130,18 +130,16 @@ const ItemForm: React.FC<ItemFormProps> = ({
         />
         
         <Input
-          label="Description"
+          label="Descripción"
+          placeholder="Agrega una descripción del item"
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
-          placeholder="Enter item description"
-          as="textarea"
-          rows={3}
           fullWidth
         />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Quantity"
+            label="Cantidad"
             type="number"
             value={formData.quantity.toString()}
             onChange={(e) => handleNumberChange('quantity', e.target.value)}
@@ -153,7 +151,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
           />
           
           <Input
-            label="Price ($)"
+            label="Precio ($)"
             type="number"
             value={formData.price.toString()}
             onChange={(e) => handleNumberChange('price', e.target.value)}
@@ -168,7 +166,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
         {rawMaterials.length > 0 && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Raw Materials Used
+              Materiales Usados
             </label>
             <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200">
               {rawMaterials.map((material) => (

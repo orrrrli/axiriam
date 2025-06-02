@@ -138,13 +138,13 @@ const RawMaterials: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Raw Materials</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Materiales</h2>
         <Button 
           variant="primary"
           onClick={() => setIsAddModalOpen(true)}
         >
           <PlusCircle className="w-5 h-5 mr-1" />
-          Add New Material
+          Agregar Nuevo Material
         </Button>
       </div>
       
@@ -174,7 +174,7 @@ const RawMaterials: React.FC = () => {
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        title="Add New Raw Material"
+        title="Agregar Nuevo Material"
         size="lg"
       >
         <RawMaterialForm
@@ -212,7 +212,7 @@ const RawMaterials: React.FC = () => {
       <Modal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
-        title="Material Details"
+        title="Detalle del Material"
         size="md"
         footer={
           <>
@@ -220,13 +220,13 @@ const RawMaterials: React.FC = () => {
               variant="outline" 
               onClick={() => { setIsViewModalOpen(false); openEditModal(currentMaterial!); }}
             >
-              Edit
+              Editar
             </Button>
             <Button 
               variant="primary" 
               onClick={() => setIsViewModalOpen(false)}
             >
-              Close
+              Cerrar
             </Button>
           </>
         }
