@@ -34,6 +34,8 @@ const Input: React.FC<InputProps> = ({
           focus:outline-none focus:border-sky-500 focus:ring-sky-500 
           block w-full rounded-md sm:text-sm focus:ring-1 
           text-gray-900 dark:text-gray-100
+          disabled:bg-gray-100 dark:disabled:bg-gray-800
+          disabled:cursor-not-allowed disabled:opacity-50
           ${error ? 'border-red-500 dark:border-red-500' : ''}
           ${className || ''}
         `}
