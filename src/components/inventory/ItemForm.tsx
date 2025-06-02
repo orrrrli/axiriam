@@ -165,10 +165,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
 
         {rawMaterials.length > 0 && (
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
               Materiales Usados
             </label>
-            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200">
+            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200 dark:bg-gray-700">
               {rawMaterials.map((material) => (
                 <div key={material.id} className="flex items-center mb-2 last:mb-0">
                   <input
@@ -180,7 +180,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
                   />
                   <label
                     htmlFor={`material-${material.id}`}
-                    className="ml-2 block text-sm text-gray-700"
+                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
                   >
                     {material.name} ({material.unit})
                   </label>
