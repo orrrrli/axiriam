@@ -1,7 +1,7 @@
 import React from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { formatCurrency, getLowStockItems, formatDate } from '../utils/helpers';
-import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope } from 'lucide-react';
+import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope, HandHeart} from 'lucide-react';
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -192,7 +192,7 @@ const Dashboard: React.FC = () => {
                     {isRawMaterial ? (
                       <ScissorsSquare className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
                     ) : (
-                      <Stethoscope className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
+                      <HandHeart className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
                     )}
                   </div>
                   <div>
