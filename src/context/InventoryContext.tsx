@@ -115,7 +115,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'SET_RAW_MATERIALS', payload: materials });
     } catch (error) {
       console.error('Error loading inventory data:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to load inventory data' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load inventory data';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -134,7 +135,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'ADD_ITEM', payload: newItem });
     } catch (error) {
       console.error('Error adding item:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to add item' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add item';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
   };
@@ -146,7 +148,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'UPDATE_ITEM', payload: updatedItem });
     } catch (error) {
       console.error('Error updating item:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to update item' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update item';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
   };
@@ -158,7 +161,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'DELETE_ITEM', payload: id });
     } catch (error) {
       console.error('Error deleting item:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to delete item' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete item';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
   };
@@ -170,7 +174,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'ADD_RAW_MATERIAL', payload: newMaterial });
     } catch (error) {
       console.error('Error adding material:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to add material' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add material';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
   };
@@ -182,7 +187,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'UPDATE_RAW_MATERIAL', payload: updatedMaterial });
     } catch (error) {
       console.error('Error updating material:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to update material' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update material';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
   };
@@ -194,7 +200,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dispatch({ type: 'DELETE_RAW_MATERIAL', payload: id });
     } catch (error) {
       console.error('Error deleting material:', error);
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to delete material' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete material';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
   };

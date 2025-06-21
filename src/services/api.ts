@@ -1,6 +1,19 @@
 import { supabase } from '../lib/supabase';
 import { Item, RawMaterial, ItemFormData, RawMaterialFormData } from '../types';
 
+// Helper function to check authentication
+const checkAuth = async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('Auth check error:', error);
+    throw new Error('Authentication error');
+  }
+  if (!session) {
+    throw new Error('User not authenticated. Please log in to continue.');
+  }
+  return session;
+};
+
 // Materials API
 export const materialsApi = {
   async getAll(): Promise<RawMaterial[]> {
@@ -19,6 +32,9 @@ export const materialsApi = {
   },
 
   async create(materialData: RawMaterialFormData): Promise<RawMaterial> {
+    // Check authentication before proceeding
+    await checkAuth();
+    
     const { data, error } = await supabase
       .from('materials')
       .insert({
@@ -32,7 +48,10 @@ export const materialsApi = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Materials create error:', error);
+      throw error;
+    }
     
     return {
       ...data,
@@ -42,6 +61,9 @@ export const materialsApi = {
   },
 
   async update(id: string, materialData: RawMaterialFormData): Promise<RawMaterial> {
+    // Check authentication before proceeding
+    await checkAuth();
+    
     const { data, error } = await supabase
       .from('materials')
       .update({
@@ -56,7 +78,10 @@ export const materialsApi = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Materials update error:', error);
+      throw error;
+    }
     
     return {
       ...data,
@@ -66,12 +91,18 @@ export const materialsApi = {
   },
 
   async delete(id: string): Promise<void> {
+    // Check authentication before proceeding
+    await checkAuth();
+    
     const { error } = await supabase
       .from('materials')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Materials delete error:', error);
+      throw error;
+    }
   }
 };
 
@@ -100,6 +131,9 @@ export const itemsApi = {
   },
 
   async create(itemData: ItemFormData): Promise<Item> {
+    // Check authentication before proceeding
+    await checkAuth();
+    
     const { data: item, error: itemError } = await supabase
       .from('items')
       .insert({
@@ -112,7 +146,10 @@ export const itemsApi = {
       .select()
       .single();
 
-    if (itemError) throw itemError;
+    if (itemError) {
+      console.error('Items create error:', itemError);
+      throw itemError;
+    }
 
     // Insert material associations
     if (itemData.materials.length > 0) {
@@ -126,7 +163,10 @@ export const itemsApi = {
         .from('items_materials')
         .insert(materialAssociations);
 
-      if (materialsError) throw materialsError;
+      if (materialsError) {
+        console.error('Items materials association error:', materialsError);
+        throw materialsError;
+      }
     }
     
     return {
@@ -138,6 +178,9 @@ export const itemsApi = {
   },
 
   async update(id: string, itemData: ItemFormData): Promise<Item> {
+    // Check authentication before proceeding
+    await checkAuth();
+    
     const { data: item, error: itemError } = await supabase
       .from('items')
       .update({
@@ -151,7 +194,10 @@ export const itemsApi = {
       .select()
       .single();
 
-    if (itemError) throw itemError;
+    if (itemError) {
+      console.error('Items update error:', itemError);
+      throw itemError;
+    }
 
     // Delete existing material associations
     const { error: deleteError } = await supabase
@@ -159,7 +205,10 @@ export const itemsApi = {
       .delete()
       .eq('item_id', id);
 
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error('Items materials delete error:', deleteError);
+      throw deleteError;
+    }
 
     // Insert new material associations
     if (itemData.materials.length > 0) {
@@ -173,7 +222,10 @@ export const itemsApi = {
         .from('items_materials')
         .insert(materialAssociations);
 
-      if (materialsError) throw materialsError;
+      if (materialsError) {
+        console.error('Items materials association error:', materialsError);
+        throw materialsError;
+      }
     }
     
     return {
@@ -185,6 +237,9 @@ export const itemsApi = {
   },
 
   async delete(id: string): Promise<void> {
+    // Check authentication before proceeding
+    await checkAuth();
+    
     // Delete material associations first (cascade should handle this, but being explicit)
     await supabase
       .from('items_materials')
@@ -196,7 +251,10 @@ export const itemsApi = {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Items delete error:', error);
+      throw error;
+    }
   }
 };
 
