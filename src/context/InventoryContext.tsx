@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Item, RawMaterial, ItemFormData, RawMaterialFormData } from '../types';
-import { mockItems, mockRawMaterials } from '../data/mockData';
-import { generateId } from '../utils/helpers';
+import { itemsApi, materialsApi } from '../services/api';
 
 // Define the state type
 interface InventoryState {
@@ -28,12 +27,13 @@ type InventoryAction =
 interface InventoryContextType {
   state: InventoryState;
   dispatch: React.Dispatch<InventoryAction>;
-  addItem: (itemData: ItemFormData) => void;
-  updateItem: (id: string, itemData: ItemFormData) => void;
-  deleteItem: (id: string) => void;
-  addRawMaterial: (materialData: RawMaterialFormData) => void;
-  updateRawMaterial: (id: string, materialData: RawMaterialFormData) => void;
-  deleteRawMaterial: (id: string) => void;
+  addItem: (itemData: ItemFormData) => Promise<void>;
+  updateItem: (id: string, itemData: ItemFormData) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
+  addRawMaterial: (materialData: RawMaterialFormData) => Promise<void>;
+  updateRawMaterial: (id: string, materialData: RawMaterialFormData) => Promise<void>;
+  deleteRawMaterial: (id: string) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 // Initial state
@@ -100,69 +100,103 @@ const inventoryReducer = (state: InventoryState, action: InventoryAction): Inven
 export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(inventoryReducer, initialState);
 
-  // Load mock data
-  useEffect(() => {
+  // Load data from API
+  const refreshData = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    
     try {
-      // Simulate API call with timeout
-      setTimeout(() => {
-        dispatch({ type: 'SET_ITEMS', payload: mockItems });
-        dispatch({ type: 'SET_RAW_MATERIALS', payload: mockRawMaterials });
-        dispatch({ type: 'SET_LOADING', payload: false });
-      }, 1000);
+      const [items, materials] = await Promise.all([
+        itemsApi.getAll(),
+        materialsApi.getAll()
+      ]);
+      
+      dispatch({ type: 'SET_ITEMS', payload: items });
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: materials });
     } catch (error) {
+      console.error('Error loading inventory data:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load inventory data' });
+    } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  // Load data on mount
+  useEffect(() => {
+    refreshData();
   }, []);
 
   // Action creators
-  const addItem = (itemData: ItemFormData) => {
-    const newItem: Item = {
-      ...itemData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'ADD_ITEM', payload: newItem });
+  const addItem = async (itemData: ItemFormData) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      const newItem = await itemsApi.create(itemData);
+      dispatch({ type: 'ADD_ITEM', payload: newItem });
+    } catch (error) {
+      console.error('Error adding item:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to add item' });
+      throw error;
+    }
   };
 
-  const updateItem = (id: string, itemData: ItemFormData) => {
-    const updatedItem: Item = {
-      ...itemData,
-      id,
-      createdAt: state.items.find(item => item.id === id)?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'UPDATE_ITEM', payload: updatedItem });
+  const updateItem = async (id: string, itemData: ItemFormData) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      const updatedItem = await itemsApi.update(id, itemData);
+      dispatch({ type: 'UPDATE_ITEM', payload: updatedItem });
+    } catch (error) {
+      console.error('Error updating item:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to update item' });
+      throw error;
+    }
   };
 
-  const deleteItem = (id: string) => {
-    dispatch({ type: 'DELETE_ITEM', payload: id });
+  const deleteItem = async (id: string) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      await itemsApi.delete(id);
+      dispatch({ type: 'DELETE_ITEM', payload: id });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to delete item' });
+      throw error;
+    }
   };
 
-  const addRawMaterial = (materialData: RawMaterialFormData) => {
-    const newMaterial: RawMaterial = {
-      ...materialData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'ADD_RAW_MATERIAL', payload: newMaterial });
+  const addRawMaterial = async (materialData: RawMaterialFormData) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      const newMaterial = await materialsApi.create(materialData);
+      dispatch({ type: 'ADD_RAW_MATERIAL', payload: newMaterial });
+    } catch (error) {
+      console.error('Error adding material:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to add material' });
+      throw error;
+    }
   };
 
-  const updateRawMaterial = (id: string, materialData: RawMaterialFormData) => {
-    const updatedMaterial: RawMaterial = {
-      ...materialData,
-      id,
-      createdAt: state.rawMaterials.find(material => material.id === id)?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'UPDATE_RAW_MATERIAL', payload: updatedMaterial });
+  const updateRawMaterial = async (id: string, materialData: RawMaterialFormData) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      const updatedMaterial = await materialsApi.update(id, materialData);
+      dispatch({ type: 'UPDATE_RAW_MATERIAL', payload: updatedMaterial });
+    } catch (error) {
+      console.error('Error updating material:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to update material' });
+      throw error;
+    }
   };
 
-  const deleteRawMaterial = (id: string) => {
-    dispatch({ type: 'DELETE_RAW_MATERIAL', payload: id });
+  const deleteRawMaterial = async (id: string) => {
+    try {
+      dispatch({ type: 'SET_ERROR', payload: null });
+      await materialsApi.delete(id);
+      dispatch({ type: 'DELETE_RAW_MATERIAL', payload: id });
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to delete material' });
+      throw error;
+    }
   };
 
   const contextValue: InventoryContextType = {
@@ -173,7 +207,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     deleteItem,
     addRawMaterial,
     updateRawMaterial,
-    deleteRawMaterial
+    deleteRawMaterial,
+    refreshData
   };
 
   return (
