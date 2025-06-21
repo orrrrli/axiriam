@@ -67,25 +67,35 @@ const ItemForm: React.FC<ItemFormProps> = ({
         };
       }
     });
+
+    // Clear materials error when user selects materials
+    if (errors.materials) {
+      setErrors(prev => ({ ...prev, materials: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof ItemFormData, string>> = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = 'El nombre es requerido';
     }
     
     if (!formData.category) {
-      newErrors.category = 'Category is required';
+      newErrors.category = 'La categoría es requerida';
     }
     
     if (formData.quantity < 0) {
-      newErrors.quantity = 'Quantity cannot be negative';
+      newErrors.quantity = 'La cantidad no puede ser negativa';
     }
     
     if (formData.price < 0) {
-      newErrors.price = 'Price cannot be negative';
+      newErrors.price = 'El precio no puede ser negativo';
+    }
+
+    // REQUIREMENT: Raw materials must be required when creating items
+    if (formData.materials.length === 0) {
+      newErrors.materials = 'Debes seleccionar al menos un material para crear el gorro';
     }
     
     setErrors(newErrors);
@@ -163,12 +173,15 @@ const ItemForm: React.FC<ItemFormProps> = ({
           />
         </div>
 
-        {rawMaterials.length > 0 && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
-              Materiales Usados
-            </label>
-            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200 dark:bg-gray-700">
+        {/* Materials Selection - Now Required */}
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
+            Materiales Usados <span className="text-red-500">*</span>
+          </label>
+          {rawMaterials.length > 0 ? (
+            <div className={`bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border ${
+              errors.materials ? 'border-red-500' : 'border-gray-200'
+            } dark:bg-gray-700 dark:border-gray-600`}>
               {rawMaterials.map((material) => (
                 <div key={material.id} className="flex items-center mb-2 last:mb-0">
                   <input
@@ -187,8 +200,17 @@ const ItemForm: React.FC<ItemFormProps> = ({
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md p-4">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                No hay materiales disponibles. Debes crear al menos un material antes de poder crear un gorro.
+              </p>
+            </div>
+          )}
+          {errors.materials && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.materials}</p>
+          )}
+        </div>
       </div>
 
       <div className="mt-6 flex justify-end space-x-3">
@@ -197,14 +219,15 @@ const ItemForm: React.FC<ItemFormProps> = ({
           variant="outline" 
           onClick={onCancel}
         >
-          Cancel
+          Cancelar
         </Button>
         <Button 
           type="submit" 
           variant="primary" 
           isLoading={isSubmitting}
+          disabled={rawMaterials.length === 0}
         >
-          {initialData ? 'Update Item' : 'Add Item'}
+          {initialData ? 'Actualizar Gorro' : 'Agregar Gorro'}
         </Button>
       </div>
     </form>

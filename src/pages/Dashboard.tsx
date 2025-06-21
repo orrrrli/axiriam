@@ -1,18 +1,54 @@
 import React from 'react';
 import { useInventory } from '../context/InventoryContext';
+import { useAuth } from '../context/AuthContext';
 import { formatCurrency, getLowStockItems, formatDate } from '../utils/helpers';
-import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope, HandHeart} from 'lucide-react';
+import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, HandHeart } from 'lucide-react';
 
 const LOW_STOCK_THRESHOLD = 5;
 
 const Dashboard: React.FC = () => {
   const { state } = useInventory();
-  const { items, rawMaterials, isLoading } = state;
+  const { isAuthenticated } = useAuth();
+  const { items, rawMaterials, isLoading, error } = state;
+  
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
+        
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6 text-center">
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-amber-800 dark:text-amber-200 mb-2">
+            Autenticación Requerida
+          </h3>
+          <p className="text-amber-700 dark:text-amber-300">
+            Debes iniciar sesión para ver el dashboard del inventario.
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
+        
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-red-800 dark:text-red-200 mb-2">
+            Error al cargar datos
+          </h3>
+          <p className="text-red-700 dark:text-red-300">{error}</p>
+        </div>
       </div>
     );
   }
@@ -93,41 +129,48 @@ const Dashboard: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Categorias de gorros</h3>
           
-          <div className="space-y-4">
-            {Object.entries(categoryCounts).map(([category, count]) => {
-              const percentage = Math.round((count / totalItems) * 100);
-              let barColor;
-              
-              switch (category) {
-                case 'sencillo':
-                  barColor = 'bg-sky-500';
-                  break;
-                case 'doble-vista':
-                  barColor = 'bg-amber-500';
-                  break;
-                case 'completo-ajustable':
-                  barColor = 'bg-purple-500';
-                  break;
-                default:
-                  barColor = 'bg-gray-500';
-              }
-              
-              return (
-                <div key={category}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium capitalize text-gray-700 dark:text-gray-300">{category}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{count} ({percentage}%)</span>
+          {totalItems > 0 ? (
+            <div className="space-y-4">
+              {Object.entries(categoryCounts).map(([category, count]) => {
+                const percentage = Math.round((count / totalItems) * 100);
+                let barColor;
+                
+                switch (category) {
+                  case 'sencillo':
+                    barColor = 'bg-sky-500';
+                    break;
+                  case 'doble-vista':
+                    barColor = 'bg-amber-500';
+                    break;
+                  case 'completo-ajustable':
+                    barColor = 'bg-purple-500';
+                    break;
+                  default:
+                    barColor = 'bg-gray-500';
+                }
+                
+                return (
+                  <div key={category}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium capitalize text-gray-700 dark:text-gray-300">{category}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{count} ({percentage}%)</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                      <div
+                        className={`${barColor} h-2.5 rounded-full`}
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                    <div
-                      className={`${barColor} h-2.5 rounded-full`}
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No hay gorros registrados aún</p>
+            </div>
+          )}
         </div>
         
         {/* Low Stock Alerts */}
@@ -141,7 +184,7 @@ const Dashboard: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p>All items and materials are well stocked!</p>
+              <p>¡Todos los items y materiales tienen buen stock!</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -179,32 +222,39 @@ const Dashboard: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Actividad Reciente</h3>
         
-        <div className="space-y-4">
-          {[...items, ...rawMaterials]
-            .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-            .slice(0, 5)
-            .map(item => {
-              const isRawMaterial = 'unit' in item;
-              
-              return (
-                <div key={item.id} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-                  <div className={`p-2 rounded-full ${isRawMaterial ? 'bg-emerald-100 dark:bg-emerald-900' : 'bg-sky-100 dark:bg-sky-900'} mr-3`}>
-                    {isRawMaterial ? (
-                      <ScissorsSquare className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
-                    ) : (
-                      <HandHeart className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
-                    )}
+        {(items.length > 0 || rawMaterials.length > 0) ? (
+          <div className="space-y-4">
+            {[...items, ...rawMaterials]
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .slice(0, 5)
+              .map(item => {
+                const isRawMaterial = 'unit' in item;
+                
+                return (
+                  <div key={item.id} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                    <div className={`p-2 rounded-full ${isRawMaterial ? 'bg-emerald-100 dark:bg-emerald-900' : 'bg-sky-100 dark:bg-sky-900'} mr-3`}>
+                      {isRawMaterial ? (
+                        <ScissorsSquare className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
+                      ) : (
+                        <HandHeart className={`h-5 w-5 ${isRawMaterial ? 'text-emerald-500 dark:text-emerald-400' : 'text-sky-500 dark:text-sky-400'}`} />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Actualizado el {formatDate(item.updatedAt)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Updated on {formatDate(item.updatedAt)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
+                );
+              })}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No hay actividad reciente</p>
+          </div>
+        )}
       </div>
     </div>
   );
