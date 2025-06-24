@@ -1,4 +1,4 @@
-import { Item, RawMaterial } from '../types';
+import { Item, RawMaterial, OrderMaterial, Sale } from '../types';
 
 const unitRawMaterial = "m²";
 export const mockRawMaterials: RawMaterial[] = [
@@ -59,7 +59,6 @@ export const mockRawMaterials: RawMaterial[] = [
   }
 ];
 
-
 export const mockItems: Item[] = [
   {
     id: '1',
@@ -115,5 +114,89 @@ export const mockItems: Item[] = [
     materials: ['5'],
     createdAt: new Date('2023-12-10'),
     updatedAt: new Date('2023-12-10')
+  }
+];
+
+export const mockOrderMaterials: OrderMaterial[] = [
+  {
+    id: '1',
+    rawMaterialId: '1',
+    distributor: 'Textiles Premium SA',
+    description: 'Pedido urgente para restock de tela Dragon Ball',
+    quantity: 25,
+    status: 'pending',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    id: '2',
+    rawMaterialId: '2',
+    distributor: 'Distribuidora Textil Norte',
+    description: 'Pedido regular mensual de tela Principito',
+    quantity: 15,
+    status: 'ordered',
+    createdAt: new Date('2024-01-10'),
+    updatedAt: new Date('2024-01-12')
+  },
+  {
+    id: '3',
+    rawMaterialId: '4',
+    distributor: 'Mayorista Telas MX',
+    description: 'Pedido especial para temporada alta',
+    quantity: 40,
+    status: 'received',
+    createdAt: new Date('2024-01-05'),
+    updatedAt: new Date('2024-01-18')
+  }
+];
+
+export const mockSales: Sale[] = [
+  {
+    id: '1',
+    name: 'María González',
+    status: 'delivered',
+    socialMedia: '@maria_med_style',
+    saleId: 'SALE-2024-001',
+    trackingNumber: 'EST123456789',
+    invoiceRequired: true,
+    shippingType: 'nacional',
+    nationalShippingCarrier: 'estafeta',
+    shippingDescription: 'Entrega en oficina principal',
+    totalAmount: 450.00,
+    items: ['1', '2'],
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-01-25')
+  },
+  {
+    id: '2',
+    name: 'Dr. Carlos Ruiz',
+    status: 'shipped',
+    socialMedia: 'Facebook - Carlos Ruiz',
+    saleId: 'SALE-2024-002',
+    trackingNumber: 'DHL987654321',
+    invoiceRequired: false,
+    shippingType: 'nacional',
+    nationalShippingCarrier: 'dhl',
+    shippingDescription: 'Entrega express 24hrs',
+    totalAmount: 125.00,
+    items: ['4'],
+    createdAt: new Date('2024-01-22'),
+    updatedAt: new Date('2024-01-23')
+  },
+  {
+    id: '3',
+    name: 'Ana Martínez',
+    status: 'pending',
+    socialMedia: '@ana_quirofano',
+    saleId: 'SALE-2024-003',
+    trackingNumber: '',
+    invoiceRequired: true,
+    shippingType: 'local',
+    localShippingOption: 'meeting-point',
+    localAddress: 'Plaza Central, Local 15',
+    totalAmount: 350.00,
+    items: ['5'],
+    createdAt: new Date('2024-01-25'),
+    updatedAt: new Date('2024-01-25')
   }
 ];
