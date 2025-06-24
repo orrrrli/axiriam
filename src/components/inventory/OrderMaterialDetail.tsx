@@ -9,8 +9,6 @@ interface OrderMaterialDetailProps {
 }
 
 const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMaterials }) => {
-  const material = rawMaterials.find(m => m.id === order.rawMaterialId);
-  
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'pending':
@@ -24,12 +22,16 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
     }
   };
   
+  const getTotalQuantity = () => {
+    return order.materials.reduce((total, material) => total + material.quantity, 0);
+  };
+  
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Pedido de {material?.name || 'Material no encontrado'}
+            Pedido de Materiales
           </h3>
           <Badge variant={getStatusBadgeVariant(order.status)}>
             {getStatusLabel(order.status)}
@@ -40,8 +42,8 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
       
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Cantidad</span>
-          <span className="block mt-1 text-lg font-medium">{order.quantity} m²</span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Total m²</span>
+          <span className="block mt-1 text-lg font-medium">{getTotalQuantity()}</span>
         </div>
         
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
@@ -50,27 +52,64 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
         </div>
       </div>
       
-      {material && (
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Detalles del Material</h4>
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">{material.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{material.description}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Proveedor actual: {material.supplier}
-                </p>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Materiales Solicitados</h4>
+        <div className="space-y-3">
+          {order.materials.map((materialItem, index) => {
+            const material = rawMaterials.find(m => m.id === materialItem.rawMaterialId);
+            const totalArea = materialItem.height * materialItem.width;
+            
+            return (
+              <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-md border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {material?.name || 'Material no encontrado'}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {material?.description}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {materialItem.quantity} m²
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
+                  <div className="text-center">
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Alto</span>
+                    <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                      {materialItem.height}m
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Ancho</span>
+                    <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                      {materialItem.width}m
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Área Total</span>
+                    <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                      {totalArea.toFixed(2)}m²
+                    </span>
+                  </div>
+                </div>
+                
+                {material && (
+                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Proveedor actual: {material.supplier} | Stock disponible: {material.quantity} {material.unit}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Stock: {material.quantity} {material.unit}
-                </p>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
       
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
         <p>Creado: {formatDate(order.createdAt)}</p>

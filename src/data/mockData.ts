@@ -120,30 +120,34 @@ export const mockItems: Item[] = [
 export const mockOrderMaterials: OrderMaterial[] = [
   {
     id: '1',
-    rawMaterialId: '1',
+    materials: [
+      { rawMaterialId: '1', quantity: 25, height: 2.5, width: 1.5 },
+      { rawMaterialId: '2', quantity: 10, height: 2.0, width: 1.2 }
+    ],
     distributor: 'Textiles Premium SA',
-    description: 'Pedido urgente para restock de tela Dragon Ball',
-    quantity: 25,
+    description: 'Pedido urgente para restock de telas Dragon Ball y Principito',
     status: 'pending',
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15')
   },
   {
     id: '2',
-    rawMaterialId: '2',
+    materials: [
+      { rawMaterialId: '2', quantity: 15, height: 3.0, width: 1.8 }
+    ],
     distributor: 'Distribuidora Textil Norte',
     description: 'Pedido regular mensual de tela Principito',
-    quantity: 15,
     status: 'ordered',
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-12')
   },
   {
     id: '3',
-    rawMaterialId: '4',
+    materials: [
+      { rawMaterialId: '4', quantity: 40, height: 2.2, width: 1.6 }
+    ],
     distributor: 'Mayorista Telas MX',
     description: 'Pedido especial para temporada alta',
-    quantity: 40,
     status: 'received',
     createdAt: new Date('2024-01-05'),
     updatedAt: new Date('2024-01-18')
@@ -155,7 +159,8 @@ export const mockSales: Sale[] = [
     id: '1',
     name: 'María González',
     status: 'delivered',
-    socialMedia: '@maria_med_style',
+    socialMediaPlatform: 'instagram',
+    socialMediaUsername: 'maria_med_style',
     saleId: 'SALE-2024-001',
     trackingNumber: 'EST123456789',
     invoiceRequired: true,
@@ -171,7 +176,8 @@ export const mockSales: Sale[] = [
     id: '2',
     name: 'Dr. Carlos Ruiz',
     status: 'shipped',
-    socialMedia: 'Facebook - Carlos Ruiz',
+    socialMediaPlatform: 'facebook',
+    socialMediaUsername: 'carlos.ruiz.medico',
     saleId: 'SALE-2024-002',
     trackingNumber: 'DHL987654321',
     invoiceRequired: false,
@@ -187,7 +193,8 @@ export const mockSales: Sale[] = [
     id: '3',
     name: 'Ana Martínez',
     status: 'pending',
-    socialMedia: '@ana_quirofano',
+    socialMediaPlatform: 'whatsapp',
+    socialMediaUsername: '5551234567',
     saleId: 'SALE-2024-003',
     trackingNumber: '',
     invoiceRequired: true,

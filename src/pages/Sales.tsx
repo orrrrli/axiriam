@@ -25,7 +25,7 @@ const Sales: React.FC = () => {
   
   const filteredSales = sales.filter(sale => 
     sale.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sale.socialMedia.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    sale.socialMediaUsername.toLowerCase().includes(searchQuery.toLowerCase()) ||
     sale.saleId.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
@@ -95,6 +95,15 @@ const Sales: React.FC = () => {
           {getStatusLabel(sale.status)}
         </Badge>
       )
+    },
+    {
+      header: 'Red Social',
+      accessor: (sale: Sale) => (
+        <span className="capitalize">
+          {sale.socialMediaPlatform}
+        </span>
+      ),
+      className: 'text-gray-700 dark:text-gray-300'
     },
     {
       header: 'Monto',
@@ -199,7 +208,8 @@ const Sales: React.FC = () => {
             initialData={{
               name: currentSale.name,
               status: currentSale.status,
-              socialMedia: currentSale.socialMedia,
+              socialMediaPlatform: currentSale.socialMediaPlatform,
+              socialMediaUsername: currentSale.socialMediaUsername,
               trackingNumber: currentSale.trackingNumber,
               invoiceRequired: currentSale.invoiceRequired,
               shippingType: currentSale.shippingType,

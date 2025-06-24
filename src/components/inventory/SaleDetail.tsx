@@ -23,6 +23,11 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
         return 'default';
     }
   };
+
+  const getSocialMediaDisplay = () => {
+    const platform = sale.socialMediaPlatform.charAt(0).toUpperCase() + sale.socialMediaPlatform.slice(1);
+    return `${platform}: ${sale.socialMediaUsername}`;
+  };
   
   return (
     <div className="space-y-6">
@@ -45,8 +50,10 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
         </div>
         
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Redes Sociales</span>
-          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">{sale.socialMedia}</span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Red Social</span>
+          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
+            {getSocialMediaDisplay()}
+          </span>
         </div>
       </div>
       

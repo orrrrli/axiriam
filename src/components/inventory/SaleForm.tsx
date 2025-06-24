@@ -22,7 +22,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
   const defaultFormData: SaleFormData = {
     name: '',
     status: 'pending',
-    socialMedia: '',
+    socialMediaPlatform: 'instagram',
+    socialMediaUsername: '',
     trackingNumber: '',
     invoiceRequired: false,
     shippingType: 'local',
@@ -82,8 +83,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
       newErrors.name = 'El nombre es requerido';
     }
     
-    if (!formData.socialMedia.trim()) {
-      newErrors.socialMedia = 'Las redes sociales son requeridas';
+    if (!formData.socialMediaUsername.trim()) {
+      newErrors.socialMediaUsername = 'El usuario de red social es requerido';
     }
     
     if (formData.totalAmount < 0) {
@@ -112,6 +113,12 @@ const SaleForm: React.FC<SaleFormProps> = ({
     { value: 'delivered', label: 'Entregado' }
   ];
 
+  const socialMediaOptions = [
+    { value: 'facebook', label: 'Facebook' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'whatsapp', label: 'WhatsApp' }
+  ];
+
   const shippingTypeOptions = [
     { value: 'local', label: 'Local' },
     { value: 'nacional', label: 'Nacional' }
@@ -128,6 +135,19 @@ const SaleForm: React.FC<SaleFormProps> = ({
     { value: 'fedex', label: 'FedEx' },
     { value: 'correos', label: 'Correos' }
   ];
+
+  const getSocialMediaPlaceholder = () => {
+    switch (formData.socialMediaPlatform) {
+      case 'facebook':
+        return 'nombre.apellido o perfil de Facebook';
+      case 'instagram':
+        return '@usuario_instagram';
+      case 'whatsapp':
+        return 'Número de teléfono (ej: 5551234567)';
+      default:
+        return 'Usuario de red social';
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -153,15 +173,26 @@ const SaleForm: React.FC<SaleFormProps> = ({
           />
         </div>
         
-        <Input
-          label="Redes Sociales"
-          value={formData.socialMedia}
-          onChange={(e) => handleChange('socialMedia', e.target.value)}
-          placeholder="@usuario o perfil de red social"
-          error={errors.socialMedia}
-          required
-          fullWidth
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="Red Social"
+            value={formData.socialMediaPlatform}
+            onChange={(value) => handleChange('socialMediaPlatform', value as 'facebook' | 'instagram' | 'whatsapp')}
+            options={socialMediaOptions}
+            required
+            fullWidth
+          />
+          
+          <Input
+            label="Usuario/Contacto"
+            value={formData.socialMediaUsername}
+            onChange={(e) => handleChange('socialMediaUsername', e.target.value)}
+            placeholder={getSocialMediaPlaceholder()}
+            error={errors.socialMediaUsername}
+            required
+            fullWidth
+          />
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input

@@ -24,9 +24,13 @@ const OrderMaterials: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const filteredOrders = orderMaterials.filter(order => {
-    const material = rawMaterials.find(m => m.id === order.rawMaterialId);
+    const materialNames = order.materials.map(m => {
+      const material = rawMaterials.find(rm => rm.id === m.rawMaterialId);
+      return material?.name || '';
+    }).join(' ');
+    
     return (
-      material?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      materialNames.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.distributor.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -82,10 +86,15 @@ const OrderMaterials: React.FC = () => {
   
   const columns: TableColumn<OrderMaterial>[] = [
     {
-      header: 'Tela',
+      header: 'Telas',
       accessor: (order: OrderMaterial) => {
-        const material = rawMaterials.find(m => m.id === order.rawMaterialId);
-        return material?.name || 'Material no encontrado';
+        const materialNames = order.materials.map(m => {
+          const material = rawMaterials.find(rm => rm.id === m.rawMaterialId);
+          return material?.name || 'Material no encontrado';
+        });
+        return materialNames.length > 1 
+          ? `${materialNames[0]} (+${materialNames.length - 1} más)`
+          : materialNames[0] || 'Sin materiales';
       },
       className: 'font-medium text-gray-900 dark:text-white'
     },
@@ -95,8 +104,11 @@ const OrderMaterials: React.FC = () => {
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
-      header: 'Cantidad (m²)',
-      accessor: (order: OrderMaterial) => `${order.quantity}`,
+      header: 'Total m²',
+      accessor: (order: OrderMaterial) => {
+        const total = order.materials.reduce((sum, m) => sum + m.quantity, 0);
+        return `${total}`;
+      },
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -176,7 +188,7 @@ const OrderMaterials: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         title="Nuevo Pedido de Material"
-        size="lg"
+        size="xl"
       >
         <OrderMaterialForm
           onSubmit={handleAddOrder}
@@ -191,15 +203,14 @@ const OrderMaterials: React.FC = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Editar Pedido"
-        size="lg"
+        size="xl"
       >
         {currentOrder && (
           <OrderMaterialForm
             initialData={{
-              rawMaterialId: currentOrder.rawMaterialId,
+              materials: currentOrder.materials,
               distributor: currentOrder.distributor,
               description: currentOrder.description,
-              quantity: currentOrder.quantity,
               status: currentOrder.status
             }}
             onSubmit={handleEditOrder}
@@ -215,7 +226,7 @@ const OrderMaterials: React.FC = () => {
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         title="Detalles del Pedido"
-        size="md"
+        size="lg"
         footer={
           <>
             <Button 

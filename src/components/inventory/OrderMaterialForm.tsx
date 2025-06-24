@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { OrderMaterialFormData, RawMaterial } from '../../types';
+import { OrderMaterialFormData, RawMaterial, OrderMaterialItem } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
+import { Trash2, Plus } from 'lucide-react';
 
 interface OrderMaterialFormProps {
   initialData?: OrderMaterialFormData;
@@ -20,10 +21,9 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   isSubmitting = false
 }) => {
   const defaultFormData: OrderMaterialFormData = {
-    rawMaterialId: '',
+    materials: [{ rawMaterialId: '', quantity: 1, height: 1, width: 1 }],
     distributor: '',
     description: '',
-    quantity: 1,
     status: 'pending'
   };
 
@@ -45,24 +45,41 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     }
   };
 
-  const handleNumberChange = (field: 'quantity', value: string) => {
-    const numValue = value === '' ? 1 : parseInt(value);
-    handleChange(field, numValue);
+  const handleMaterialChange = (index: number, field: keyof OrderMaterialItem, value: any) => {
+    const updatedMaterials = [...formData.materials];
+    updatedMaterials[index] = { ...updatedMaterials[index], [field]: value };
+    setFormData(prev => ({ ...prev, materials: updatedMaterials }));
+  };
+
+  const addMaterial = () => {
+    setFormData(prev => ({
+      ...prev,
+      materials: [...prev.materials, { rawMaterialId: '', quantity: 1, height: 1, width: 1 }]
+    }));
+  };
+
+  const removeMaterial = (index: number) => {
+    if (formData.materials.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        materials: prev.materials.filter((_, i) => i !== index)
+      }));
+    }
   };
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof OrderMaterialFormData, string>> = {};
     
-    if (!formData.rawMaterialId) {
-      newErrors.rawMaterialId = 'La tela es requerida';
+    if (formData.materials.some(m => !m.rawMaterialId)) {
+      newErrors.materials = 'Todas las telas son requeridas';
     }
     
     if (!formData.distributor.trim()) {
       newErrors.distributor = 'El distribuidor es requerido';
     }
     
-    if (formData.quantity < 1) {
-      newErrors.quantity = 'La cantidad debe ser mayor a 0';
+    if (formData.materials.some(m => m.quantity < 1 || m.height <= 0 || m.width <= 0)) {
+      newErrors.materials = 'Cantidad, alto y ancho deben ser mayores a 0';
     }
     
     setErrors(newErrors);
@@ -90,16 +107,93 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-4">
-        <Select
-          label="Tela"
-          value={formData.rawMaterialId}
-          onChange={(value) => handleChange('rawMaterialId', value)}
-          options={materialOptions}
-          error={errors.rawMaterialId}
-          required
-          fullWidth
-        />
+      <div className="space-y-6">
+        {/* Materials Section */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Telas
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addMaterial}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Agregar Tela
+            </Button>
+          </div>
+          
+          {formData.materials.map((material, index) => (
+            <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md mb-3">
+              <div className="flex justify-between items-start mb-3">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Tela {index + 1}
+                </h4>
+                {formData.materials.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeMaterial(index)}
+                    className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 gap-3">
+                <Select
+                  label="Seleccionar Tela"
+                  value={material.rawMaterialId}
+                  onChange={(value) => handleMaterialChange(index, 'rawMaterialId', value)}
+                  options={materialOptions}
+                  required
+                  fullWidth
+                />
+                
+                <div className="grid grid-cols-3 gap-3">
+                  <Input
+                    label="Cantidad (m²)"
+                    type="number"
+                    value={material.quantity.toString()}
+                    onChange={(e) => handleMaterialChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                    min="1"
+                    step="1"
+                    required
+                    fullWidth
+                  />
+                  
+                  <Input
+                    label="Alto (m)"
+                    type="number"
+                    value={material.height.toString()}
+                    onChange={(e) => handleMaterialChange(index, 'height', parseFloat(e.target.value) || 1)}
+                    min="0.1"
+                    step="0.1"
+                    required
+                    fullWidth
+                  />
+                  
+                  <Input
+                    label="Ancho (m)"
+                    type="number"
+                    value={material.width.toString()}
+                    onChange={(e) => handleMaterialChange(index, 'width', parseFloat(e.target.value) || 1)}
+                    min="0.1"
+                    step="0.1"
+                    required
+                    fullWidth
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {errors.materials && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.materials}</p>
+          )}
+        </div>
         
         <Input
           label="Distribuidor"
@@ -119,28 +213,14 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
           fullWidth
         />
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Cantidad (m²)"
-            type="number"
-            value={formData.quantity.toString()}
-            onChange={(e) => handleNumberChange('quantity', e.target.value)}
-            min="1"
-            step="1"
-            error={errors.quantity}
-            required
-            fullWidth
-          />
-          
-          <Select
-            label="Estado"
-            value={formData.status}
-            onChange={(value) => handleChange('status', value as 'pending' | 'ordered' | 'received')}
-            options={statusOptions}
-            required
-            fullWidth
-          />
-        </div>
+        <Select
+          label="Estado"
+          value={formData.status}
+          onChange={(value) => handleChange('status', value as 'pending' | 'ordered' | 'received')}
+          options={statusOptions}
+          required
+          fullWidth
+        />
       </div>
 
       <div className="mt-6 flex justify-end space-x-3">

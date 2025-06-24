@@ -26,12 +26,18 @@ export interface RawMaterial {
   updatedAt: Date;
 }
 
+export interface OrderMaterialItem {
+  rawMaterialId: string;
+  quantity: number;
+  height: number; // in meters
+  width: number; // in meters
+}
+
 export interface OrderMaterial {
   id: string;
-  rawMaterialId: string; // Reference to RawMaterial
+  materials: OrderMaterialItem[]; // Multiple materials with dimensions
   distributor: string;
   description: string;
-  quantity: number;
   status: 'pending' | 'ordered' | 'received';
   createdAt: Date;
   updatedAt: Date;
@@ -41,7 +47,8 @@ export interface Sale {
   id: string;
   name: string;
   status: 'pending' | 'shipped' | 'delivered';
-  socialMedia: string;
+  socialMediaPlatform: 'facebook' | 'instagram' | 'whatsapp';
+  socialMediaUsername: string;
   saleId: string; // UUID for sale identification
   trackingNumber: string;
   invoiceRequired: boolean;
