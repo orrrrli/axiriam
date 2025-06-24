@@ -10,7 +10,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5 mr-2" /> },
     { id: 'items', label: 'Gorros', icon: <Box className="w-5 h-5 mr-2" /> },
-    { id: 'raw-materials', label: 'm² de material', icon: <PackageOpen className="w-5 h-5 mr-2" /> }
+    { id: 'raw-materials', label: 'Materiales', icon: <PackageOpen className="w-5 h-5 mr-2" /> }
   ];
 
   return (
