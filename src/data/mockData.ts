@@ -121,8 +121,8 @@ export const mockOrderMaterials: OrderMaterial[] = [
   {
     id: '1',
     materials: [
-      { rawMaterialId: '1', quantity: 25, height: 2.5, width: 1.5 },
-      { rawMaterialId: '2', quantity: 10, height: 2.0, width: 1.2 }
+      { rawMaterialId: '1', height: 2.5, width: 1.5, quantity: 25 },
+      { rawMaterialId: '2', height: 2.0, width: 1.2, quantity: 10 }
     ],
     distributor: 'Textiles Premium SA',
     description: 'Pedido urgente para restock de telas Dragon Ball y Principito',
@@ -133,7 +133,7 @@ export const mockOrderMaterials: OrderMaterial[] = [
   {
     id: '2',
     materials: [
-      { rawMaterialId: '2', quantity: 15, height: 3.0, width: 1.8 }
+      { rawMaterialId: '2', height: 3.0, width: 1.8, quantity: 15 }
     ],
     distributor: 'Distribuidora Textil Norte',
     description: 'Pedido regular mensual de tela Principito',
@@ -144,7 +144,7 @@ export const mockOrderMaterials: OrderMaterial[] = [
   {
     id: '3',
     materials: [
-      { rawMaterialId: '4', quantity: 40, height: 2.2, width: 1.6 }
+      { rawMaterialId: '4', height: 2.2, width: 1.6, quantity: 40 }
     ],
     distributor: 'Mayorista Telas MX',
     description: 'Pedido especial para temporada alta',

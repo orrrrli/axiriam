@@ -28,9 +28,9 @@ export interface RawMaterial {
 
 export interface OrderMaterialItem {
   rawMaterialId: string;
-  quantity: number;
   height: number; // in meters
   width: number; // in meters
+  quantity: number; // final quantity in m²
 }
 
 export interface OrderMaterial {

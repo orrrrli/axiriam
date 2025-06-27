@@ -21,7 +21,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   isSubmitting = false
 }) => {
   const defaultFormData: OrderMaterialFormData = {
-    materials: [{ rawMaterialId: '', quantity: 1, height: 1, width: 1 }],
+    materials: [{ rawMaterialId: '', height: 1, width: 1, quantity: 1 }],
     distributor: '',
     description: '',
     status: 'pending'
@@ -54,7 +54,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   const addMaterial = () => {
     setFormData(prev => ({
       ...prev,
-      materials: [...prev.materials, { rawMaterialId: '', quantity: 1, height: 1, width: 1 }]
+      materials: [...prev.materials, { rawMaterialId: '', height: 1, width: 1, quantity: 1 }]
     }));
   };
 
@@ -78,7 +78,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       newErrors.distributor = 'El distribuidor es requerido';
     }
     
-    if (formData.materials.some(m => m.quantity < 1 || m.height <= 0 || m.width <= 0)) {
+    if (formData.materials.some(m => m.quantity <= 0 || m.height <= 0 || m.width <= 0)) {
       newErrors.materials = 'Cantidad, alto y ancho deben ser mayores a 0';
     }
     
@@ -112,7 +112,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
         <div>
           <div className="flex justify-between items-center mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Telas
+              Materiales
             </label>
             <Button
               type="button"
@@ -121,38 +121,79 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
               onClick={addMaterial}
             >
               <Plus className="w-4 h-4 mr-1" />
-              Agregar Tela
+              Agregar Material
             </Button>
           </div>
           
-          {formData.materials.map((material, index) => (
-            <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md mb-3">
-              <div className="flex justify-between items-start mb-3">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Tela {index + 1}
-                </h4>
-                {formData.materials.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeMaterial(index)}
-                    className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 gap-3">
-                <Select
-                  label="Seleccionar Tela"
-                  value={material.rawMaterialId}
-                  onChange={(value) => handleMaterialChange(index, 'rawMaterialId', value)}
-                  options={materialOptions}
-                  required
-                  fullWidth
-                />
+          {formData.materials.map((material, index) => {
+            const calculatedArea = material.height * material.width;
+            
+            return (
+              <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md mb-3 border border-gray-200 dark:border-gray-600">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Material {index + 1}
+                  </h4>
+                  {formData.materials.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeMaterial(index)}
+                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-4">
+                  {/* 1. Material Selection */}
+                  <Select
+                    label="Seleccionar Tela"
+                    value={material.rawMaterialId}
+                    onChange={(value) => handleMaterialChange(index, 'rawMaterialId', value)}
+                    options={materialOptions}
+                    required
+                    fullWidth
+                  />
+                  
+                  {/* 2. Dimensions */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Alto (m)"
+                      type="number"
+                      value={material.height.toString()}
+                      onChange={(e) => handleMaterialChange(index, 'height', parseFloat(e.target.value) || 1)}
+                      min="0.1"
+                      step="0.1"
+                      required
+                      fullWidth
+                    />
+                    
+                    <Input
+                      label="Ancho (m)"
+                      type="number"
+                      value={material.width.toString()}
+                      onChange={(e) => handleMaterialChange(index, 'width', parseFloat(e.target.value) || 1)}
+                      min="0.1"
+                      step="0.1"
+                      required
+                      fullWidth
+                    />
+                  </div>
+                  
+                  {/* Area Calculation Display */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                        Área calculada:
+                      </span>
+                      <span className="text-sm font-bold text-blue-900 dark:text-blue-200">
+                        {calculatedArea.toFixed(2)} m²
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* 3. Final Quantity */}
                   <Input
                     label="Cantidad (m²)"
                     type="number"
@@ -163,32 +204,10 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     required
                     fullWidth
                   />
-                  
-                  <Input
-                    label="Alto (m)"
-                    type="number"
-                    value={material.height.toString()}
-                    onChange={(e) => handleMaterialChange(index, 'height', parseFloat(e.target.value) || 1)}
-                    min="0.1"
-                    step="0.1"
-                    required
-                    fullWidth
-                  />
-                  
-                  <Input
-                    label="Ancho (m)"
-                    type="number"
-                    value={material.width.toString()}
-                    onChange={(e) => handleMaterialChange(index, 'width', parseFloat(e.target.value) || 1)}
-                    min="0.1"
-                    step="0.1"
-                    required
-                    fullWidth
-                  />
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           
           {errors.materials && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.materials}</p>
