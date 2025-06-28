@@ -34,13 +34,17 @@ export interface OrderMaterialItem {
 }
 
 export interface OrderMaterial {
-  id: string;
-  materials: OrderMaterialItem[]; // Multiple materials with dimensions
+  materials: {
+    quantity: number;
+    designs: {
+      rawMaterialId: string;
+      height: number;
+      width: number;
+    }[];
+  }[];
   distributor: string;
   description: string;
   status: 'pending' | 'ordered' | 'received';
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface Sale {

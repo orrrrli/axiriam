@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import Button from './Button';
 
 interface ModalProps {
@@ -27,30 +28,20 @@ const Modal: React.FC<ModalProps> = ({
       }
     };
 
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEsc);
       document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.body.style.overflow = 'auto';
-    };
-  }, [isOpen, onClose]);
-
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-    }
-
-    return () => {
       document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'auto';
     };
   }, [isOpen, onClose]);
 
@@ -63,8 +54,8 @@ const Modal: React.FC<ModalProps> = ({
     xl: 'max-w-xl'
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 transition-opacity">
+  return ReactDOM.createPortal(
+    <div className="fixed top-0 left-0 w-screen h-screen z-50 flex items-center justify-center bg-black/75 transition-opacity">
       <div 
         ref={modalRef}
         className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden w-full ${sizeClasses[size]} transform transition-all`}
@@ -75,7 +66,7 @@ const Modal: React.FC<ModalProps> = ({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
-            aria-label="Close"
+            aria-label="Cerrar"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -93,7 +84,8 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
