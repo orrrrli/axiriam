@@ -34,8 +34,8 @@ export interface OrderMaterialItem {
 }
 
 export interface OrderMaterial {
+  id: string;
   materials: {
-    quantity: number;
     designs: {
       rawMaterialId: string;
       height: number;
@@ -45,6 +45,8 @@ export interface OrderMaterial {
   distributor: string;
   description: string;
   status: 'pending' | 'ordered' | 'received';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Sale {

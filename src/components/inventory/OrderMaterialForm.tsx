@@ -23,7 +23,6 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   const defaultFormData: OrderMaterialFormData = {
     materials: [
       {
-        quantity: 1,
         designs: [{ rawMaterialId: '', height: 1, width: 1 }],
       },
     ],
@@ -50,12 +49,6 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const handleQuantityChange = (materialIndex: number, value: number) => {
-    const updatedMaterials = [...formData.materials];
-    updatedMaterials[materialIndex].quantity = value;
-    setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
-  };
-
   const handleDesignChange = (
     materialIndex: number,
     designIndex: number,
@@ -75,7 +68,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       ...prev,
       materials: [
         ...prev.materials,
-        { quantity: 1, designs: [{ rawMaterialId: '', height: 1, width: 1 }] },
+        { designs: [{ rawMaterialId: '', height: 1, width: 1 }] },
       ],
     }));
   };
@@ -121,12 +114,10 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       newErrors.distributor = 'El distribuidor es requerido';
 
     if (
-      formData.materials.some(
-        (m) =>
-          m.quantity <= 0 ||
-          m.designs.some((d) => d.height <= 0 || d.width <= 0)
+      formData.materials.some((m) =>
+        m.designs.some((d) => d.height <= 0 || d.width <= 0)
       )
-    ) newErrors.materials = 'Cantidad, alto y ancho deben ser mayores a 0';
+    ) newErrors.materials = 'Alto y ancho deben ser mayores a 0';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -171,7 +162,6 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
             (sum, d) => sum + d.height * d.width,
             0
           );
-          const totalMaterialArea = designsArea * material.quantity;
 
           return (
             <div
@@ -193,20 +183,6 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                   </button>
                 )}
               </div>
-
-              <Input
-                label="Cantidad de piezas de este material"
-                type="number"
-                value={material.quantity.toString()}
-                onChange={(e) =>
-                  handleQuantityChange(materialIndex, parseInt(e.target.value) || 1)
-                }
-                min="1"
-                step="1"
-                placeholder="Número de piezas"
-                required
-                fullWidth
-              />
 
               <div className="mt-4 space-y-4">
                 {material.designs.map((design, designIndex) => (
@@ -254,9 +230,9 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                             parseFloat(e.target.value) || 1
                           )
                         }
-                        min="0.1"
-                        step="0.1"
-                        placeholder="Ej: 1.5"
+                        min="0.001"
+                        step="0.001"
+                        placeholder="Ej: 1.500"
                         required
                         fullWidth
                       />
@@ -273,9 +249,9 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                             parseFloat(e.target.value) || 1
                           )
                         }
-                        min="0.1"
-                        step="0.1"
-                        placeholder="Ej: 2.0"
+                        min="0.001"
+                        step="0.001"
+                        placeholder="Ej: 2.000"
                         required
                         fullWidth
                       />
@@ -301,7 +277,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     Área total de este material:
                   </span>
                   <span className="text-sm font-bold text-green-900 dark:text-green-200">
-                    {totalMaterialArea.toFixed(2)} m²
+                    {designsArea.toFixed(3)} m²
                   </span>
                 </div>
               </div>

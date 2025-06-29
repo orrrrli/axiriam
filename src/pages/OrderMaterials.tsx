@@ -24,10 +24,12 @@ const OrderMaterials: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const filteredOrders = orderMaterials.filter(order => {
-    const materialNames = order.materials.map(m => {
-      const material = rawMaterials.find(rm => rm.id === m.rawMaterialId);
-      return material?.name || '';
-    }).join(' ');
+    const materialNames = order.materials.flatMap(m => 
+      m.designs.map(d => {
+        const material = rawMaterials.find(rm => rm.id === d.rawMaterialId);
+        return material?.name || '';
+      })
+    ).join(' ');
     
     return (
       materialNames.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,13 +90,16 @@ const OrderMaterials: React.FC = () => {
     {
       header: 'Telas',
       accessor: (order: OrderMaterial) => {
-        const materialNames = order.materials.map(m => {
-          const material = rawMaterials.find(rm => rm.id === m.rawMaterialId);
-          return material?.name || 'Material no encontrado';
-        });
-        return materialNames.length > 1 
-          ? `${materialNames[0]} (+${materialNames.length - 1} más)`
-          : materialNames[0] || 'Sin materiales';
+        const materialNames = order.materials.flatMap(m => 
+          m.designs.map(d => {
+            const material = rawMaterials.find(rm => rm.id === d.rawMaterialId);
+            return material?.name || 'Material no encontrado';
+          })
+        );
+        const uniqueNames = [...new Set(materialNames)];
+        return uniqueNames.length > 1 
+          ? `${uniqueNames[0]} (+${uniqueNames.length - 1} más)`
+          : uniqueNames[0] || 'Sin materiales';
       },
       className: 'font-medium text-gray-900 dark:text-white'
     },
@@ -106,8 +111,12 @@ const OrderMaterials: React.FC = () => {
     {
       header: 'Total m²',
       accessor: (order: OrderMaterial) => {
-        const total = order.materials.reduce((sum, m) => sum + m.quantity, 0);
-        return `${total}`;
+        const total = order.materials.reduce((sum, m) => {
+          return sum + m.designs.reduce((designSum, d) => {
+            return designSum + (d.height * d.width);
+          }, 0);
+        }, 0);
+        return total.toFixed(3);
       },
       className: 'text-gray-700 dark:text-gray-300'
     },
