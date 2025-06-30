@@ -19,8 +19,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   const defaultFormData: RawMaterialFormData = {
     name: '',
     description: '',
-    quantity: 0,
-    unit: 'm²',
+    width: 0,
+    height: 0,
     price: 0,
     supplier: ''
   };
@@ -43,7 +43,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     }
   };
 
-  const handleNumberChange = (field: 'quantity' | 'price', value: string) => {
+  const handleNumberChange = (field: 'width' | 'height' | 'price', value: string) => {
     const numValue = value === '' ? 0 : parseFloat(value);
     handleChange(field, numValue);
   };
@@ -55,8 +55,12 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
       newErrors.name = 'El nombre es requerido';
     }
 
-    if (formData.quantity < 0) {
-      newErrors.quantity = 'La cantidad no puede ser negativa';
+    if (formData.width <= 0) {
+      newErrors.width = 'El ancho debe ser mayor a 0';
+    }
+
+    if (formData.height <= 0) {
+      newErrors.height = 'El alto debe ser mayor a 0';
     }
     
     if (formData.price < 0) {
@@ -74,6 +78,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
       onSubmit(formData);
     }
   };
+
+  const totalArea = formData.width * formData.height;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -98,25 +104,44 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Cantidad"
+            label="Ancho (m)"
             type="number"
-            value={formData.quantity.toString()}
-            onChange={(e) => handleNumberChange('quantity', e.target.value)}
-            min="1"
-            step="1"
-            error={errors.quantity}
+            value={formData.width.toString()}
+            onChange={(e) => handleNumberChange('width', e.target.value)}
+            min="0.001"
+            step="0.001"
+            placeholder="Ej: 1.500"
+            error={errors.width}
             required
             fullWidth
           />
           
           <Input
-            label="Unidad"
-            value="m²"
-            readOnly
+            label="Alto (m)"
+            type="number"
+            value={formData.height.toString()}
+            onChange={(e) => handleNumberChange('height', e.target.value)}
+            min="0.001"
+            step="0.001"
+            placeholder="Ej: 2.000"
+            error={errors.height}
+            required
             fullWidth
           />
-
         </div>
+
+        {(formData.width > 0 && formData.height > 0) && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-700">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                Área total:
+              </span>
+              <span className="text-sm font-bold text-blue-900 dark:text-blue-200">
+                {totalArea.toFixed(3)} m²
+              </span>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input

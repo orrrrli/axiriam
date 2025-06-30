@@ -8,7 +8,6 @@ import RawMaterialDetail from '../components/inventory/RawMaterialDetail';
 import { RawMaterial, RawMaterialFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
-import {unitRawMaterial} from '../types';
 import type { TableColumn } from '../components/ui/Table';
 
 const RawMaterials: React.FC = () => {
@@ -92,8 +91,13 @@ const RawMaterials: React.FC = () => {
       className: 'font-medium text-gray-900 dark:text-white'
     },
     {
-      header: `Cantidad (${unitRawMaterial[0].toLowerCase()})`,
-      accessor: (material: RawMaterial) => `${material.quantity}`,
+      header: 'Dimensiones',
+      accessor: (material: RawMaterial) => `${material.width.toFixed(3)} x ${material.height.toFixed(3)} m`,
+      className: 'text-gray-700 dark:text-gray-300'
+    },
+    {
+      header: 'Área Total',
+      accessor: (material: RawMaterial) => `${(material.width * material.height).toFixed(3)} m²`,
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -138,7 +142,7 @@ const RawMaterials: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Materiales</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Diseños/Material</h2>
         <Button 
           variant="primary"
           onClick={() => setIsAddModalOpen(true)}
@@ -196,8 +200,8 @@ const RawMaterials: React.FC = () => {
             initialData={{
               name: currentMaterial.name,
               description: currentMaterial.description,
-              quantity: currentMaterial.quantity,
-              unit: currentMaterial.unit,
+              width: currentMaterial.width,
+              height: currentMaterial.height,
               price: currentMaterial.price,
               supplier: currentMaterial.supplier
             }}

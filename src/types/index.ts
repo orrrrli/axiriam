@@ -1,7 +1,7 @@
 export interface Item {
   id: string;
   name: string;
-  category: 'sencillo' | 'doble-vista' | 'completo-ajustable';
+  category: 'sencillo' | 'doble-vista' | 'completo' | 'sencillo-algodon' | 'completo-algodon' | 'stretch';
   description: string;
   quantity: number;
   price: number;
@@ -10,16 +10,12 @@ export interface Item {
   updatedAt: Date;
 }
 
-export const unitRawMaterial = [
-  'm²'
-]
-
 export interface RawMaterial {
   id: string;
   name: string;
   description: string;
-  quantity: number;
-  unit: string;
+  width: number; // in meters
+  height: number; // in meters
   price: number;
   supplier: string;
   createdAt: Date;

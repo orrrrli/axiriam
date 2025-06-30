@@ -1,13 +1,12 @@
 import { Item, RawMaterial, OrderMaterial, Sale } from '../types';
 
-const unitRawMaterial = "m²";
 export const mockRawMaterials: RawMaterial[] = [
   {
     id: '1',
     name: 'Dragon Ball Dibujos',
     description: 'Tela de algodón con estampado de Dragon Ball.',
-    quantity: 50,
-    unit: unitRawMaterial,
+    width: 1.500,
+    height: 2.000,
     price: 45.99,
     supplier: 'Textiles Médicos MX',
     createdAt: new Date('2023-12-01'),
@@ -17,8 +16,8 @@ export const mockRawMaterials: RawMaterial[] = [
     id: '2',
     name: 'Principito Impresión',
     description: 'Tela suave con impresión del Principito.',
-    quantity: 20,
-    unit: unitRawMaterial,
+    width: 1.200,
+    height: 1.800,
     price: 35.50,
     supplier: 'Telas & Diseños',
     createdAt: new Date('2023-12-05'),
@@ -28,8 +27,8 @@ export const mockRawMaterials: RawMaterial[] = [
     id: '3',
     name: 'Tiburón Dental Stone',
     description: 'Tela de algodón con estampado de tiburones.',
-    quantity: 15,
-    unit: unitRawMaterial,
+    width: 1.000,
+    height: 1.500,
     price: 28.75,
     supplier: 'Estampados Creativos',
     createdAt: new Date('2023-12-10'),
@@ -39,8 +38,8 @@ export const mockRawMaterials: RawMaterial[] = [
     id: '4',
     name: 'Tela de Pequeña',
     description: 'Tela de algodón liviana con patrón infantil.',
-    quantity: 30,
-    unit: unitRawMaterial,
+    width: 2.000,
+    height: 1.500,
     price: 65.00,
     supplier: 'Confecciones Médicas SA',
     createdAt: new Date('2023-12-12'),
@@ -50,19 +49,41 @@ export const mockRawMaterials: RawMaterial[] = [
     id: '5',
     name: 'Snoopy Sticker',
     description: 'Tela con estampado de Snoopy.',
-    quantity: 12,
-    unit: unitRawMaterial,
+    width: 0.800,
+    height: 1.200,
     price: 120.50,
     supplier: 'Médica Textil',
     createdAt: new Date('2023-12-15'),
     updatedAt: new Date('2023-12-15')
+  },
+  {
+    id: '6',
+    name: 'Flores Vintage',
+    description: 'Tela con diseño floral vintage para gorros elegantes.',
+    width: 1.600,
+    height: 2.200,
+    price: 52.30,
+    supplier: 'Textiles Médicos MX',
+    createdAt: new Date('2023-12-18'),
+    updatedAt: new Date('2023-12-18')
+  },
+  {
+    id: '7',
+    name: 'Estrellas Azules',
+    description: 'Tela azul con estampado de estrellas blancas.',
+    width: 1.400,
+    height: 1.900,
+    price: 38.90,
+    supplier: 'Telas & Diseños',
+    createdAt: new Date('2023-12-20'),
+    updatedAt: new Date('2023-12-20')
   }
 ];
 
 export const mockItems: Item[] = [
   {
     id: '1',
-    name: 'Pingüino',
+    name: 'Pingüino Básico',
     category: 'sencillo',
     description: 'Gorro quirúrgico sencillo con estampado infantil de pingüinos.',
     quantity: 25,
@@ -73,7 +94,7 @@ export const mockItems: Item[] = [
   },
   {
     id: '2',
-    name: 'Dragon Ball',
+    name: 'Dragon Ball Reversible',
     category: 'doble-vista',
     description: 'Gorro quirúrgico reversible con diseño de Dragon Ball.',
     quantity: 40,
@@ -84,18 +105,18 @@ export const mockItems: Item[] = [
   },
   {
     id: '3',
-    name: 'Tiburón',
-    category: 'completo-ajustable',
+    name: 'Tiburón Ajustable',
+    category: 'completo',
     description: 'Gorro quirúrgico ajustable con estampado divertido de tiburones.',
     quantity: 3,
     price: 4500.00,
-    materials: [],
+    materials: ['3'],
     createdAt: new Date('2023-12-05'),
     updatedAt: new Date('2023-12-05')
   },
   {
     id: '4',
-    name: 'Principito',
+    name: 'Principito Doble',
     category: 'doble-vista',
     description: 'Gorro quirúrgico reversible con ilustraciones del Principito.',
     quantity: 15,
@@ -106,7 +127,7 @@ export const mockItems: Item[] = [
   },
   {
     id: '5',
-    name: 'Snoopy',
+    name: 'Snoopy Clásico',
     category: 'doble-vista',
     description: 'Gorro quirúrgico reversible con estampado clásico de Snoopy.',
     quantity: 10,
@@ -114,6 +135,83 @@ export const mockItems: Item[] = [
     materials: ['5'],
     createdAt: new Date('2023-12-10'),
     updatedAt: new Date('2023-12-10')
+  },
+  {
+    id: '6',
+    name: 'Algodón Natural',
+    category: 'sencillo-algodon',
+    description: 'Gorro quirúrgico de algodón 100% natural, hipoalergénico.',
+    quantity: 30,
+    price: 22.50,
+    materials: ['4'],
+    createdAt: new Date('2023-12-12'),
+    updatedAt: new Date('2023-12-12')
+  },
+  {
+    id: '7',
+    name: 'Algodón Premium Ajustable',
+    category: 'completo-algodon',
+    description: 'Gorro quirúrgico completo de algodón premium con ajuste personalizado.',
+    quantity: 8,
+    price: 89.99,
+    materials: ['6'],
+    createdAt: new Date('2023-12-14'),
+    updatedAt: new Date('2023-12-14')
+  },
+  {
+    id: '8',
+    name: 'Stretch Deportivo',
+    category: 'stretch',
+    description: 'Gorro quirúrgico elástico ideal para procedimientos largos.',
+    quantity: 20,
+    price: 45.75,
+    materials: ['7'],
+    createdAt: new Date('2023-12-16'),
+    updatedAt: new Date('2023-12-16')
+  },
+  {
+    id: '9',
+    name: 'Flores Elegante',
+    category: 'completo',
+    description: 'Gorro quirúrgico completo con diseño floral elegante.',
+    quantity: 12,
+    price: 95.00,
+    materials: ['6'],
+    createdAt: new Date('2023-12-18'),
+    updatedAt: new Date('2023-12-18')
+  },
+  {
+    id: '10',
+    name: 'Estrellas Stretch',
+    category: 'stretch',
+    description: 'Gorro quirúrgico elástico con estampado de estrellas.',
+    quantity: 18,
+    price: 52.30,
+    materials: ['7'],
+    createdAt: new Date('2023-12-20'),
+    updatedAt: new Date('2023-12-20')
+  },
+  {
+    id: '11',
+    name: 'Algodón Básico Azul',
+    category: 'sencillo-algodon',
+    description: 'Gorro quirúrgico básico de algodón en color azul.',
+    quantity: 35,
+    price: 19.99,
+    materials: ['7'],
+    createdAt: new Date('2023-12-22'),
+    updatedAt: new Date('2023-12-22')
+  },
+  {
+    id: '12',
+    name: 'Premium Completo Algodón',
+    category: 'completo-algodon',
+    description: 'Gorro quirúrgico premium de algodón con todas las características.',
+    quantity: 6,
+    price: 110.50,
+    materials: ['6', '7'],
+    createdAt: new Date('2023-12-24'),
+    updatedAt: new Date('2023-12-24')
   }
 ];
 

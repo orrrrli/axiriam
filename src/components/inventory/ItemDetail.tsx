@@ -13,12 +13,18 @@ const ItemDetail: React.FC<ItemDetailProps> = ({ item, rawMaterials }) => {
   
   const getCategoryBadge = (category: string) => {
     switch (category) {
-      case 'instruments':
+      case 'sencillo':
         return <Badge variant="primary">Sencillo</Badge>;
-      case 'consumables':
-        return <Badge variant="warning">Doble-vista</Badge>;
-      case 'equipment':
-        return <Badge variant="secondary">Completo-ajustable</Badge>;
+      case 'doble-vista':
+        return <Badge variant="warning">Doble vista</Badge>;
+      case 'completo':
+        return <Badge variant="secondary">Completo</Badge>;
+      case 'sencillo-algodon':
+        return <Badge variant="success">Sencillo algodón</Badge>;
+      case 'completo-algodon':
+        return <Badge variant="danger">Completo algodón</Badge>;
+      case 'stretch':
+        return <Badge variant="default">Stretch</Badge>;
       default:
         return <Badge>{category}</Badge>;
     }
@@ -54,7 +60,7 @@ const ItemDetail: React.FC<ItemDetailProps> = ({ item, rawMaterials }) => {
               <li key={material.id} className="p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <div className="flex justify-between">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">{material.name}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{material.unit}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{material.width}x{material.height}m</span>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{material.description}</p>
               </li>

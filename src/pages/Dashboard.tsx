@@ -1,13 +1,13 @@
 import React from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { formatCurrency, getLowStockItems, formatDate } from '../utils/helpers';
-import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope, HandHeart} from 'lucide-react';
+import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope, HandHeart, Clock} from 'lucide-react';
 
 const LOW_STOCK_THRESHOLD = 5;
 
 const Dashboard: React.FC = () => {
   const { state } = useInventory();
-  const { items, rawMaterials, isLoading } = state;
+  const { items, rawMaterials, orderMaterials, isLoading } = state;
   
   if (isLoading) {
     return (
@@ -18,13 +18,14 @@ const Dashboard: React.FC = () => {
   }
   
   // Calculate dashboard metrics
-  const totalItems = items.length;
-  const totalMaterials = rawMaterials.length;
+  const pendingOrders = orderMaterials.filter(order => order.status === 'pending').length;
+  const totalDesigns = orderMaterials.reduce((total, order) => {
+    return total + order.materials.reduce((materialTotal, material) => {
+      return materialTotal + material.designs.length;
+    }, 0);
+  }, 0);
   const lowStockItems = getLowStockItems(LOW_STOCK_THRESHOLD, items);
   const lowStockMaterials = getLowStockItems(LOW_STOCK_THRESHOLD, rawMaterials);
-  
-  const totalItemsValue = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const totalMaterialsValue = rawMaterials.reduce((sum, material) => sum + (material.price * material.quantity), 0);
   
   // Create data for category distribution
   const categoryCounts = items.reduce((acc, item) => {
@@ -38,15 +39,15 @@ const Dashboard: React.FC = () => {
       <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-sky-500">
           <div className="flex items-center">
             <div className="bg-sky-100 dark:bg-sky-900 p-3 rounded-lg">
-              <ShoppingBag className="h-6 w-6 text-sky-500 dark:text-sky-400" />
+              <Clock className="h-6 w-6 text-sky-500 dark:text-sky-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total de Gorros</h3>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{totalItems}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Pedidos Pendientes</h3>
+              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{pendingOrders}</p>
             </div>
           </div>
         </div>
@@ -57,20 +58,8 @@ const Dashboard: React.FC = () => {
               <PackageSearch className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400"> Total m² de material </h3>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{totalMaterials}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-purple-500">
-          <div className="flex items-center">
-            <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg">
-              <BarChart3 className="h-6 w-6 text-purple-500 dark:text-purple-400" />
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Valor de Inventario</h3>
-              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{formatCurrency(totalItemsValue + totalMaterialsValue)}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total de Diseños</h3>
+              <p className="text-2xl font-semibold text-gray-800 dark:text-white">{totalDesigns}</p>
             </div>
           </div>
         </div>
@@ -95,7 +84,7 @@ const Dashboard: React.FC = () => {
           
           <div className="space-y-4">
             {Object.entries(categoryCounts).map(([category, count]) => {
-              const percentage = Math.round((count / totalItems) * 100);
+              const percentage = Math.round((count / items.length) * 100);
               let barColor;
               
               switch (category) {
@@ -105,8 +94,17 @@ const Dashboard: React.FC = () => {
                 case 'doble-vista':
                   barColor = 'bg-amber-500';
                   break;
-                case 'completo-ajustable':
+                case 'completo':
                   barColor = 'bg-purple-500';
+                  break;
+                case 'sencillo-algodon':
+                  barColor = 'bg-green-500';
+                  break;
+                case 'completo-algodon':
+                  barColor = 'bg-red-500';
+                  break;
+                case 'stretch':
+                  barColor = 'bg-indigo-500';
                   break;
                 default:
                   barColor = 'bg-gray-500';
@@ -162,11 +160,11 @@ const Dashboard: React.FC = () => {
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{material.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Solo {material.quantity} {material.unit} en stock
+                      Solo {material.width}x{material.height}m en stock
                     </p>
                   </div>
                   <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300">
-                    m² 
+                    Material
                   </span>
                 </div>
               ))}
@@ -184,7 +182,7 @@ const Dashboard: React.FC = () => {
             .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
             .slice(0, 5)
             .map(item => {
-              const isRawMaterial = 'unit' in item;
+              const isRawMaterial = 'width' in item && 'height' in item;
               
               return (
                 <div key={item.id} className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">

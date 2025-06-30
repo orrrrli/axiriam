@@ -11,22 +11,39 @@ interface RawMaterialDetailProps {
 const RawMaterialDetail: React.FC<RawMaterialDetailProps> = ({ material, items }) => {
   // Find items that use this raw material
   const relatedItems = items.filter(item => item.materials.includes(material.id));
+  const totalArea = material.width * material.height;
   
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">{material.name}</h3>
-          <Badge>{material.unit}</Badge>
+          <Badge>{totalArea.toFixed(3)} m²</Badge>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">{material.description}</p>
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Cantidad</span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Ancho</span>
           <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
-            {material.quantity} {material.unit}
+            {material.width.toFixed(3)} m
+          </span>
+        </div>
+        
+        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Alto</span>
+          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
+            {material.height.toFixed(3)} m
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Área Total</span>
+          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
+            {totalArea.toFixed(3)} m²
           </span>
         </div>
         
@@ -55,7 +72,13 @@ const RawMaterialDetail: React.FC<RawMaterialDetailProps> = ({ material, items }
                         ? 'primary' 
                         : item.category === 'doble-vista' 
                           ? 'warning' 
-                          : 'secondary'
+                          : item.category === 'completo'
+                            ? 'secondary'
+                            : item.category === 'sencillo-algodon'
+                              ? 'success'
+                              : item.category === 'completo-algodon'
+                                ? 'danger'
+                                : 'default'
                     }
                   >
                     {item.category}

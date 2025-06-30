@@ -6,10 +6,11 @@ import Modal from '../components/ui/Modal';
 import ItemForm from '../components/inventory/ItemForm';
 import ItemDetail from '../components/inventory/ItemDetail';
 import Badge from '../components/ui/Badge';
+import Select from '../components/ui/Select';
 import { Item, ItemFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
-import type { TableColumn } from '../components/ui/Table'; // Ajusta la ruta si es diferente
+import { Trash2, Pencil, Search, PlusCircle, Filter } from 'lucide-react';
+import type { TableColumn } from '../components/ui/Table';
 
 const Items: React.FC = () => {
   const { state, addItem, updateItem, deleteItem } = useInventory();
@@ -21,13 +22,18 @@ const Items: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = categoryFilter === '' || item.category === categoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
   
   const handleAddItem = (data: ItemFormData) => {
     setIsSubmitting(true);
@@ -76,6 +82,44 @@ const Items: React.FC = () => {
     setCurrentItem(item);
     setIsDeleteModalOpen(true);
   };
+
+  const getBadgeVariant = (category: string) => {
+    switch (category) {
+      case 'sencillo':
+        return 'primary';
+      case 'doble-vista':
+        return 'warning';
+      case 'completo':
+        return 'secondary';
+      case 'sencillo-algodon':
+        return 'success';
+      case 'completo-algodon':
+        return 'danger';
+      case 'stretch':
+        return 'default';
+      default:
+        return 'default';
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'sencillo':
+        return 'Sencillo';
+      case 'doble-vista':
+        return 'Doble vista';
+      case 'completo':
+        return 'Completo';
+      case 'sencillo-algodon':
+        return 'Sencillo algodón';
+      case 'completo-algodon':
+        return 'Completo algodón';
+      case 'stretch':
+        return 'Stretch';
+      default:
+        return category;
+    }
+  };
   
   const columns: TableColumn<Item>[] = [
     {
@@ -86,14 +130,11 @@ const Items: React.FC = () => {
     {
       header: 'Categoria',
       accessor: (item: Item) => {
-        const variant = 
-          item.category === 'sencillo' ? 'primary' : 
-          item.category === 'doble-vista' ? 'warning' : 
-          'secondary';
+        const variant = getBadgeVariant(item.category);
         
         return (
           <Badge variant={variant}>
-            {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+            {getCategoryLabel(item.category)}
           </Badge>
         );
       }
@@ -136,6 +177,16 @@ const Items: React.FC = () => {
       className: 'text-right'
     }
   ];
+
+  const categoryOptions = [
+    { value: '', label: 'Todas las categorías' },
+    { value: 'sencillo', label: 'Sencillo' },
+    { value: 'doble-vista', label: 'Doble vista' },
+    { value: 'completo', label: 'Completo' },
+    { value: 'sencillo-algodon', label: 'Sencillo algodón' },
+    { value: 'completo-algodon', label: 'Completo algodón' },
+    { value: 'stretch', label: 'Stretch' }
+  ];
   
   return (
     <div className="space-y-6">
@@ -150,17 +201,28 @@ const Items: React.FC = () => {
         </Button>
       </div>
       
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar gorros..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Search items..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-        />
+        
+        <div className="w-full sm:w-64">
+          <Select
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={categoryOptions}
+            fullWidth
+          />
+        </div>
       </div>
       
       <Table
