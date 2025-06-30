@@ -29,8 +29,19 @@ export const getMaterialsById = (materialIds: string[], allMaterials: RawMateria
   return allMaterials.filter(material => materialIds.includes(material.id));
 };
 
-export const getLowStockItems = (threshold: number, items: { quantity: number }[]): number => {
-  return items.filter(item => item.quantity <= threshold).length;
+export const getLowStockItems = (threshold: number, items: { quantity?: number; width?: number; height?: number }[]): number => {
+  return items.filter(item => {
+    // For items with quantity property
+    if ('quantity' in item && item.quantity !== undefined) {
+      return item.quantity <= threshold;
+    }
+    // For materials with width/height (calculate area)
+    if ('width' in item && 'height' in item && item.width !== undefined && item.height !== undefined) {
+      const area = item.width * item.height;
+      return area <= threshold;
+    }
+    return false;
+  }).length;
 };
 
 export const getStatusBadgeVariant = (status: string) => {

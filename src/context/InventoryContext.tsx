@@ -22,6 +22,7 @@ type InventoryAction =
   | { type: 'ADD_ITEM'; payload: Item }
   | { type: 'UPDATE_ITEM'; payload: Item }
   | { type: 'DELETE_ITEM'; payload: string }
+  | { type: 'REDUCE_ITEM_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'ADD_RAW_MATERIAL'; payload: RawMaterial }
   | { type: 'UPDATE_RAW_MATERIAL'; payload: RawMaterial }
   | { type: 'DELETE_RAW_MATERIAL'; payload: string }
@@ -41,6 +42,7 @@ interface InventoryContextType {
   addItem: (itemData: ItemFormData) => void;
   updateItem: (id: string, itemData: ItemFormData) => void;
   deleteItem: (id: string) => void;
+  reduceItemQuantity: (id: string, quantity: number) => void;
   addRawMaterial: (materialData: RawMaterialFormData) => void;
   updateRawMaterial: (id: string, materialData: RawMaterialFormData) => void;
   deleteRawMaterial: (id: string) => void;
@@ -89,6 +91,19 @@ const inventoryReducer = (state: InventoryState, action: InventoryAction): Inven
       return {
         ...state,
         items: state.items.filter(item => item.id !== action.payload)
+      };
+    case 'REDUCE_ITEM_QUANTITY':
+      return {
+        ...state,
+        items: state.items.map(item => 
+          item.id === action.payload.id 
+            ? { 
+                ...item, 
+                quantity: Math.max(0, item.quantity - action.payload.quantity),
+                updatedAt: new Date()
+              }
+            : item
+        )
       };
     case 'ADD_RAW_MATERIAL':
       return { 
@@ -203,6 +218,10 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     dispatch({ type: 'DELETE_ITEM', payload: id });
   };
 
+  const reduceItemQuantity = (id: string, quantity: number) => {
+    dispatch({ type: 'REDUCE_ITEM_QUANTITY', payload: { id, quantity } });
+  };
+
   const addRawMaterial = (materialData: RawMaterialFormData) => {
     const newMaterial: RawMaterial = {
       ...materialData,
@@ -259,6 +278,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       createdAt: new Date(),
       updatedAt: new Date()
     };
+    
+    // Reduce quantities of sold items
+    saleData.items.forEach(itemId => {
+      reduceItemQuantity(itemId, 1);
+    });
+    
     dispatch({ type: 'ADD_SALE', payload: newSale });
   };
 
@@ -271,10 +296,53 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       createdAt: existingSale?.createdAt || new Date(),
       updatedAt: new Date()
     };
+
+    // Handle quantity changes when updating a sale
+    if (existingSale) {
+      // Restore quantities from the old sale
+      existingSale.items.forEach(itemId => {
+        const item = state.items.find(i => i.id === itemId);
+        if (item) {
+          dispatch({ 
+            type: 'UPDATE_ITEM', 
+            payload: { 
+              ...item, 
+              quantity: item.quantity + 1,
+              updatedAt: new Date()
+            }
+          });
+        }
+      });
+
+      // Reduce quantities for the new sale
+      saleData.items.forEach(itemId => {
+        reduceItemQuantity(itemId, 1);
+      });
+    }
+
     dispatch({ type: 'UPDATE_SALE', payload: updatedSale });
   };
 
   const deleteSale = (id: string) => {
+    const existingSale = state.sales.find(sale => sale.id === id);
+    
+    // Restore quantities when deleting a sale
+    if (existingSale) {
+      existingSale.items.forEach(itemId => {
+        const item = state.items.find(i => i.id === itemId);
+        if (item) {
+          dispatch({ 
+            type: 'UPDATE_ITEM', 
+            payload: { 
+              ...item, 
+              quantity: item.quantity + 1,
+              updatedAt: new Date()
+            }
+          });
+        }
+      });
+    }
+    
     dispatch({ type: 'DELETE_SALE', payload: id });
   };
 
@@ -284,6 +352,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     addItem,
     updateItem,
     deleteItem,
+    reduceItemQuantity,
     addRawMaterial,
     updateRawMaterial,
     deleteRawMaterial,

@@ -5,21 +5,23 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import ItemForm from '../components/inventory/ItemForm';
 import ItemDetail from '../components/inventory/ItemDetail';
+import GiftQuantityModal from '../components/inventory/GiftQuantityModal';
 import Badge from '../components/ui/Badge';
 import Select from '../components/ui/Select';
 import { Item, ItemFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle, Filter } from 'lucide-react';
+import { Trash2, Pencil, Search, PlusCircle, Gift } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
 const Items: React.FC = () => {
-  const { state, addItem, updateItem, deleteItem } = useInventory();
+  const { state, addItem, updateItem, deleteItem, reduceItemQuantity } = useInventory();
   const { items, rawMaterials, isLoading } = state;
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -67,6 +69,18 @@ const Items: React.FC = () => {
       setIsSubmitting(false);
     }, 500);
   };
+
+  const handleGiftConfirm = (quantity: number) => {
+    if (!currentItem) return;
+    
+    setIsSubmitting(true);
+    setTimeout(() => {
+      reduceItemQuantity(currentItem.id, quantity);
+      setIsGiftModalOpen(false);
+      setCurrentItem(null);
+      setIsSubmitting(false);
+    }, 500);
+  };
   
   const openEditModal = (item: Item) => {
     setCurrentItem(item);
@@ -81,6 +95,15 @@ const Items: React.FC = () => {
   const openDeleteModal = (item: Item) => {
     setCurrentItem(item);
     setIsDeleteModalOpen(true);
+  };
+
+  const openGiftModal = (item: Item) => {
+    if (item.quantity <= 0) {
+      alert('No hay stock disponible para este artículo.');
+      return;
+    }
+    setCurrentItem(item);
+    setIsGiftModalOpen(true);
   };
 
   const getBadgeVariant = (category: string) => {
@@ -141,7 +164,11 @@ const Items: React.FC = () => {
     },
     {
       header: 'Cantidad',
-      accessor: 'quantity',
+      accessor: (item: Item) => (
+        <span className={item.quantity <= 5 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+          {item.quantity}
+        </span>
+      ),
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -158,6 +185,14 @@ const Items: React.FC = () => {
       header: 'Acciones',
       accessor: (item: Item) => (
         <div className="flex space-x-2 justify-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); openGiftModal(item); }}
+            className="text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
+            aria-label="Gift"
+            title="Reducir por regalo"
+          >
+            <Gift size={18} />
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
             className="text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
@@ -304,6 +339,17 @@ const Items: React.FC = () => {
           />
         )}
       </Modal>
+
+      {/* Gift Quantity Modal */}
+      {currentItem && (
+        <GiftQuantityModal
+          isOpen={isGiftModalOpen}
+          onClose={() => setIsGiftModalOpen(false)}
+          item={currentItem}
+          onConfirm={handleGiftConfirm}
+          isSubmitting={isSubmitting}
+        />
+      )}
       
       {/* Delete Confirmation Modal */}
       <Modal
