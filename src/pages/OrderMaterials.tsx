@@ -5,10 +5,11 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import OrderMaterialForm from '../components/inventory/OrderMaterialForm';
 import OrderMaterialDetail from '../components/inventory/OrderMaterialDetail';
+import ShipmentTrackerModal from '../components/inventory/ShipmentTrackerModal';
 import Badge from '../components/ui/Badge';
 import { OrderMaterial, OrderMaterialFormData } from '../types';
 import { formatDate, getStatusBadgeVariant, getStatusLabel } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
+import { Trash2, Pencil, Search, PlusCircle, Truck } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
 const OrderMaterials: React.FC = () => {
@@ -19,6 +20,7 @@ const OrderMaterials: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isTrackerModalOpen, setIsTrackerModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderMaterial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +87,11 @@ const OrderMaterials: React.FC = () => {
     setCurrentOrder(order);
     setIsDeleteModalOpen(true);
   };
+
+  const openTrackerModal = (order: OrderMaterial) => {
+    setCurrentOrder(order);
+    setIsTrackerModalOpen(true);
+  };
   
   const columns: TableColumn<OrderMaterial>[] = [
     {
@@ -137,6 +144,14 @@ const OrderMaterials: React.FC = () => {
       header: 'Acciones',
       accessor: (order: OrderMaterial) => (
         <div className="flex space-x-2 justify-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); openTrackerModal(order); }}
+            className="text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+            aria-label="Track Shipment"
+            title="Seguimiento de envío"
+          >
+            <Truck size={18} />
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); openEditModal(order); }}
             className="text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
@@ -220,7 +235,9 @@ const OrderMaterials: React.FC = () => {
               materials: currentOrder.materials,
               distributor: currentOrder.distributor,
               description: currentOrder.description,
-              status: currentOrder.status
+              status: currentOrder.status,
+              trackingNumber: currentOrder.trackingNumber,
+              estimatedDelivery: currentOrder.estimatedDelivery
             }}
             onSubmit={handleEditOrder}
             onCancel={() => setIsEditModalOpen(false)}
@@ -260,6 +277,15 @@ const OrderMaterials: React.FC = () => {
           />
         )}
       </Modal>
+
+      {/* Shipment Tracker Modal */}
+      {currentOrder && (
+        <ShipmentTrackerModal
+          isOpen={isTrackerModalOpen}
+          onClose={() => setIsTrackerModalOpen(false)}
+          order={currentOrder}
+        />
+      )}
       
       {/* Delete Confirmation Modal */}
       <Modal

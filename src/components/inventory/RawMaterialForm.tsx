@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RawMaterialFormData } from '../../types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import { Upload, X } from 'lucide-react';
 
 interface RawMaterialFormProps {
   initialData?: RawMaterialFormData;
@@ -22,15 +23,18 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     width: 0,
     height: 0,
     price: 0,
-    supplier: ''
+    supplier: '',
+    imageUrl: ''
   };
 
   const [formData, setFormData] = useState<RawMaterialFormData>(initialData || defaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof RawMaterialFormData, string>>>({});
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+      setImagePreview(initialData.imageUrl || '');
     }
   }, [initialData]);
 
@@ -46,6 +50,20 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   const handleNumberChange = (field: 'width' | 'height' | 'price', value: string) => {
     const numValue = value === '' ? 0 : parseFloat(value);
     handleChange(field, numValue);
+  };
+
+  const handleImageUrlChange = (url: string) => {
+    setFormData(prev => ({ ...prev, imageUrl: url }));
+    setImagePreview(url);
+    
+    if (errors.imageUrl) {
+      setErrors(prev => ({ ...prev, imageUrl: undefined }));
+    }
+  };
+
+  const clearImage = () => {
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
+    setImagePreview('');
   };
 
   const validateForm = (): boolean => {
@@ -101,6 +119,47 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           placeholder="Ingresa una descripción del material"
           fullWidth
         />
+
+        {/* Image Upload Section */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Imagen del Diseño
+          </label>
+          
+          <Input
+            placeholder="URL de la imagen del diseño"
+            value={formData.imageUrl || ''}
+            onChange={(e) => handleImageUrlChange(e.target.value)}
+            error={errors.imageUrl}
+            fullWidth
+          />
+          
+          {imagePreview && (
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Vista previa del diseño"
+                className="w-32 h-32 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+                onError={() => {
+                  setImagePreview('');
+                  setErrors(prev => ({ ...prev, imageUrl: 'URL de imagen inválida' }));
+                }}
+              />
+              <button
+                type="button"
+                onClick={clearImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                aria-label="Eliminar imagen"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Ingresa la URL de una imagen para mostrar el diseño del material
+          </p>
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input

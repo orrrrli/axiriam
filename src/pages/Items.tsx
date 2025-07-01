@@ -13,6 +13,8 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle, Gift } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
+const LOW_STOCK_THRESHOLD = 10; // Updated to 10 items
+
 const Items: React.FC = () => {
   const { state, addItem, updateItem, deleteItem, reduceItemQuantity } = useInventory();
   const { items, rawMaterials, isLoading } = state;
@@ -165,7 +167,7 @@ const Items: React.FC = () => {
     {
       header: 'Cantidad',
       accessor: (item: Item) => (
-        <span className={item.quantity <= 5 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+        <span className={item.quantity <= LOW_STOCK_THRESHOLD ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
           {item.quantity}
         </span>
       ),

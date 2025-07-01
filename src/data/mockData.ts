@@ -9,6 +9,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 2.000,
     price: 45.99,
     supplier: 'Textiles Médicos MX',
+    imageUrl: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-01'),
     updatedAt: new Date('2023-12-01')
   },
@@ -20,6 +21,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 1.800,
     price: 35.50,
     supplier: 'Telas & Diseños',
+    imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-05'),
     updatedAt: new Date('2023-12-15')
   },
@@ -31,6 +33,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 1.500,
     price: 28.75,
     supplier: 'Estampados Creativos',
+    imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-10'),
     updatedAt: new Date('2023-12-10')
   },
@@ -42,6 +45,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 1.500,
     price: 65.00,
     supplier: 'Confecciones Médicas SA',
+    imageUrl: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-12'),
     updatedAt: new Date('2023-12-12')
   },
@@ -53,6 +57,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 1.200,
     price: 120.50,
     supplier: 'Médica Textil',
+    imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-15'),
     updatedAt: new Date('2023-12-15')
   },
@@ -64,6 +69,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 2.200,
     price: 52.30,
     supplier: 'Textiles Médicos MX',
+    imageUrl: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-18'),
     updatedAt: new Date('2023-12-18')
   },
@@ -75,6 +81,7 @@ export const mockRawMaterials: RawMaterial[] = [
     height: 1.900,
     price: 38.90,
     supplier: 'Telas & Diseños',
+    imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
     createdAt: new Date('2023-12-20'),
     updatedAt: new Date('2023-12-20')
   }
@@ -229,6 +236,8 @@ export const mockOrderMaterials: OrderMaterial[] = [
     distributor: 'Textiles Premium SA',
     description: 'Pedido urgente para restock de telas Dragon Ball y Principito',
     status: 'pending',
+    trackingNumber: 'TXP-2024-001',
+    estimatedDelivery: new Date('2024-02-15'),
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15')
   },
@@ -244,6 +253,8 @@ export const mockOrderMaterials: OrderMaterial[] = [
     distributor: 'Distribuidora Textil Norte',
     description: 'Pedido regular mensual de tela Principito',
     status: 'ordered',
+    trackingNumber: 'DTN-2024-002',
+    estimatedDelivery: new Date('2024-02-10'),
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-12')
   },
@@ -259,6 +270,7 @@ export const mockOrderMaterials: OrderMaterial[] = [
     distributor: 'Mayorista Telas MX',
     description: 'Pedido especial para temporada alta',
     status: 'received',
+    trackingNumber: 'MTM-2024-003',
     createdAt: new Date('2024-01-05'),
     updatedAt: new Date('2024-01-18')
   }

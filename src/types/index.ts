@@ -18,6 +18,7 @@ export interface RawMaterial {
   height: number; // in meters
   price: number;
   supplier: string;
+  imageUrl?: string; // Optional design image URL
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,8 @@ export interface OrderMaterial {
   distributor: string;
   description: string;
   status: 'pending' | 'ordered' | 'received';
+  trackingNumber?: string; // Optional tracking number for shipment
+  estimatedDelivery?: Date; // Optional estimated delivery date
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useInventory } from '../context/InventoryContext';
 import { formatCurrency, getLowStockItems, formatDate } from '../utils/helpers';
-import { BarChart3, PackageSearch, ShoppingBag, AlertCircle, ScissorsSquare, Stethoscope, HandHeart, Clock} from 'lucide-react';
+import { BarChart3, PackageSearch, ShoppingCart, AlertCircle, ScissorsSquare, Stethoscope, HandHeart, Clock} from 'lucide-react';
 
-const LOW_STOCK_THRESHOLD = 5;
+const LOW_STOCK_THRESHOLD_ITEMS = 10; // Updated to 10 items
+const LOW_STOCK_THRESHOLD_MATERIALS = 3; // Updated to 3 m² for materials
 
 const Dashboard: React.FC = () => {
   const { state } = useInventory();
@@ -24,8 +25,13 @@ const Dashboard: React.FC = () => {
       return materialTotal + material.designs.length;
     }, 0);
   }, 0);
-  const lowStockItems = getLowStockItems(LOW_STOCK_THRESHOLD, items);
-  const lowStockMaterials = getLowStockItems(LOW_STOCK_THRESHOLD, rawMaterials);
+  
+  // Calculate low stock with updated thresholds
+  const lowStockItems = items.filter(item => item.quantity <= LOW_STOCK_THRESHOLD_ITEMS).length;
+  const lowStockMaterials = rawMaterials.filter(material => {
+    const area = material.width * material.height;
+    return area <= LOW_STOCK_THRESHOLD_MATERIALS;
+  }).length;
   
   // Create data for category distribution
   const categoryCounts = items.reduce((acc, item) => {
@@ -139,11 +145,11 @@ const Dashboard: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p>All items and materials are well stocked!</p>
+              <p>¡Todos los artículos y materiales tienen buen stock!</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {items.filter(item => item.quantity <= LOW_STOCK_THRESHOLD).map(item => (
+              {items.filter(item => item.quantity <= LOW_STOCK_THRESHOLD_ITEMS).map(item => (
                 <div key={item.id} className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-100 dark:border-red-800">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
@@ -155,12 +161,15 @@ const Dashboard: React.FC = () => {
                 </div>
               ))}
               
-              {rawMaterials.filter(material => material.quantity <= LOW_STOCK_THRESHOLD).map(material => (
+              {rawMaterials.filter(material => {
+                const area = material.width * material.height;
+                return area <= LOW_STOCK_THRESHOLD_MATERIALS;
+              }).map(material => (
                 <div key={material.id} className="flex justify-between items-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-100 dark:border-amber-800">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{material.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Solo {material.width}x{material.height}m en stock
+                      Solo {(material.width * material.height).toFixed(3)}m² en stock
                     </p>
                   </div>
                   <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300">

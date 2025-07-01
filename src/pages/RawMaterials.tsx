@@ -10,6 +10,8 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
+const LOW_STOCK_THRESHOLD = 3; // Updated to 3 m² for materials
+
 const RawMaterials: React.FC = () => {
   const { state, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useInventory();
   const { rawMaterials, items, isLoading } = state;
@@ -86,6 +88,26 @@ const RawMaterials: React.FC = () => {
   
   const columns: TableColumn<RawMaterial>[] = [
     {
+      header: 'Imagen',
+      accessor: (material: RawMaterial) => (
+        material.imageUrl ? (
+          <img
+            src={material.imageUrl}
+            alt={material.name}
+            className="w-12 h-12 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Sin imagen</span>
+          </div>
+        )
+      ),
+      className: 'text-center'
+    },
+    {
       header: 'Nombre',
       accessor: 'name',
       className: 'font-medium text-gray-900 dark:text-white'
@@ -97,7 +119,16 @@ const RawMaterials: React.FC = () => {
     },
     {
       header: 'Área Total',
-      accessor: (material: RawMaterial) => `${(material.width * material.height).toFixed(3)} m²`,
+      accessor: (material: RawMaterial) => {
+        const area = material.width * material.height;
+        const isLowStock = area <= LOW_STOCK_THRESHOLD;
+        
+        return (
+          <span className={isLowStock ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+            {area.toFixed(3)} m²
+          </span>
+        );
+      },
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -203,7 +234,8 @@ const RawMaterials: React.FC = () => {
               width: currentMaterial.width,
               height: currentMaterial.height,
               price: currentMaterial.price,
-              supplier: currentMaterial.supplier
+              supplier: currentMaterial.supplier,
+              imageUrl: currentMaterial.imageUrl
             }}
             onSubmit={handleEditMaterial}
             onCancel={() => setIsEditModalOpen(false)}
