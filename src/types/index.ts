@@ -16,6 +16,8 @@ export interface RawMaterial {
   description: string;
   width: number; // in meters
   height: number; // in meters
+  quantity: number; // quantity in stock
+  unit: string; // unit of measurement (e.g., 'm²', 'metros', 'piezas')
   price: number;
   supplier: string;
   imageUrl?: string; // Optional design image URL
@@ -38,6 +40,7 @@ export interface OrderMaterial {
       height: number;
       width: number;
     }[];
+    quantity: number; // quantity for this material group
   }[];
   distributor: string;
   description: string;

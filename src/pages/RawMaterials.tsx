@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
-const LOW_STOCK_THRESHOLD = 3; // Updated to 3 m² for materials
+const LOW_STOCK_THRESHOLD = 3; // Updated to 3 for materials
 
 const RawMaterials: React.FC = () => {
   const { state, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useInventory();
@@ -118,14 +118,13 @@ const RawMaterials: React.FC = () => {
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
-      header: 'Área Total',
+      header: 'Cantidad',
       accessor: (material: RawMaterial) => {
-        const area = material.width * material.height;
-        const isLowStock = area <= LOW_STOCK_THRESHOLD;
+        const isLowStock = material.quantity <= LOW_STOCK_THRESHOLD;
         
         return (
           <span className={isLowStock ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
-            {area.toFixed(3)} m²
+            {material.quantity.toFixed(3)} {material.unit}
           </span>
         );
       },
@@ -233,6 +232,8 @@ const RawMaterials: React.FC = () => {
               description: currentMaterial.description,
               width: currentMaterial.width,
               height: currentMaterial.height,
+              quantity: currentMaterial.quantity,
+              unit: currentMaterial.unit,
               price: currentMaterial.price,
               supplier: currentMaterial.supplier,
               imageUrl: currentMaterial.imageUrl

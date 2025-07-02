@@ -22,6 +22,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     description: '',
     width: 0,
     height: 0,
+    quantity: 0,
+    unit: 'm²',
     price: 0,
     supplier: '',
     imageUrl: ''
@@ -47,7 +49,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     }
   };
 
-  const handleNumberChange = (field: 'width' | 'height' | 'price', value: string) => {
+  const handleNumberChange = (field: 'width' | 'height' | 'quantity' | 'price', value: string) => {
     const numValue = value === '' ? 0 : parseFloat(value);
     handleChange(field, numValue);
   };
@@ -80,6 +82,10 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     if (formData.height <= 0) {
       newErrors.height = 'El alto debe ser mayor a 0';
     }
+
+    if (formData.quantity < 0) {
+      newErrors.quantity = 'La cantidad no puede ser negativa';
+    }
     
     if (formData.price < 0) {
       newErrors.price = 'El precio no puede ser negativo';
@@ -98,6 +104,13 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   };
 
   const totalArea = formData.width * formData.height;
+
+  const unitOptions = [
+    { value: 'm²', label: 'm²' },
+    { value: 'metros', label: 'metros' },
+    { value: 'piezas', label: 'piezas' },
+    { value: 'rollos', label: 'rollos' }
+  ];
 
   return (
     <form onSubmit={handleSubmit}>
@@ -201,6 +214,37 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
             </div>
           </div>
         )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Cantidad"
+            type="number"
+            value={formData.quantity.toString()}
+            onChange={(e) => handleNumberChange('quantity', e.target.value)}
+            min="0"
+            step="0.001"
+            error={errors.quantity}
+            required
+            fullWidth
+          />
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Unidad
+            </label>
+            <select
+              value={formData.unit}
+              onChange={(e) => handleChange('unit', e.target.value)}
+              className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+            >
+              {unitOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input

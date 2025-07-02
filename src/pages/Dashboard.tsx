@@ -4,7 +4,7 @@ import { formatCurrency, getLowStockItems, formatDate } from '../utils/helpers';
 import { BarChart3, PackageSearch, ShoppingCart, AlertCircle, ScissorsSquare, Stethoscope, HandHeart, Clock} from 'lucide-react';
 
 const LOW_STOCK_THRESHOLD_ITEMS = 10; // Updated to 10 items
-const LOW_STOCK_THRESHOLD_MATERIALS = 3; // Updated to 3 m² for materials
+const LOW_STOCK_THRESHOLD_MATERIALS = 3; // Updated to 3 for materials
 
 const Dashboard: React.FC = () => {
   const { state } = useInventory();
@@ -29,8 +29,7 @@ const Dashboard: React.FC = () => {
   // Calculate low stock with updated thresholds
   const lowStockItems = items.filter(item => item.quantity <= LOW_STOCK_THRESHOLD_ITEMS).length;
   const lowStockMaterials = rawMaterials.filter(material => {
-    const area = material.width * material.height;
-    return area <= LOW_STOCK_THRESHOLD_MATERIALS;
+    return material.quantity <= LOW_STOCK_THRESHOLD_MATERIALS;
   }).length;
   
   // Create data for category distribution
@@ -161,15 +160,12 @@ const Dashboard: React.FC = () => {
                 </div>
               ))}
               
-              {rawMaterials.filter(material => {
-                const area = material.width * material.height;
-                return area <= LOW_STOCK_THRESHOLD_MATERIALS;
-              }).map(material => (
+              {rawMaterials.filter(material => material.quantity <= LOW_STOCK_THRESHOLD_MATERIALS).map(material => (
                 <div key={material.id} className="flex justify-between items-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-100 dark:border-amber-800">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{material.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Solo {(material.width * material.height).toFixed(3)}m² en stock
+                      Solo {material.quantity.toFixed(3)} {material.unit} en stock
                     </p>
                   </div>
                   <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300">

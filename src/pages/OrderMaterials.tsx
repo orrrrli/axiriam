@@ -116,13 +116,9 @@ const OrderMaterials: React.FC = () => {
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
-      header: 'Total m²',
+      header: 'Cantidad',
       accessor: (order: OrderMaterial) => {
-        const total = order.materials.reduce((sum, m) => {
-          return sum + m.designs.reduce((designSum, d) => {
-            return designSum + (d.height * d.width);
-          }, 0);
-        }, 0);
+        const total = order.materials.reduce((sum, m) => sum + m.quantity, 0);
         return total.toFixed(3);
       },
       className: 'text-gray-700 dark:text-gray-300'

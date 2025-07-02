@@ -24,6 +24,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     materials: [
       {
         designs: [{ rawMaterialId: '', height: 1, width: 1 }],
+        quantity: 1,
       },
     ],
     distributor: '',
@@ -63,12 +64,18 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
   };
 
+  const handleMaterialQuantityChange = (materialIndex: number, quantity: number) => {
+    const updatedMaterials = [...formData.materials];
+    updatedMaterials[materialIndex].quantity = quantity;
+    setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
+  };
+
   const addMaterial = () => {
     setFormData((prev) => ({
       ...prev,
       materials: [
         ...prev.materials,
-        { designs: [{ rawMaterialId: '', height: 1, width: 1 }] },
+        { designs: [{ rawMaterialId: '', height: 1, width: 1 }], quantity: 1 },
       ],
     }));
   };
@@ -118,6 +125,10 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
         m.designs.some((d) => d.height <= 0 || d.width <= 0)
       )
     ) newErrors.materials = 'Alto y ancho deben ser mayores a 0';
+
+    if (
+      formData.materials.some((m) => m.quantity <= 0)
+    ) newErrors.materials = 'La cantidad debe ser mayor a 0';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -182,6 +193,23 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
+              </div>
+
+              {/* Material Quantity */}
+              <div className="mb-4">
+                <Input
+                  label="Cantidad"
+                  type="number"
+                  value={material.quantity.toString()}
+                  onChange={(e) =>
+                    handleMaterialQuantityChange(materialIndex, parseFloat(e.target.value) || 1)
+                  }
+                  min="0.001"
+                  step="0.001"
+                  placeholder="Ej: 5"
+                  required
+                  fullWidth
+                />
               </div>
 
               <div className="mt-4 space-y-4">
@@ -274,9 +302,17 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
               <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-md border border-green-300 dark:border-green-700 mt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-green-900 dark:text-green-300">
-                    Área total de este material:
+                    Cantidad total de este material:
                   </span>
                   <span className="text-sm font-bold text-green-900 dark:text-green-200">
+                    {material.quantity} unidades
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-green-700 dark:text-green-400">
+                    Área total de diseños:
+                  </span>
+                  <span className="text-xs font-medium text-green-700 dark:text-green-300">
                     {designsArea.toFixed(3)} m²
                   </span>
                 </div>

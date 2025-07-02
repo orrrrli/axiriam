@@ -7,6 +7,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela de algodón con estampado de Dragon Ball.',
     width: 1.500,
     height: 2.000,
+    quantity: 15.5,
+    unit: 'm²',
     price: 45.99,
     supplier: 'Textiles Médicos MX',
     imageUrl: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -19,6 +21,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela suave con impresión del Principito.',
     width: 1.200,
     height: 1.800,
+    quantity: 8.3,
+    unit: 'm²',
     price: 35.50,
     supplier: 'Telas & Diseños',
     imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -31,6 +35,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela de algodón con estampado de tiburones.',
     width: 1.000,
     height: 1.500,
+    quantity: 2.8,
+    unit: 'm²',
     price: 28.75,
     supplier: 'Estampados Creativos',
     imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -43,6 +49,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela de algodón liviana con patrón infantil.',
     width: 2.000,
     height: 1.500,
+    quantity: 25.0,
+    unit: 'm²',
     price: 65.00,
     supplier: 'Confecciones Médicas SA',
     imageUrl: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -55,6 +63,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela con estampado de Snoopy.',
     width: 0.800,
     height: 1.200,
+    quantity: 1.5,
+    unit: 'm²',
     price: 120.50,
     supplier: 'Médica Textil',
     imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -67,6 +77,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela con diseño floral vintage para gorros elegantes.',
     width: 1.600,
     height: 2.200,
+    quantity: 18.7,
+    unit: 'm²',
     price: 52.30,
     supplier: 'Textiles Médicos MX',
     imageUrl: 'https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -79,6 +91,8 @@ export const mockRawMaterials: RawMaterial[] = [
     description: 'Tela azul con estampado de estrellas blancas.',
     width: 1.400,
     height: 1.900,
+    quantity: 12.4,
+    unit: 'm²',
     price: 38.90,
     supplier: 'Telas & Diseños',
     imageUrl: 'https://images.pexels.com/photos/1029925/pexels-photo-1029925.jpeg?auto=compress&cs=tinysrgb&w=400',
@@ -230,7 +244,8 @@ export const mockOrderMaterials: OrderMaterial[] = [
         designs: [
           { rawMaterialId: '1', height: 2.5, width: 1.5 },
           { rawMaterialId: '2', height: 2.0, width: 1.2 }
-        ]
+        ],
+        quantity: 10
       }
     ],
     distributor: 'Textiles Premium SA',
@@ -247,7 +262,8 @@ export const mockOrderMaterials: OrderMaterial[] = [
       {
         designs: [
           { rawMaterialId: '2', height: 3.0, width: 1.8 }
-        ]
+        ],
+        quantity: 5
       }
     ],
     distributor: 'Distribuidora Textil Norte',
@@ -264,7 +280,8 @@ export const mockOrderMaterials: OrderMaterial[] = [
       {
         designs: [
           { rawMaterialId: '4', height: 2.2, width: 1.6 }
-        ]
+        ],
+        quantity: 8
       }
     ],
     distributor: 'Mayorista Telas MX',
