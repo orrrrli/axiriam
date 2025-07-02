@@ -150,6 +150,13 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     { value: 'received', label: 'Recibido' },
   ];
 
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
@@ -200,12 +207,12 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                 <Input
                   label="Cantidad"
                   type="number"
-                  value={material.quantity.toString()}
+                  value={formatNumber(material.quantity, true)}
                   onChange={(e) =>
-                    handleMaterialQuantityChange(materialIndex, parseFloat(e.target.value) || 1)
+                    handleMaterialQuantityChange(materialIndex, parseInt(e.target.value) || 1)
                   }
-                  min="0.001"
-                  step="0.001"
+                  min="1"
+                  step="1"
                   placeholder="Ej: 5"
                   required
                   fullWidth
@@ -249,7 +256,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                       <Input
                         label="Alto (m)"
                         type="number"
-                        value={design.height.toString()}
+                        value={formatNumber(design.height)}
                         onChange={(e) =>
                           handleDesignChange(
                             materialIndex,
@@ -260,7 +267,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                         }
                         min="0.001"
                         step="0.001"
-                        placeholder="Ej: 1.500"
+                        placeholder="Ej: 1.5"
                         required
                         fullWidth
                       />
@@ -268,7 +275,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                       <Input
                         label="Ancho (m)"
                         type="number"
-                        value={design.width.toString()}
+                        value={formatNumber(design.width)}
                         onChange={(e) =>
                           handleDesignChange(
                             materialIndex,
@@ -279,7 +286,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                         }
                         min="0.001"
                         step="0.001"
-                        placeholder="Ej: 2.000"
+                        placeholder="Ej: 2"
                         required
                         fullWidth
                       />
@@ -305,7 +312,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     Cantidad total de este material:
                   </span>
                   <span className="text-sm font-bold text-green-900 dark:text-green-200">
-                    {material.quantity} unidades
+                    {formatNumber(material.quantity, true)} unidades
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-1">
@@ -313,7 +320,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     Área total de diseños:
                   </span>
                   <span className="text-xs font-medium text-green-700 dark:text-green-300">
-                    {designsArea.toFixed(3)} m²
+                    {formatNumber(designsArea)} m²
                   </span>
                 </div>
               </div>

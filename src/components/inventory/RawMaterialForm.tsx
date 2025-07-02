@@ -112,6 +112,20 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     { value: 'rollos', label: 'rollos' }
   ];
 
+  const getStepValue = (field: string) => {
+    if (field === 'quantity' && formData.unit === 'piezas') {
+      return "1";
+    }
+    return "0.001";
+  };
+
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-4">
@@ -178,11 +192,11 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Ancho (m)"
             type="number"
-            value={formData.width.toString()}
+            value={formatNumber(formData.width)}
             onChange={(e) => handleNumberChange('width', e.target.value)}
             min="0.001"
             step="0.001"
-            placeholder="Ej: 1.500"
+            placeholder="Ej: 1.5"
             error={errors.width}
             required
             fullWidth
@@ -191,11 +205,11 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Alto (m)"
             type="number"
-            value={formData.height.toString()}
+            value={formatNumber(formData.height)}
             onChange={(e) => handleNumberChange('height', e.target.value)}
             min="0.001"
             step="0.001"
-            placeholder="Ej: 2.000"
+            placeholder="Ej: 2"
             error={errors.height}
             required
             fullWidth
@@ -209,7 +223,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
                 Área total:
               </span>
               <span className="text-sm font-bold text-blue-900 dark:text-blue-200">
-                {totalArea.toFixed(3)} m²
+                {formatNumber(totalArea)} m²
               </span>
             </div>
           </div>
@@ -219,10 +233,10 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Cantidad"
             type="number"
-            value={formData.quantity.toString()}
+            value={formatNumber(formData.quantity, formData.unit === 'piezas')}
             onChange={(e) => handleNumberChange('quantity', e.target.value)}
             min="0"
-            step="0.001"
+            step={getStepValue('quantity')}
             error={errors.quantity}
             required
             fullWidth
@@ -250,7 +264,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Precio ($)"
             type="number"
-            value={formData.price.toString()}
+            value={formatNumber(formData.price)}
             onChange={(e) => handleNumberChange('price', e.target.value)}
             min="0"
             step="0.01"

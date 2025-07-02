@@ -38,6 +38,13 @@ const Dashboard: React.FC = () => {
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
   
   return (
     <div className="space-y-6">
@@ -165,7 +172,7 @@ const Dashboard: React.FC = () => {
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{material.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Solo {material.quantity.toFixed(3)} {material.unit} en stock
+                      Solo {formatNumber(material.quantity, material.unit === 'piezas')} {material.unit} en stock
                     </p>
                   </div>
                   <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300">

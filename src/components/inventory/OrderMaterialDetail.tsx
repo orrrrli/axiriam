@@ -27,6 +27,13 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
       return total + material.quantity;
     }, 0);
   };
+
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
   
   return (
     <div className="space-y-6">
@@ -45,7 +52,7 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Cantidad Total</span>
-          <span className="block mt-1 text-lg font-medium">{getTotalQuantity().toFixed(3)}</span>
+          <span className="block mt-1 text-lg font-medium">{formatNumber(getTotalQuantity(), true)}</span>
         </div>
         
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
@@ -65,7 +72,7 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                 </h5>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    Cantidad: {materialGroup.quantity}
+                    Cantidad: {formatNumber(materialGroup.quantity, true)}
                   </p>
                 </div>
               </div>
@@ -88,7 +95,7 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {totalArea.toFixed(3)} m²
+                            {formatNumber(totalArea)} m²
                           </p>
                         </div>
                       </div>
@@ -97,19 +104,19 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                         <div className="text-center">
                           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Alto</span>
                           <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                            {design.height.toFixed(3)}m
+                            {formatNumber(design.height)}m
                           </span>
                         </div>
                         <div className="text-center">
                           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Ancho</span>
                           <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                            {design.width.toFixed(3)}m
+                            {formatNumber(design.width)}m
                           </span>
                         </div>
                         <div className="text-center">
                           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Área</span>
                           <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                            {totalArea.toFixed(3)}m²
+                            {formatNumber(totalArea)}m²
                           </span>
                         </div>
                       </div>
@@ -117,7 +124,7 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                       {material && (
                         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Proveedor actual: {material.supplier} | Stock disponible: {material.quantity} {material.unit}
+                            Proveedor actual: {material.supplier} | Stock disponible: {formatNumber(material.quantity, material.unit === 'piezas')} {material.unit}
                           </p>
                         </div>
                       )}

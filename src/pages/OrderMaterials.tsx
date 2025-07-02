@@ -92,6 +92,13 @@ const OrderMaterials: React.FC = () => {
     setCurrentOrder(order);
     setIsTrackerModalOpen(true);
   };
+
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
   
   const columns: TableColumn<OrderMaterial>[] = [
     {
@@ -119,7 +126,7 @@ const OrderMaterials: React.FC = () => {
       header: 'Cantidad',
       accessor: (order: OrderMaterial) => {
         const total = order.materials.reduce((sum, m) => sum + m.quantity, 0);
-        return total.toFixed(3);
+        return formatNumber(total, true);
       },
       className: 'text-gray-700 dark:text-gray-300'
     },

@@ -85,6 +85,13 @@ const RawMaterials: React.FC = () => {
     setCurrentMaterial(material);
     setIsDeleteModalOpen(true);
   };
+
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
   
   const columns: TableColumn<RawMaterial>[] = [
     {
@@ -114,7 +121,7 @@ const RawMaterials: React.FC = () => {
     },
     {
       header: 'Dimensiones',
-      accessor: (material: RawMaterial) => `${material.width.toFixed(3)} x ${material.height.toFixed(3)} m`,
+      accessor: (material: RawMaterial) => `${formatNumber(material.width)} x ${formatNumber(material.height)} m`,
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -124,7 +131,7 @@ const RawMaterials: React.FC = () => {
         
         return (
           <span className={isLowStock ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
-            {material.quantity.toFixed(3)} {material.unit}
+            {formatNumber(material.quantity, material.unit === 'piezas')}
           </span>
         );
       },
