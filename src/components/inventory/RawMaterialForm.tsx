@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RawMaterialFormData } from '../../types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Image } from 'lucide-react';
 
 interface RawMaterialFormProps {
   initialData?: RawMaterialFormData;
@@ -32,6 +32,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   const [formData, setFormData] = useState<RawMaterialFormData>(initialData || defaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof RawMaterialFormData, string>>>({});
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -54,18 +56,52 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     handleChange(field, numValue);
   };
 
-  const handleImageUrlChange = (url: string) => {
-    setFormData(prev => ({ ...prev, imageUrl: url }));
-    setImagePreview(url);
-    
-    if (errors.imageUrl) {
-      setErrors(prev => ({ ...prev, imageUrl: undefined }));
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setErrors(prev => ({ ...prev, imageUrl: 'Por favor selecciona solo archivos de imagen' }));
+      return;
     }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, imageUrl: 'La imagen debe ser menor a 5MB' }));
+      return;
+    }
+
+    setIsUploading(true);
+    setErrors(prev => ({ ...prev, imageUrl: undefined }));
+
+    // Create file reader to convert to base64
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImagePreview(result);
+      setFormData(prev => ({ ...prev, imageUrl: result }));
+      setIsUploading(false);
+    };
+
+    reader.onerror = () => {
+      setErrors(prev => ({ ...prev, imageUrl: 'Error al cargar la imagen' }));
+      setIsUploading(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
   };
 
   const clearImage = () => {
     setFormData(prev => ({ ...prev, imageUrl: '' }));
     setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const validateForm = (): boolean => {
@@ -153,38 +189,74 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
             Imagen del Diseño
           </label>
           
-          <Input
-            placeholder="URL de la imagen del diseño"
-            value={formData.imageUrl || ''}
-            onChange={(e) => handleImageUrlChange(e.target.value)}
-            error={errors.imageUrl}
-            fullWidth
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-label="Seleccionar imagen"
           />
           
-          {imagePreview && (
-            <div className="relative inline-block">
-              <img
-                src={imagePreview}
-                alt="Vista previa del diseño"
-                className="w-32 h-32 object-cover rounded-md border border-gray-300 dark:border-gray-600"
-                onError={() => {
-                  setImagePreview('');
-                  setErrors(prev => ({ ...prev, imageUrl: 'URL de imagen inválida' }));
-                }}
-              />
-              <button
-                type="button"
-                onClick={clearImage}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                aria-label="Eliminar imagen"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="flex flex-col space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleImageClick}
+              disabled={isUploading}
+              className="w-full"
+            >
+              {isUploading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                  Cargando...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Seleccionar Imagen
+                </>
+              )}
+            </Button>
+            
+            {imagePreview && (
+              <div className="relative inline-block">
+                <img
+                  src={imagePreview}
+                  alt="Vista previa del diseño"
+                  className="w-32 h-32 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+                  onError={() => {
+                    setImagePreview('');
+                    setErrors(prev => ({ ...prev, imageUrl: 'Error al cargar la imagen' }));
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  aria-label="Eliminar imagen"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            
+            {!imagePreview && (
+              <div className="w-32 h-32 bg-gray-100 dark:bg-gray-700 rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center">
+                <Image className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-2" />
+                <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  Sin imagen
+                </span>
+              </div>
+            )}
+          </div>
+          
+          {errors.imageUrl && (
+            <p className="text-sm text-red-600 dark:text-red-400">{errors.imageUrl}</p>
           )}
           
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Ingresa la URL de una imagen para mostrar el diseño del material
+            Formatos soportados: JPG, PNG, GIF, WebP (máx. 5MB)
           </p>
         </div>
         
