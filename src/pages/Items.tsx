@@ -10,7 +10,7 @@ import Badge from '../components/ui/Badge';
 import Select from '../components/ui/Select';
 import { Item, ItemFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle, Gift } from 'lucide-react';
+import { Trash2, Pencil, Search, PlusCircle, Gift, MinusCircle } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
 const LOW_STOCK_THRESHOLD = 10; // Updated to 10 items
@@ -193,7 +193,7 @@ const Items: React.FC = () => {
             aria-label="Gift"
             title="Reducir por regalo"
           >
-            <Gift size={18} />
+            <MinusCircle size={18} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
@@ -239,8 +239,16 @@ const Items: React.FC = () => {
       </div>
       
       <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-64">
+          <Select
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={categoryOptions}
+            fullWidth
+          />
+        </div>
         <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute left-0 w-10 h-10 grid place-items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
           <input
@@ -249,15 +257,6 @@ const Items: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-          />
-        </div>
-        
-        <div className="w-full sm:w-64">
-          <Select
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            options={categoryOptions}
-            fullWidth
           />
         </div>
       </div>
