@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
-const LOW_STOCK_THRESHOLD = 3; // Updated to 3 for materials
+const LOW_STOCK_THRESHOLD = 3;
 
 const RawMaterials: React.FC = () => {
   const { state, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useInventory();
@@ -30,37 +30,49 @@ const RawMaterials: React.FC = () => {
     material.supplier.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleAddMaterial = (data: RawMaterialFormData) => {
+  const handleAddMaterial = async (data: RawMaterialFormData) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addRawMaterial(data);
+    try {
+      await addRawMaterial(data);
       setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add material:', error);
+      alert('Failed to add material. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleEditMaterial = (data: RawMaterialFormData) => {
+  const handleEditMaterial = async (data: RawMaterialFormData) => {
     if (!currentMaterial) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateRawMaterial(currentMaterial.id, data);
+    try {
+      await updateRawMaterial(currentMaterial.id, data);
       setIsEditModalOpen(false);
       setCurrentMaterial(null);
+    } catch (error) {
+      console.error('Failed to update material:', error);
+      alert('Failed to update material. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!currentMaterial) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      deleteRawMaterial(currentMaterial.id);
+    try {
+      await deleteRawMaterial(currentMaterial.id);
       setIsDeleteModalOpen(false);
       setCurrentMaterial(null);
+    } catch (error) {
+      console.error('Failed to delete material:', error);
+      alert('Failed to delete material. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
   const openEditModal = (material: RawMaterial) => {

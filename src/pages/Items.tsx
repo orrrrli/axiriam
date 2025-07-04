@@ -13,7 +13,7 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle, Gift, MinusCircle } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
-const LOW_STOCK_THRESHOLD = 10; // Updated to 10 items
+const LOW_STOCK_THRESHOLD = 10;
 
 const Items: React.FC = () => {
   const { state, addItem, updateItem, deleteItem, reduceItemQuantity } = useInventory();
@@ -39,49 +39,65 @@ const Items: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
   
-  const handleAddItem = (data: ItemFormData) => {
+  const handleAddItem = async (data: ItemFormData) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addItem(data);
+    try {
+      await addItem(data);
       setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add item:', error);
+      alert('Failed to add item. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleEditItem = (data: ItemFormData) => {
+  const handleEditItem = async (data: ItemFormData) => {
     if (!currentItem) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateItem(currentItem.id, data);
+    try {
+      await updateItem(currentItem.id, data);
       setIsEditModalOpen(false);
       setCurrentItem(null);
+    } catch (error) {
+      console.error('Failed to update item:', error);
+      alert('Failed to update item. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!currentItem) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      deleteItem(currentItem.id);
+    try {
+      await deleteItem(currentItem.id);
       setIsDeleteModalOpen(false);
       setCurrentItem(null);
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+      alert('Failed to delete item. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
 
-  const handleGiftConfirm = (quantity: number) => {
+  const handleGiftConfirm = async (quantity: number) => {
     if (!currentItem) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      reduceItemQuantity(currentItem.id, quantity);
+    try {
+      await reduceItemQuantity(currentItem.id, quantity);
       setIsGiftModalOpen(false);
       setCurrentItem(null);
+    } catch (error) {
+      console.error('Failed to reduce item quantity:', error);
+      alert('Failed to reduce item quantity. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
   const openEditModal = (item: Item) => {

@@ -40,37 +40,49 @@ const OrderMaterials: React.FC = () => {
     );
   });
   
-  const handleAddOrder = (data: OrderMaterialFormData) => {
+  const handleAddOrder = async (data: OrderMaterialFormData) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addOrderMaterial(data);
+    try {
+      await addOrderMaterial(data);
       setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add order:', error);
+      alert('Failed to add order. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleEditOrder = (data: OrderMaterialFormData) => {
+  const handleEditOrder = async (data: OrderMaterialFormData) => {
     if (!currentOrder) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateOrderMaterial(currentOrder.id, data);
+    try {
+      await updateOrderMaterial(currentOrder.id, data);
       setIsEditModalOpen(false);
       setCurrentOrder(null);
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      alert('Failed to update order. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!currentOrder) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      deleteOrderMaterial(currentOrder.id);
+    try {
+      await deleteOrderMaterial(currentOrder.id);
       setIsDeleteModalOpen(false);
       setCurrentOrder(null);
+    } catch (error) {
+      console.error('Failed to delete order:', error);
+      alert('Failed to delete order. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
   const openEditModal = (order: OrderMaterial) => {

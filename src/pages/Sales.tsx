@@ -29,37 +29,49 @@ const Sales: React.FC = () => {
     sale.saleId.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleAddSale = (data: SaleFormData) => {
+  const handleAddSale = async (data: SaleFormData) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addSale(data);
+    try {
+      await addSale(data);
       setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add sale:', error);
+      alert('Failed to add sale. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleEditSale = (data: SaleFormData) => {
+  const handleEditSale = async (data: SaleFormData) => {
     if (!currentSale) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateSale(currentSale.id, data);
+    try {
+      await updateSale(currentSale.id, data);
       setIsEditModalOpen(false);
       setCurrentSale(null);
+    } catch (error) {
+      console.error('Failed to update sale:', error);
+      alert('Failed to update sale. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!currentSale) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      deleteSale(currentSale.id);
+    try {
+      await deleteSale(currentSale.id);
       setIsDeleteModalOpen(false);
       setCurrentSale(null);
+    } catch (error) {
+      console.error('Failed to delete sale:', error);
+      alert('Failed to delete sale. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
   const openEditModal = (sale: Sale) => {

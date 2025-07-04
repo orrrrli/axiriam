@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Item, RawMaterial, ItemFormData, RawMaterialFormData, OrderMaterial, OrderMaterialFormData, Sale, SaleFormData } from '../types';
-import { mockItems, mockRawMaterials, mockOrderMaterials, mockSales } from '../data/mockData';
 import { generateId, generateSaleId } from '../utils/helpers';
+import { apiService } from '../services/api';
 
 // Define the state type
 interface InventoryState {
@@ -39,19 +39,20 @@ type InventoryAction =
 interface InventoryContextType {
   state: InventoryState;
   dispatch: React.Dispatch<InventoryAction>;
-  addItem: (itemData: ItemFormData) => void;
-  updateItem: (id: string, itemData: ItemFormData) => void;
-  deleteItem: (id: string) => void;
-  reduceItemQuantity: (id: string, quantity: number) => void;
-  addRawMaterial: (materialData: RawMaterialFormData) => void;
-  updateRawMaterial: (id: string, materialData: RawMaterialFormData) => void;
-  deleteRawMaterial: (id: string) => void;
-  addOrderMaterial: (orderData: OrderMaterialFormData) => void;
-  updateOrderMaterial: (id: string, orderData: OrderMaterialFormData) => void;
-  deleteOrderMaterial: (id: string) => void;
-  addSale: (saleData: SaleFormData) => void;
-  updateSale: (id: string, saleData: SaleFormData) => void;
-  deleteSale: (id: string) => void;
+  addItem: (itemData: ItemFormData) => Promise<void>;
+  updateItem: (id: string, itemData: ItemFormData) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
+  reduceItemQuantity: (id: string, quantity: number) => Promise<void>;
+  addRawMaterial: (materialData: RawMaterialFormData) => Promise<void>;
+  updateRawMaterial: (id: string, materialData: RawMaterialFormData) => Promise<void>;
+  deleteRawMaterial: (id: string) => Promise<void>;
+  addOrderMaterial: (orderData: OrderMaterialFormData) => Promise<void>;
+  updateOrderMaterial: (id: string, orderData: OrderMaterialFormData) => Promise<void>;
+  deleteOrderMaterial: (id: string) => Promise<void>;
+  addSale: (saleData: SaleFormData) => Promise<void>;
+  updateSale: (id: string, saleData: SaleFormData) => Promise<void>;
+  deleteSale: (id: string) => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 // Initial state
@@ -171,179 +172,252 @@ const inventoryReducer = (state: InventoryState, action: InventoryAction): Inven
   }
 };
 
+// Transform API data to match frontend types
+const transformApiData = {
+  item: (apiItem: any): Item => ({
+    ...apiItem,
+    createdAt: new Date(apiItem.created_at),
+    updatedAt: new Date(apiItem.updated_at)
+  }),
+  
+  rawMaterial: (apiMaterial: any): RawMaterial => ({
+    ...apiMaterial,
+    imageUrl: apiMaterial.image_url,
+    createdAt: new Date(apiMaterial.created_at),
+    updatedAt: new Date(apiMaterial.updated_at)
+  }),
+  
+  orderMaterial: (apiOrder: any): OrderMaterial => ({
+    ...apiOrder,
+    trackingNumber: apiOrder.tracking_number,
+    estimatedDelivery: apiOrder.estimated_delivery ? new Date(apiOrder.estimated_delivery) : undefined,
+    createdAt: new Date(apiOrder.created_at),
+    updatedAt: new Date(apiOrder.updated_at)
+  }),
+  
+  sale: (apiSale: any): Sale => ({
+    ...apiSale,
+    saleId: apiSale.sale_id,
+    socialMediaPlatform: apiSale.social_media_platform,
+    socialMediaUsername: apiSale.social_media_username,
+    trackingNumber: apiSale.tracking_number,
+    invoiceRequired: apiSale.invoice_required,
+    shippingType: apiSale.shipping_type,
+    localShippingOption: apiSale.local_shipping_option,
+    localAddress: apiSale.local_address,
+    nationalShippingCarrier: apiSale.national_shipping_carrier,
+    shippingDescription: apiSale.shipping_description,
+    totalAmount: parseFloat(apiSale.total_amount),
+    createdAt: new Date(apiSale.created_at),
+    updatedAt: new Date(apiSale.updated_at)
+  })
+};
+
+// Transform frontend data to API format
+const transformToApiData = {
+  rawMaterial: (data: RawMaterialFormData) => ({
+    ...data,
+    image_url: data.imageUrl
+  }),
+  
+  orderMaterial: (data: OrderMaterialFormData) => ({
+    ...data,
+    tracking_number: data.trackingNumber,
+    estimated_delivery: data.estimatedDelivery
+  }),
+  
+  sale: (data: SaleFormData) => ({
+    ...data,
+    social_media_platform: data.socialMediaPlatform,
+    social_media_username: data.socialMediaUsername,
+    tracking_number: data.trackingNumber,
+    invoice_required: data.invoiceRequired,
+    shipping_type: data.shippingType,
+    local_shipping_option: data.localShippingOption,
+    local_address: data.localAddress,
+    national_shipping_carrier: data.nationalShippingCarrier,
+    shipping_description: data.shippingDescription,
+    total_amount: data.totalAmount
+  })
+};
+
 // Provider component
 export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(inventoryReducer, initialState);
 
-  // Load mock data
-  useEffect(() => {
+  // Load data from API
+  const loadData = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+    
     try {
-      // Simulate API call with timeout
-      setTimeout(() => {
-        dispatch({ type: 'SET_ITEMS', payload: mockItems });
-        dispatch({ type: 'SET_RAW_MATERIALS', payload: mockRawMaterials });
-        dispatch({ type: 'SET_ORDER_MATERIALS', payload: mockOrderMaterials });
-        dispatch({ type: 'SET_SALES', payload: mockSales });
-        dispatch({ type: 'SET_LOADING', payload: false });
-      }, 1000);
+      const [items, rawMaterials, orderMaterials, sales] = await Promise.all([
+        apiService.getItems(),
+        apiService.getRawMaterials(),
+        apiService.getOrderMaterials(),
+        apiService.getSales()
+      ]);
+
+      dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
+      dispatch({ type: 'SET_ORDER_MATERIALS', payload: orderMaterials.map(transformApiData.orderMaterial) });
+      dispatch({ type: 'SET_SALES', payload: sales.map(transformApiData.sale) });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to load inventory data' });
+      console.error('Failed to load data:', error);
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load data' });
+    } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  // Load data on mount
+  useEffect(() => {
+    loadData();
   }, []);
 
+  // Refresh data function
+  const refreshData = async () => {
+    await loadData();
+  };
+
   // Action creators
-  const addItem = (itemData: ItemFormData) => {
-    const newItem: Item = {
-      ...itemData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'ADD_ITEM', payload: newItem });
-  };
-
-  const updateItem = (id: string, itemData: ItemFormData) => {
-    const updatedItem: Item = {
-      ...itemData,
-      id,
-      createdAt: state.items.find(item => item.id === id)?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'UPDATE_ITEM', payload: updatedItem });
-  };
-
-  const deleteItem = (id: string) => {
-    dispatch({ type: 'DELETE_ITEM', payload: id });
-  };
-
-  const reduceItemQuantity = (id: string, quantity: number) => {
-    dispatch({ type: 'REDUCE_ITEM_QUANTITY', payload: { id, quantity } });
-  };
-
-  const addRawMaterial = (materialData: RawMaterialFormData) => {
-    const newMaterial: RawMaterial = {
-      ...materialData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'ADD_RAW_MATERIAL', payload: newMaterial });
-  };
-
-  const updateRawMaterial = (id: string, materialData: RawMaterialFormData) => {
-    const updatedMaterial: RawMaterial = {
-      ...materialData,
-      id,
-      createdAt: state.rawMaterials.find(material => material.id === id)?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'UPDATE_RAW_MATERIAL', payload: updatedMaterial });
-  };
-
-  const deleteRawMaterial = (id: string) => {
-    dispatch({ type: 'DELETE_RAW_MATERIAL', payload: id });
-  };
-
-  const addOrderMaterial = (orderData: OrderMaterialFormData) => {
-    const newOrder: OrderMaterial = {
-      ...orderData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'ADD_ORDER_MATERIAL', payload: newOrder });
-  };
-
-  const updateOrderMaterial = (id: string, orderData: OrderMaterialFormData) => {
-    const updatedOrder: OrderMaterial = {
-      ...orderData,
-      id,
-      createdAt: state.orderMaterials.find(order => order.id === id)?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-    dispatch({ type: 'UPDATE_ORDER_MATERIAL', payload: updatedOrder });
-  };
-
-  const deleteOrderMaterial = (id: string) => {
-    dispatch({ type: 'DELETE_ORDER_MATERIAL', payload: id });
-  };
-
-  const addSale = (saleData: SaleFormData) => {
-    const newSale: Sale = {
-      ...saleData,
-      id: generateId(),
-      saleId: generateSaleId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    // Reduce quantities of sold items
-    saleData.items.forEach(itemId => {
-      reduceItemQuantity(itemId, 1);
-    });
-    
-    dispatch({ type: 'ADD_SALE', payload: newSale });
-  };
-
-  const updateSale = (id: string, saleData: SaleFormData) => {
-    const existingSale = state.sales.find(sale => sale.id === id);
-    const updatedSale: Sale = {
-      ...saleData,
-      id,
-      saleId: existingSale?.saleId || generateSaleId(),
-      createdAt: existingSale?.createdAt || new Date(),
-      updatedAt: new Date()
-    };
-
-    // Handle quantity changes when updating a sale
-    if (existingSale) {
-      // Restore quantities from the old sale
-      existingSale.items.forEach(itemId => {
-        const item = state.items.find(i => i.id === itemId);
-        if (item) {
-          dispatch({ 
-            type: 'UPDATE_ITEM', 
-            payload: { 
-              ...item, 
-              quantity: item.quantity + 1,
-              updatedAt: new Date()
-            }
-          });
-        }
-      });
-
-      // Reduce quantities for the new sale
-      saleData.items.forEach(itemId => {
-        reduceItemQuantity(itemId, 1);
-      });
+  const addItem = async (itemData: ItemFormData) => {
+    try {
+      const newItem = await apiService.createItem(itemData);
+      dispatch({ type: 'ADD_ITEM', payload: transformApiData.item(newItem) });
+    } catch (error) {
+      console.error('Failed to add item:', error);
+      throw error;
     }
-
-    dispatch({ type: 'UPDATE_SALE', payload: updatedSale });
   };
 
-  const deleteSale = (id: string) => {
-    const existingSale = state.sales.find(sale => sale.id === id);
-    
-    // Restore quantities when deleting a sale
-    if (existingSale) {
-      existingSale.items.forEach(itemId => {
-        const item = state.items.find(i => i.id === itemId);
-        if (item) {
-          dispatch({ 
-            type: 'UPDATE_ITEM', 
-            payload: { 
-              ...item, 
-              quantity: item.quantity + 1,
-              updatedAt: new Date()
-            }
-          });
-        }
-      });
+  const updateItem = async (id: string, itemData: ItemFormData) => {
+    try {
+      const updatedItem = await apiService.updateItem(id, itemData);
+      dispatch({ type: 'UPDATE_ITEM', payload: transformApiData.item(updatedItem) });
+    } catch (error) {
+      console.error('Failed to update item:', error);
+      throw error;
     }
-    
-    dispatch({ type: 'DELETE_SALE', payload: id });
+  };
+
+  const deleteItem = async (id: string) => {
+    try {
+      await apiService.deleteItem(id);
+      dispatch({ type: 'DELETE_ITEM', payload: id });
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+      throw error;
+    }
+  };
+
+  const reduceItemQuantity = async (id: string, quantity: number) => {
+    try {
+      const updatedItem = await apiService.reduceItemQuantity(id, quantity);
+      dispatch({ type: 'UPDATE_ITEM', payload: transformApiData.item(updatedItem) });
+    } catch (error) {
+      console.error('Failed to reduce item quantity:', error);
+      throw error;
+    }
+  };
+
+  const addRawMaterial = async (materialData: RawMaterialFormData) => {
+    try {
+      const newMaterial = await apiService.createRawMaterial(transformToApiData.rawMaterial(materialData));
+      dispatch({ type: 'ADD_RAW_MATERIAL', payload: transformApiData.rawMaterial(newMaterial) });
+    } catch (error) {
+      console.error('Failed to add raw material:', error);
+      throw error;
+    }
+  };
+
+  const updateRawMaterial = async (id: string, materialData: RawMaterialFormData) => {
+    try {
+      const updatedMaterial = await apiService.updateRawMaterial(id, transformToApiData.rawMaterial(materialData));
+      dispatch({ type: 'UPDATE_RAW_MATERIAL', payload: transformApiData.rawMaterial(updatedMaterial) });
+    } catch (error) {
+      console.error('Failed to update raw material:', error);
+      throw error;
+    }
+  };
+
+  const deleteRawMaterial = async (id: string) => {
+    try {
+      await apiService.deleteRawMaterial(id);
+      dispatch({ type: 'DELETE_RAW_MATERIAL', payload: id });
+    } catch (error) {
+      console.error('Failed to delete raw material:', error);
+      throw error;
+    }
+  };
+
+  const addOrderMaterial = async (orderData: OrderMaterialFormData) => {
+    try {
+      const newOrder = await apiService.createOrderMaterial(transformToApiData.orderMaterial(orderData));
+      dispatch({ type: 'ADD_ORDER_MATERIAL', payload: transformApiData.orderMaterial(newOrder) });
+    } catch (error) {
+      console.error('Failed to add order material:', error);
+      throw error;
+    }
+  };
+
+  const updateOrderMaterial = async (id: string, orderData: OrderMaterialFormData) => {
+    try {
+      const updatedOrder = await apiService.updateOrderMaterial(id, transformToApiData.orderMaterial(orderData));
+      dispatch({ type: 'UPDATE_ORDER_MATERIAL', payload: transformApiData.orderMaterial(updatedOrder) });
+    } catch (error) {
+      console.error('Failed to update order material:', error);
+      throw error;
+    }
+  };
+
+  const deleteOrderMaterial = async (id: string) => {
+    try {
+      await apiService.deleteOrderMaterial(id);
+      dispatch({ type: 'DELETE_ORDER_MATERIAL', payload: id });
+    } catch (error) {
+      console.error('Failed to delete order material:', error);
+      throw error;
+    }
+  };
+
+  const addSale = async (saleData: SaleFormData) => {
+    try {
+      const newSale = await apiService.createSale(transformToApiData.sale(saleData));
+      dispatch({ type: 'ADD_SALE', payload: transformApiData.sale(newSale) });
+      // Refresh items to get updated quantities
+      const items = await apiService.getItems();
+      dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
+    } catch (error) {
+      console.error('Failed to add sale:', error);
+      throw error;
+    }
+  };
+
+  const updateSale = async (id: string, saleData: SaleFormData) => {
+    try {
+      const updatedSale = await apiService.updateSale(id, transformToApiData.sale(saleData));
+      dispatch({ type: 'UPDATE_SALE', payload: transformApiData.sale(updatedSale) });
+      // Refresh items to get updated quantities
+      const items = await apiService.getItems();
+      dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
+    } catch (error) {
+      console.error('Failed to update sale:', error);
+      throw error;
+    }
+  };
+
+  const deleteSale = async (id: string) => {
+    try {
+      await apiService.deleteSale(id);
+      dispatch({ type: 'DELETE_SALE', payload: id });
+      // Refresh items to get updated quantities
+      const items = await apiService.getItems();
+      dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
+    } catch (error) {
+      console.error('Failed to delete sale:', error);
+      throw error;
+    }
   };
 
   const contextValue: InventoryContextType = {
@@ -361,7 +435,8 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     deleteOrderMaterial,
     addSale,
     updateSale,
-    deleteSale
+    deleteSale,
+    refreshData
   };
 
   return (
