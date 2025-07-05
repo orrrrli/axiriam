@@ -23,4 +23,24 @@ router.post('/login', async (req, res) => {
   });
 });
 
+router.post('/logout', async (req, res) => {
+  const { refresh_token } = req.body;
+
+  if (!refresh_token) {
+    return res.status(400).json({ error: 'Refresh token required for logout' });
+  }
+
+  const { error } = await supabase.auth.signOut({
+    scope: 'global',
+    refreshToken: refresh_token,
+  });
+
+  if (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({ error: 'Failed to logout' });
+  }
+
+  res.json({ message: 'Logged out successfully' });
+});
+
 export default router;
