@@ -11,6 +11,7 @@ import itemsRoutes from './routes/items.js';
 import orderMaterialsRoutes from './routes/orderMaterials.js';
 import salesRoutes from './routes/sales.js';
 import dashboardRoutes from './routes/dashboard.js';
+import authRoutes from './routes/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/api/items', itemsRoutes);
 app.use('/api/order-materials', orderMaterialsRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/auth', authRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
