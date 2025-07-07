@@ -94,6 +94,10 @@ const SaleForm: React.FC<SaleFormProps> = ({
     if (formData.shippingType === 'local' && formData.localShippingOption === 'meeting-point' && !formData.localAddress?.trim()) {
       newErrors.localAddress = 'La dirección es requerida para punto de encuentro';
     }
+
+    if (formData.shippingType === 'local' && formData.localShippingOption === 'pzexpress' && !formData.localAddress?.trim()) {
+      newErrors.localAddress = 'La dirección es requerida para PZ Express';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -248,17 +252,19 @@ const SaleForm: React.FC<SaleFormProps> = ({
               fullWidth
             />
             
-            {formData.localShippingOption === 'meeting-point' && (
-              <Input
-                label="Dirección"
-                value={formData.localAddress || ''}
-                onChange={(e) => handleChange('localAddress', e.target.value)}
-                placeholder="Dirección del punto de encuentro"
-                error={errors.localAddress}
-                required
-                fullWidth
-              />
-            )}
+            <Input
+              label="Dirección"
+              value={formData.localAddress || ''}
+              onChange={(e) => handleChange('localAddress', e.target.value)}
+              placeholder={
+                formData.localShippingOption === 'meeting-point' 
+                  ? "Dirección del punto de encuentro" 
+                  : "Dirección para PZ Express"
+              }
+              error={errors.localAddress}
+              required
+              fullWidth
+            />
           </div>
         )}
         

@@ -1,70 +1,51 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { apiService } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  user: any;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(
-    () => {
-      const token = localStorage.getItem('acces_token');
-      setIsAuthenticated(!!token);
-    },
-    []
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Check if user is already logged in (has valid token)
+    const token = localStorage.getItem('access_token');
+    return !!token;
+  });
+  const [user, setUser] = useState(null);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await apiService.login(email, password);
       
-      if (!response.ok) {
-        setIsAuthenticated(false);
-        return false;
-      }
-
-      const data = await response.json();
-      localStorage.setItem('acces_token', data.token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-
+      // Store tokens and user data
+      localStorage.setItem('access_token', response.access_token);
+      localStorage.setItem('refresh_token', response.refresh_token);
+      
+      setUser(response.user);
       setIsAuthenticated(true);
       return true;
     } catch (error) {
       console.error('Login failed:', error);
-      setIsAuthenticated(false);
       return false;
     }
-  }
+  };
 
   const logout = () => {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (refreshToken) {
-      fetch('http://localhost:3001/api/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      }).catch((error) => console.error('Logout error:', error));
-    }
-
-    // Limpia tokens y estado
+    // Clear stored tokens and user data
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    
+    setUser(null);
     setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, user }}>
       {children}
     </AuthContext.Provider>
   );
