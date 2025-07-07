@@ -220,11 +220,11 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
             </Button>
             
             {imagePreview && (
-              <div className="relative inline-block">
+              <div className="relative inline-block w-32 h-32">
                 <img
                   src={imagePreview}
                   alt="Vista previa del diseño"
-                  className="w-32 h-32 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+                  className="w-full h-full object-cover rounded-md border border-gray-300 dark:border-gray-600"
                   onError={() => {
                     setImagePreview('');
                     setErrors(prev => ({ ...prev, imageUrl: 'Error al cargar la imagen' }));
