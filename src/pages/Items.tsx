@@ -5,61 +5,99 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import ItemForm from '../components/inventory/ItemForm';
 import ItemDetail from '../components/inventory/ItemDetail';
+import GiftQuantityModal from '../components/inventory/GiftQuantityModal';
 import Badge from '../components/ui/Badge';
+import Select from '../components/ui/Select';
 import { Item, ItemFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
-import type { TableColumn } from '../components/ui/Table'; // Ajusta la ruta si es diferente
+import { Trash2, Pencil, Search, PlusCircle, Gift, MinusCircle } from 'lucide-react';
+import type { TableColumn } from '../components/ui/Table';
+
+const LOW_STOCK_THRESHOLD = 10;
 
 const Items: React.FC = () => {
-  const { state, addItem, updateItem, deleteItem } = useInventory();
+  const { state, addItem, updateItem, deleteItem, reduceItemQuantity } = useInventory();
   const { items, rawMaterials, isLoading } = state;
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = categoryFilter === '' || item.category === categoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
   
-  const handleAddItem = (data: ItemFormData) => {
+  const handleAddItem = async (data: ItemFormData) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addItem(data);
+    try {
+      await addItem(data);
       setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add item:', error);
+      alert('Failed to add item. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleEditItem = (data: ItemFormData) => {
+  const handleEditItem = async (data: ItemFormData) => {
     if (!currentItem) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateItem(currentItem.id, data);
+    try {
+      await updateItem(currentItem.id, data);
       setIsEditModalOpen(false);
       setCurrentItem(null);
+    } catch (error) {
+      console.error('Failed to update item:', error);
+      alert('Failed to update item. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!currentItem) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      deleteItem(currentItem.id);
+    try {
+      await deleteItem(currentItem.id);
       setIsDeleteModalOpen(false);
       setCurrentItem(null);
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+      alert('Failed to delete item. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
+  };
+
+  const handleGiftConfirm = async (quantity: number) => {
+    if (!currentItem) return;
+    
+    setIsSubmitting(true);
+    try {
+      await reduceItemQuantity(currentItem.id, quantity);
+      setIsGiftModalOpen(false);
+      setCurrentItem(null);
+    } catch (error) {
+      console.error('Failed to reduce item quantity:', error);
+      alert('Failed to reduce item quantity. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const openEditModal = (item: Item) => {
@@ -76,6 +114,53 @@ const Items: React.FC = () => {
     setCurrentItem(item);
     setIsDeleteModalOpen(true);
   };
+
+  const openGiftModal = (item: Item) => {
+    if (item.quantity <= 0) {
+      alert('No hay stock disponible para este artículo.');
+      return;
+    }
+    setCurrentItem(item);
+    setIsGiftModalOpen(true);
+  };
+
+  const getBadgeVariant = (category: string) => {
+    switch (category) {
+      case 'sencillo':
+        return 'primary';
+      case 'doble-vista':
+        return 'warning';
+      case 'completo':
+        return 'secondary';
+      case 'sencillo-algodon':
+        return 'success';
+      case 'completo-algodon':
+        return 'danger';
+      case 'stretch':
+        return 'default';
+      default:
+        return 'default';
+    }
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'sencillo':
+        return 'Sencillo';
+      case 'doble-vista':
+        return 'Doble vista';
+      case 'completo':
+        return 'Completo';
+      case 'sencillo-algodon':
+        return 'Sencillo algodón';
+      case 'completo-algodon':
+        return 'Completo algodón';
+      case 'stretch':
+        return 'Stretch';
+      default:
+        return category;
+    }
+  };
   
   const columns: TableColumn<Item>[] = [
     {
@@ -86,21 +171,22 @@ const Items: React.FC = () => {
     {
       header: 'Categoria',
       accessor: (item: Item) => {
-        const variant = 
-          item.category === 'sencillo' ? 'primary' : 
-          item.category === 'doble-vista' ? 'warning' : 
-          'secondary';
+        const variant = getBadgeVariant(item.category);
         
         return (
           <Badge variant={variant}>
-            {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+            {getCategoryLabel(item.category)}
           </Badge>
         );
       }
     },
     {
       header: 'Cantidad',
-      accessor: 'quantity',
+      accessor: (item: Item) => (
+        <span className={item.quantity <= LOW_STOCK_THRESHOLD ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+          {item.quantity}
+        </span>
+      ),
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -117,6 +203,14 @@ const Items: React.FC = () => {
       header: 'Acciones',
       accessor: (item: Item) => (
         <div className="flex space-x-2 justify-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); openGiftModal(item); }}
+            className="text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
+            aria-label="Gift"
+            title="Reducir por regalo"
+          >
+            <MinusCircle size={18} />
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
             className="text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
@@ -136,6 +230,16 @@ const Items: React.FC = () => {
       className: 'text-right'
     }
   ];
+
+  const categoryOptions = [
+    { value: '', label: 'Todas las categorías' },
+    { value: 'sencillo', label: 'Sencillo' },
+    { value: 'doble-vista', label: 'Doble vista' },
+    { value: 'completo', label: 'Completo' },
+    { value: 'sencillo-algodon', label: 'Sencillo algodón' },
+    { value: 'completo-algodon', label: 'Completo algodón' },
+    { value: 'stretch', label: 'Stretch' }
+  ];
   
   return (
     <div className="space-y-6">
@@ -150,17 +254,27 @@ const Items: React.FC = () => {
         </Button>
       </div>
       
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-64">
+          <Select
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={categoryOptions}
+            fullWidth
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Search items..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-        />
+        <div className="relative flex-1">
+          <div className="absolute left-0 w-10 h-10 grid place-items-center pointer-events-none z-10">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar gorros..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
+          />
+        </div>
       </div>
       
       <Table
@@ -242,6 +356,17 @@ const Items: React.FC = () => {
           />
         )}
       </Modal>
+
+      {/* Gift Quantity Modal */}
+      {currentItem && (
+        <GiftQuantityModal
+          isOpen={isGiftModalOpen}
+          onClose={() => setIsGiftModalOpen(false)}
+          item={currentItem}
+          onConfirm={handleGiftConfirm}
+          isSubmitting={isSubmitting}
+        />
+      )}
       
       {/* Delete Confirmation Modal */}
       <Modal

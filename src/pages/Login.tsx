@@ -3,24 +3,22 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { Bluetooth as Tooth, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import logo from '../assets/images/logo.png'; 
-
 
 const Login: React.FC = () => {
   const { login } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [isLoginView, setIsLoginView] = useState(true);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoginView) {
-      // Just UI demonstration for register
+    
+    if (!email.trim() || !password.trim()) {
+      setError('Por favor ingresa email y contraseña');
       return;
     }
 
@@ -28,23 +26,15 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const success = await login(username, password);
+      const success = await login(email, password);
       if (!success) {
-        setError('Invalid username or password');
+        setError('Email o contraseña incorrectos');
       }
     } catch (err) {
-      setError('An error occurred during login');
+      setError('Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleView = () => {
-    setIsLoginView(!isLoginView);
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
-    setError('');
   };
 
   return (
@@ -81,11 +71,11 @@ const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
-              label="Usuario"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ingresa tu usuario"
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Ingresa tu email"
               required
               fullWidth
             />
@@ -99,18 +89,6 @@ const Login: React.FC = () => {
               required
               fullWidth
             />
-
-            {!isLoginView && (
-              <Input
-                label="Confirmar contraseña"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirma tu contraseña"
-                required
-                fullWidth
-              />
-            )}
           </div>
 
           {error && (
@@ -125,24 +103,8 @@ const Login: React.FC = () => {
             fullWidth
             isLoading={isLoading}
           >
-            {isLoginView ? 'Iniciar sesión' : 'Registrarse'}
+            Iniciar sesión
           </Button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={toggleView}
-              className="text-sm text-primary-light dark:text-primary-dark hover:underline"
-            >
-              {isLoginView ? 'Todavia no tienes cuenta? Registrate' : 'Ya tengo una cuenta! Quiero iniciar sesión'}
-            </button>
-          </div>
-
-          {isLoginView && (
-            <div className="text-xs text-center text-gray-600 dark:text-gray-400">
-              Demo: usuario: "user" / contraseña: "dummypass"
-            </div>
-          )}
         </form>
       </div>
     </div>

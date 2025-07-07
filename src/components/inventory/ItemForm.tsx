@@ -103,7 +103,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
   const categoryOptions = [
     { value: 'sencillo', label: 'Sencillo' },
     { value: 'doble-vista', label: 'Doble vista' },
-    { value: 'completo-ajustable', label: 'Completo-Ajustable' }
+    { value: 'completo', label: 'Completo' },
+    { value: 'sencillo-algodon', label: 'Sencillo algodón' },
+    { value: 'completo-algodon', label: 'Completo algodón' },
+    { value: 'stretch', label: 'Stretch' }
   ];
 
   return (
@@ -182,7 +185,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
                     htmlFor={`material-${material.id}`}
                     className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
                   >
-                    {material.name} ({material.unit})
+                    {material.name} ({material.width}x{material.height}m)
                   </label>
                 </div>
               ))}

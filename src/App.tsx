@@ -8,6 +8,8 @@ import TabNavigation from './components/layout/TabNavigation';
 import Dashboard from './pages/Dashboard';
 import Items from './pages/Items';
 import RawMaterials from './pages/RawMaterials';
+import OrderMaterials from './pages/OrderMaterials';
+import Sales from './pages/Sales';
 import Login from './pages/Login';
 
 const AppContent = () => {
@@ -22,6 +24,10 @@ const AppContent = () => {
         return <Items />;
       case 'raw-materials':
         return <RawMaterials />;
+      case 'order-materials':
+        return <OrderMaterials />;
+      case 'sales':
+        return <Sales />;
       default:
         return <Dashboard />;
     }

@@ -8,8 +8,9 @@ import RawMaterialDetail from '../components/inventory/RawMaterialDetail';
 import { RawMaterial, RawMaterialFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
-import {unitRawMaterial} from '../types';
 import type { TableColumn } from '../components/ui/Table';
+
+const LOW_STOCK_THRESHOLD = 3;
 
 const RawMaterials: React.FC = () => {
   const { state, addRawMaterial, updateRawMaterial, deleteRawMaterial } = useInventory();
@@ -29,37 +30,49 @@ const RawMaterials: React.FC = () => {
     material.supplier.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleAddMaterial = (data: RawMaterialFormData) => {
+  const handleAddMaterial = async (data: RawMaterialFormData) => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addRawMaterial(data);
+    try {
+      await addRawMaterial(data);
       setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Failed to add material:', error);
+      alert('Failed to add material. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleEditMaterial = (data: RawMaterialFormData) => {
+  const handleEditMaterial = async (data: RawMaterialFormData) => {
     if (!currentMaterial) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      updateRawMaterial(currentMaterial.id, data);
+    try {
+      await updateRawMaterial(currentMaterial.id, data);
       setIsEditModalOpen(false);
       setCurrentMaterial(null);
+    } catch (error) {
+      console.error('Failed to update material:', error);
+      alert('Failed to update material. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!currentMaterial) return;
     
     setIsSubmitting(true);
-    setTimeout(() => {
-      deleteRawMaterial(currentMaterial.id);
+    try {
+      await deleteRawMaterial(currentMaterial.id);
       setIsDeleteModalOpen(false);
       setCurrentMaterial(null);
+    } catch (error) {
+      console.error('Failed to delete material:', error);
+      alert('Failed to delete material. Please try again.');
+    } finally {
       setIsSubmitting(false);
-    }, 500);
+    }
   };
   
   const openEditModal = (material: RawMaterial) => {
@@ -84,16 +97,56 @@ const RawMaterials: React.FC = () => {
     setCurrentMaterial(material);
     setIsDeleteModalOpen(true);
   };
+
+  const formatNumber = (value: number, isInteger: boolean = false): string => {
+    if (isInteger && Number.isInteger(value)) {
+      return value.toString();
+    }
+    return value.toString();
+  };
   
   const columns: TableColumn<RawMaterial>[] = [
+    {
+      header: 'Imagen',
+      accessor: (material: RawMaterial) => (
+        material.imageUrl ? (
+          <img
+            src={material.imageUrl}
+            alt={material.name}
+            className="w-12 h-12 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Sin imagen</span>
+          </div>
+        )
+      ),
+      className: 'text-center'
+    },
     {
       header: 'Nombre',
       accessor: 'name',
       className: 'font-medium text-gray-900 dark:text-white'
     },
     {
-      header: `Cantidad (${unitRawMaterial[0].toLowerCase()})`,
-      accessor: (material: RawMaterial) => `${material.quantity}`,
+      header: 'Dimensiones',
+      accessor: (material: RawMaterial) => `${formatNumber(material.width)} x ${formatNumber(material.height)} m`,
+      className: 'text-gray-700 dark:text-gray-300'
+    },
+    {
+      header: 'Cantidad',
+      accessor: (material: RawMaterial) => {
+        const isLowStock = material.quantity <= LOW_STOCK_THRESHOLD;
+        
+        return (
+          <span className={isLowStock ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+            {formatNumber(material.quantity, material.unit === 'piezas')}
+          </span>
+        );
+      },
       className: 'text-gray-700 dark:text-gray-300'
     },
     {
@@ -138,7 +191,7 @@ const RawMaterials: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Materiales</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Diseños/Material</h2>
         <Button 
           variant="primary"
           onClick={() => setIsAddModalOpen(true)}
@@ -196,10 +249,13 @@ const RawMaterials: React.FC = () => {
             initialData={{
               name: currentMaterial.name,
               description: currentMaterial.description,
+              width: currentMaterial.width,
+              height: currentMaterial.height,
               quantity: currentMaterial.quantity,
               unit: currentMaterial.unit,
               price: currentMaterial.price,
-              supplier: currentMaterial.supplier
+              supplier: currentMaterial.supplier,
+              imageUrl: currentMaterial.imageUrl
             }}
             onSubmit={handleEditMaterial}
             onCancel={() => setIsEditModalOpen(false)}
