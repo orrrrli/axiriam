@@ -71,7 +71,24 @@ export interface Sale {
   updatedAt: Date;
 }
 
+export interface OrderMaterial {
+  id: string;
+  materials: {
+    designs: {
+      rawMaterialId: string;
+      height: number;
+      width: number;
+    }[];
+  }[];
+  distributor: string;
+  description: string;
+  status: 'pending' | 'ordered' | 'received';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type ItemFormData = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
 export type RawMaterialFormData = Omit<RawMaterial, 'id' | 'createdAt' | 'updatedAt'>;
 export type OrderMaterialFormData = Omit<OrderMaterial, 'id' | 'createdAt' | 'updatedAt'>;
 export type SaleFormData = Omit<Sale, 'id' | 'createdAt' | 'updatedAt' | 'saleId'>;
+
