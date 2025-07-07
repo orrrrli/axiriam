@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -11,16 +11,55 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const login = async (username: string, password: string) => {
-    // Dummy authentication
-    if (username === 'user' && password === 'dummypass') {
+  useEffect(
+    () => {
+      const token = localStorage.getItem('acces_token');
+      setIsAuthenticated(!!token);
+    },
+    []
+  );
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      if (!response.ok) {
+        setIsAuthenticated(false);
+        return false;
+      }
+
+      const data = await response.json();
+      localStorage.setItem('acces_token', data.token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+
       setIsAuthenticated(true);
       return true;
+    } catch (error) {
+      console.error('Login failed:', error);
+      setIsAuthenticated(false);
+      return false;
     }
-    return false;
-  };
+  }
 
   const logout = () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) {
+      fetch('http://localhost:3001/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }).catch((error) => console.error('Logout error:', error));
+    }
+
+    // Limpia tokens y estado
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     setIsAuthenticated(false);
   };
 
