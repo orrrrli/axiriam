@@ -1,4 +1,3 @@
-const API_BASE_URL = 'https://axiriam-api.onrender.com/api';
 
 interface ApiResponse<T> {
   success: boolean;
