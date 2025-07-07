@@ -1,3 +1,4 @@
+const API_BASE_URL = 'https://axiriam-api.onrender.com/api';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -14,9 +15,13 @@ class ApiService {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    // Get auth token from localStorage
+    const token = localStorage.getItem('access_token');
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
@@ -26,6 +31,13 @@ class ApiService {
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        // If unauthorized, clear tokens and redirect to login
+        if (response.status === 401) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.reload();
+        }
+        
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
@@ -41,6 +53,24 @@ class ApiService {
       console.error(`API request failed for ${endpoint}:`, error);
       throw error;
     }
+  }
+
+  // Authentication API
+  async login(email: string, password: string) {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Login failed');
+    }
+
+    return response.json();
   }
 
   // Raw Materials API
