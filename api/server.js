@@ -25,6 +25,8 @@ export const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+console.log('DEBUG - process.env.NODE_ENV:', process.env.NODE_ENV);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
