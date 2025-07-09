@@ -145,7 +145,7 @@ const Dashboard: React.FC = () => {
                 <div key={category}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-sm font-medium capitalize text-gray-700 dark:text-gray-300">{category}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{count} ({percentage}%)</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{Number(count)} ({Number(percentage)}%)</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                     <div
