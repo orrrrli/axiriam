@@ -160,14 +160,16 @@ const Sales: React.FC = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Ventas</h2>
         <Button 
           variant="primary"
           onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center justify-center"
         >
           <PlusCircle className="w-5 h-5 mr-1" />
-          Nueva Venta
+          <span className="hidden sm:inline">Nueva Venta</span>
+          <span className="sm:hidden">Nueva Venta</span>
         </Button>
       </div>
       
