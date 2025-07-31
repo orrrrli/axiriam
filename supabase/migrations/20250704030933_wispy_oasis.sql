@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS raw_materials (
 CREATE TABLE IF NOT EXISTS items (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name text NOT NULL,
-  category text NOT NULL CHECK (category IN ('sencillo', 'doble-vista', 'completo', 'sencillo-algodon', 'completo-algodon', 'stretch')),
+  category text NOT NULL CHECK (category IN ('sencillo', 'doble-vista', 'completo'),
+  type text NOT NULL CHECK (type IN ('sencillo-algodon', 'completo-algodon', 'stretch')),
   description text DEFAULT '',
   quantity integer NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   price decimal(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),

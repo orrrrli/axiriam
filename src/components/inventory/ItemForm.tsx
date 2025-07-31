@@ -22,6 +22,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
   const defaultFormData: ItemFormData = {
     name: '',
     category: 'sencillo',
+    type: 'sencillo-algodon',
     description: '',
     quantity: 0,
     price: 0,
@@ -104,9 +105,12 @@ const ItemForm: React.FC<ItemFormProps> = ({
     { value: 'sencillo', label: 'Sencillo' },
     { value: 'doble-vista', label: 'Doble vista' },
     { value: 'completo', label: 'Completo' },
+  ];
+
+  const typeOptions = [
     { value: 'sencillo-algodon', label: 'Sencillo algodón' },
     { value: 'completo-algodon', label: 'Completo algodón' },
-    { value: 'stretch', label: 'Stretch' }
+    { value: 'stretch', label: 'Stretch' },
   ];
 
   return (
@@ -128,6 +132,16 @@ const ItemForm: React.FC<ItemFormProps> = ({
           onChange={(value) => handleChange('category', value)}
           options={categoryOptions}
           error={errors.category}
+          required
+          fullWidth
+        />
+
+        <Select
+          label="Tipo de material"
+          value={formData.type}
+          onChange={(value) => handleChange('type', value)}
+          options={typeOptions}
+          error={errors.type}
           required
           fullWidth
         />

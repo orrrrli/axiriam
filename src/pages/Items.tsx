@@ -27,6 +27,7 @@ const Items: React.FC = () => {
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const filteredItems = items.filter(item => {
@@ -35,6 +36,8 @@ const Items: React.FC = () => {
       item.category.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesCategory = categoryFilter === '' || item.category === categoryFilter;
+
+    const matchesType = typeFilter === '' || item.type === typeFilter;
     
     return matchesSearch && matchesCategory;
   });
@@ -124,7 +127,8 @@ const Items: React.FC = () => {
     setIsGiftModalOpen(true);
   };
 
-  const getBadgeVariant = (category: string) => {
+   // Funciones para TIPO
+  const getTypeBadgeVariant = (category: string) => {
     switch (category) {
       case 'sencillo':
         return 'primary';
@@ -132,6 +136,27 @@ const Items: React.FC = () => {
         return 'warning';
       case 'completo':
         return 'secondary';
+      default:
+        return 'default';
+    }
+  };
+
+  const getTypeLabel = (category: string) => {
+    switch (category) {
+      case 'sencillo':
+        return 'Sencillo';
+      case 'doble-vista':
+        return 'Doble vista';
+      case 'completo':
+        return 'Completo';
+      default:
+        return category;
+    }
+  };
+
+  // Funciones para MATERIAL
+  const getMaterialBadgeVariant = (type: string) => {
+    switch (type) {
       case 'sencillo-algodon':
         return 'success';
       case 'completo-algodon':
@@ -143,14 +168,8 @@ const Items: React.FC = () => {
     }
   };
 
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'sencillo':
-        return 'Sencillo';
-      case 'doble-vista':
-        return 'Doble vista';
-      case 'completo':
-        return 'Completo';
+  const getMaterialLabel = (type: string) => {
+    switch (type) {
       case 'sencillo-algodon':
         return 'Sencillo algodón';
       case 'completo-algodon':
@@ -158,8 +177,16 @@ const Items: React.FC = () => {
       case 'stretch':
         return 'Stretch';
       default:
-        return category;
+        return type;
     }
+  };
+
+  const isTypeCategory = (category: string) => {
+    return ['sencillo', 'doble-vista', 'completo'].includes(category);
+  };
+
+  const isMaterialCategory = (type: string) => {
+    return ['sencillo-algodon', 'completo-algodon', 'stretch'].includes(type);
   };
   
   const columns: TableColumn<Item>[] = [
@@ -169,15 +196,31 @@ const Items: React.FC = () => {
       className: 'font-medium text-gray-900 dark:text-white'
     },
     {
-      header: 'Categoria',
+    header: 'Tipo',
       accessor: (item: Item) => {
-        const variant = getBadgeVariant(item.category);
-        
-        return (
-          <Badge variant={variant}>
-            {getCategoryLabel(item.category)}
-          </Badge>
-        );
+        if (isTypeCategory(item.category)) {
+          const variant = getTypeBadgeVariant(item.category);
+          return (
+            <Badge variant={variant}>
+              {getTypeLabel(item.category)}
+            </Badge>
+          );
+        }
+        return <span className="text-gray-400 dark:text-gray-500">-</span>;
+      }
+    },
+    {
+      header: 'Material',
+      accessor: (item: Item) => {
+        if (isMaterialCategory(item.type)) {
+          const variant = getMaterialBadgeVariant(item.type);
+          return (
+            <Badge variant={variant}>
+              {getMaterialLabel(item.type)}
+            </Badge>
+          );
+        }
+        return <span className="text-gray-400 dark:text-gray-500">-</span>;
       }
     },
     {
@@ -236,6 +279,10 @@ const Items: React.FC = () => {
     { value: 'sencillo', label: 'Sencillo' },
     { value: 'doble-vista', label: 'Doble vista' },
     { value: 'completo', label: 'Completo' },
+  ];
+
+  const typeOptions = [
+    { value: '', label: 'Todos los tipos' },
     { value: 'sencillo-algodon', label: 'Sencillo algodón' },
     { value: 'completo-algodon', label: 'Completo algodón' },
     { value: 'stretch', label: 'Stretch' }
@@ -265,6 +312,15 @@ const Items: React.FC = () => {
             fullWidth
           />
         </div>
+        <div className="w-full sm:w-64">
+          <Select
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={typeOptions}
+            fullWidth
+          />
+        </div>
+        
         <div className="relative flex-1">
           <div className="absolute left-0 w-10 h-10 grid place-items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
@@ -315,6 +371,7 @@ const Items: React.FC = () => {
             initialData={{
               name: currentItem.name,
               category: currentItem.category,
+              type: currentItem.type,
               description: currentItem.description,
               quantity: currentItem.quantity,
               price: currentItem.price,

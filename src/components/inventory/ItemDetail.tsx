@@ -19,6 +19,13 @@ const ItemDetail: React.FC<ItemDetailProps> = ({ item, rawMaterials }) => {
         return <Badge variant="warning">Doble vista</Badge>;
       case 'completo':
         return <Badge variant="secondary">Completo</Badge>;
+      default:
+        return <Badge>{category}</Badge>;
+    }
+  };
+
+  const getTypeMaterialBadge = (type: string) => {
+    switch (type) {
       case 'sencillo-algodon':
         return <Badge variant="success">Sencillo algodón</Badge>;
       case 'completo-algodon':
@@ -26,16 +33,19 @@ const ItemDetail: React.FC<ItemDetailProps> = ({ item, rawMaterials }) => {
       case 'stretch':
         return <Badge variant="default">Stretch</Badge>;
       default:
-        return <Badge>{category}</Badge>;
+        return <Badge>{type}</Badge>;
     }
-  };
+  }
   
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">{item.name}</h3>
-          {getCategoryBadge(item.category)}
+          <div className='flex items-center space-x-2'>
+            {getCategoryBadge(item.category)}
+            {getTypeMaterialBadge(item.type)}
+          </div>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
       </div>

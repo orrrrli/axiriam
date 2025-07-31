@@ -1,7 +1,8 @@
 export interface Item {
   id: string;
   name: string;
-  category: 'sencillo' | 'doble-vista' | 'completo' | 'sencillo-algodon' | 'completo-algodon' | 'stretch';
+  category: 'sencillo' | 'doble-vista' | 'completo';
+  type: 'sencillo-algodon' | 'completo-algodon' | 'stretch'; // New field for item type
   description: string;
   quantity: number;
   price: number;
@@ -67,22 +68,6 @@ export interface Sale {
   shippingDescription?: string;
   totalAmount: number;
   items: string[]; // IDs of items sold
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface OrderMaterial {
-  id: string;
-  materials: {
-    designs: {
-      rawMaterialId: string;
-      height: number;
-      width: number;
-    }[];
-  }[];
-  distributor: string;
-  description: string;
-  status: 'pending' | 'ordered' | 'received';
   createdAt: Date;
   updatedAt: Date;
 }
