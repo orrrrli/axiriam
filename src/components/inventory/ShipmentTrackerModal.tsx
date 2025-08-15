@@ -5,23 +5,88 @@ import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
 import { Package, Truck, Calendar, MapPin, User, Clock, AlertCircle } from 'lucide-react';
 
-interface TrackingEvent {
+// Estafeta tracking interfaces
+interface EstafetaTrackingEvent {
   date: string;
   time: string;
   location: string;
   description: string;
 }
 
-interface TrackingData {
+interface EstafetaTrackingData {
   wayBill: string;
-  events: TrackingEvent[];
+  events: EstafetaTrackingEvent[];
   cached: boolean;
 }
 
-interface TrackingResponse {
+interface EstafetaTrackingResponse {
   success: boolean;
-  data: TrackingData;
+  data: EstafetaTrackingData;
   count: number;
+}
+
+// DHL tracking interfaces
+interface DHLTrackingEvent {
+  timestamp: string;
+  location: {
+    address: {
+      addressLocality: string;
+      countryCode: string;
+    };
+  };
+  statusCode: string;
+  status: string;
+  description: string;
+  pieceIds: string[];
+}
+
+interface DHLShipment {
+  id: string;
+  service: string;
+  origin: {
+    address: {
+      addressLocality: string;
+    };
+  };
+  destination: {
+    address: {
+      addressLocality: string;
+    };
+  };
+  status: {
+    timestamp: string;
+    location: {
+      address: {
+        addressLocality: string;
+        countryCode: string;
+      };
+    };
+    statusCode: string;
+    status: string;
+    description: string;
+  };
+  events: DHLTrackingEvent[];
+}
+
+interface DHLTrackingResponse {
+  shipments: DHLShipment[];
+}
+
+// Unified tracking data interface
+interface UnifiedTrackingEvent {
+  timestamp: Date;
+  location: string;
+  description: string;
+  isDelivered: boolean;
+}
+
+interface UnifiedTrackingData {
+  trackingNumber: string;
+  service: string;
+  origin?: string;
+  destination?: string;
+  events: UnifiedTrackingEvent[];
+  cached?: boolean;
 }
 
 interface ShipmentTrackerModalProps {
@@ -35,7 +100,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
   onClose,
   order
 }) => {
-  const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
+  const [trackingData, setTrackingData] = useState<UnifiedTrackingData | null>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
@@ -46,28 +111,111 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
     }
   }, [isOpen, order.trackingNumber]);
 
+  const parseEstafetaData = (response: EstafetaTrackingResponse): UnifiedTrackingData => {
+    const events: UnifiedTrackingEvent[] = response.data.events.map(event => {
+      // Parse the date format "25/07/2025" and time "18:44 hrs."
+      const [day, month, year] = event.date.split('/');
+      const cleanTime = event.time.replace(' hrs.', '');
+      const [hours, minutes] = cleanTime.split(':');
+      
+      const timestamp = new Date(
+        parseInt(year), 
+        parseInt(month) - 1, 
+        parseInt(day), 
+        parseInt(hours), 
+        parseInt(minutes)
+      );
+
+      return {
+        timestamp,
+        location: event.location,
+        description: event.description,
+        isDelivered: event.description.toLowerCase().includes('entregado')
+      };
+    });
+
+    return {
+      trackingNumber: response.data.wayBill,
+      service: 'Estafeta',
+      events,
+      cached: response.data.cached
+    };
+  };
+
+  const parseDHLData = (response: DHLTrackingResponse): UnifiedTrackingData => {
+    if (!response.shipments || response.shipments.length === 0) {
+      throw new Error('No shipment data found');
+    }
+
+    const shipment = response.shipments[0];
+    
+    const events: UnifiedTrackingEvent[] = shipment.events.map(event => {
+      const timestamp = new Date(event.timestamp);
+      
+      return {
+        timestamp,
+        location: event.location.address.addressLocality,
+        description: event.description,
+        isDelivered: event.statusCode === 'delivered'
+      };
+    });
+
+    // Sort events by timestamp (most recent first)
+    events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    return {
+      trackingNumber: shipment.id,
+      service: 'DHL Express',
+      origin: shipment.origin.address.addressLocality,
+      destination: shipment.destination.address.addressLocality,
+      events
+    };
+  };
+
   const fetchTrackingData = async () => {
     if (!order.trackingNumber || !order.trackingNumber.trim()) return;
+    if (!order.parcel_service) {
+      setTrackingError('Servicio de paquetería no especificado');
+      return;
+    }
 
     setIsLoadingTracking(true);
     setTrackingError(null);
 
     try {
-      const response = await fetch(
-        `http://localhost:3001/api/tracking/${order.trackingNumber.trim()}`
-      );
+      let apiUrl: string;
+      
+      if (order.parcel_service === 'Estafeta') {
+        apiUrl = `https://axiriam-api.onrender.com/api/tracking/${order.trackingNumber.trim()}`;
+      } else if (order.parcel_service === 'DHL') {
+        apiUrl = `https://api-eu.dhl.com/track/shipments?trackingNumber=${order.trackingNumber.trim()}`;
+      } else {
+        throw new Error(`Servicio de paquetería no soportado: ${order.parcel_service}`);
+      }
+
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result: TrackingResponse = await response.json();
+      let unifiedData: UnifiedTrackingData;
       
-      if (result.success && result.data) {
-        setTrackingData(result.data);
+      if (order.parcel_service === 'Estafeta') {
+        const result: EstafetaTrackingResponse = await response.json();
+        if (result.success && result.data) {
+          unifiedData = parseEstafetaData(result);
+        } else {
+          throw new Error('No tracking data available from Estafeta');
+        }
+      } else if (order.parcel_service === 'DHL') {
+        const result: DHLTrackingResponse = await response.json();
+        unifiedData = parseDHLData(result);
       } else {
-        throw new Error('No tracking data available');
+        throw new Error('Unsupported parcel service');
       }
+      
+      setTrackingData(unifiedData);
     } catch (error) {
       console.error('Failed to fetch tracking data:', error);
       setTrackingError(
@@ -106,26 +254,14 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
     }
   };
 
-
-
-  const formatTrackingDate = (dateStr: string, timeStr: string) => {
-    try {
-      // Parse the date format "25/07/2025" and time "18:44 hrs."
-      const [day, month, year] = dateStr.split('/');
-      const cleanTime = timeStr.replace(' hrs.', '');
-      const [hours, minutes] = cleanTime.split(':');
-      
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-      return date.toLocaleString('es-MX', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return `${dateStr} ${timeStr}`;
-    }
+  const formatTrackingTimestamp = (timestamp: Date) => {
+    return timestamp.toLocaleString('es-MX', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -178,20 +314,6 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                 </div>
               </div>
             )}
-{/*             
-            {order.estimatedDelivery && (
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    Entrega Estimada
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(order.estimatedDelivery)}
-                  </p>
-                </div>
-              </div>
-            )} */}
           </div>
         </div>
 
@@ -203,7 +325,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Seguimiento en Tiempo Real
               </h4>
-              {trackingData?.cached && (
+              {trackingData?.cached !== undefined && trackingData.cached && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                   Información en caché
                 </span>
@@ -247,11 +369,21 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <h5 className="text-sm font-medium text-gray-900 dark:text-white">
-                        Número de Guía: {trackingData.wayBill}
+                        Número de Guía: {trackingData.trackingNumber}
                       </h5>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {trackingData.events.length} eventos registrados
                       </p>
+                      {trackingData.service && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Servicio: {trackingData.service}
+                        </p>
+                      )}
+                      {trackingData.origin && trackingData.destination && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {trackingData.origin} → {trackingData.destination}
+                        </p>
+                      )}
                     </div>
                     <Truck className="h-6 w-6 text-blue-500" />
                   </div>
@@ -261,7 +393,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                   <div className="space-y-4">
                     {trackingData.events.map((event, index) => {
                       const isLatest = index === 0;
-                      const isDelivered = event.description.toLowerCase().includes('entregado');
+                      const isDelivered = event.isDelivered;
                       
                       return (
                         <div key={index} className="flex items-start">
@@ -300,7 +432,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                                   <MapPin className="h-3 w-3 mr-1" />
                                   <span className="mr-3">{event.location}</span>
                                   <Clock className="h-3 w-3 mr-1" />
-                                  <span>{formatTrackingDate(event.date, event.time)}</span>
+                                  <span>{formatTrackingTimestamp(event.timestamp)}</span>
                                 </div>
                               </div>
                               
