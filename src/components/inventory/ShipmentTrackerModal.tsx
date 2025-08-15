@@ -3,7 +3,7 @@ import { OrderMaterial } from '../../types';
 import { formatDate } from '../../utils/helpers';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
-import { Package, Truck, Calendar, MapPin, User, Clock, AlertCircle } from 'lucide-react';
+import { Package, Truck, MapPin, User, Clock, AlertCircle } from 'lucide-react';
 
 // Estafeta tracking interfaces
 interface EstafetaTrackingEvent {
@@ -185,19 +185,29 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
     try {
       let apiUrl: string;
       
+      let response: Response;
+
       if (order.parcel_service === 'Estafeta') {
-        apiUrl = `https://axiriam-api.onrender.com/api/tracking/${order.trackingNumber.trim()}`;
+        apiUrl = `http://localhost:3001/api/tracking/${order.trackingNumber.trim()}`;
+        response = await fetch(apiUrl);
+
       } else if (order.parcel_service === 'DHL') {
         apiUrl = `https://api-eu.dhl.com/track/shipments?trackingNumber=${order.trackingNumber.trim()}`;
+        response = await fetch(apiUrl, {
+          headers: {
+            'DHL-API-Key': import.meta.env.VITE_DHL_API_KEY
+          }
+        });
+
       } else {
         throw new Error(`Servicio de paquetería no soportado: ${order.parcel_service}`);
       }
 
-      const response = await fetch(apiUrl);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      console.log(`Fetching tracking data from: ${order.trackingNumber.trim()}`);
 
       let unifiedData: UnifiedTrackingData;
       

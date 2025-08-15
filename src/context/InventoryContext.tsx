@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Item, RawMaterial, ItemFormData, RawMaterialFormData, OrderMaterial, OrderMaterialFormData, Sale, SaleFormData } from '../types';
-import { generateId, generateSaleId } from '../utils/helpers';
 import { apiService } from '../services/api';
 
 // Define the state type
