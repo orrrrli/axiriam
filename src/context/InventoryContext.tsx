@@ -223,7 +223,7 @@ const transformToApiData = {
   orderMaterial: (data: OrderMaterialFormData) => ({
     ...data,
     tracking_number: data.trackingNumber,
-    estimated_delivery: data.estimatedDelivery
+    parcel_service: data.parcel_service
   }),
   
   sale: (data: SaleFormData) => ({

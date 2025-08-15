@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { OrderMaterial } from '../../types';
 import { formatDate } from '../../utils/helpers';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
-import { Package, Truck, Calendar, MapPin, User } from 'lucide-react';
+import { Package, Truck, Calendar, MapPin, User, Clock, AlertCircle } from 'lucide-react';
+
+interface TrackingEvent {
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+}
+
+interface TrackingData {
+  wayBill: string;
+  events: TrackingEvent[];
+  cached: boolean;
+}
+
+interface TrackingResponse {
+  success: boolean;
+  data: TrackingData;
+  count: number;
+}
 
 interface ShipmentTrackerModalProps {
   isOpen: boolean;
@@ -16,6 +35,51 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
   onClose,
   order
 }) => {
+  const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
+  const [isLoadingTracking, setIsLoadingTracking] = useState(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
+
+  // Fetch tracking data when modal opens and tracking number exists
+  useEffect(() => {
+    if (isOpen && order.trackingNumber && order.trackingNumber.trim()) {
+      fetchTrackingData();
+    }
+  }, [isOpen, order.trackingNumber]);
+
+  const fetchTrackingData = async () => {
+    if (!order.trackingNumber || !order.trackingNumber.trim()) return;
+
+    setIsLoadingTracking(true);
+    setTrackingError(null);
+
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/tracking/${order.trackingNumber.trim()}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: TrackingResponse = await response.json();
+      
+      if (result.success && result.data) {
+        setTrackingData(result.data);
+      } else {
+        throw new Error('No tracking data available');
+      }
+    } catch (error) {
+      console.error('Failed to fetch tracking data:', error);
+      setTrackingError(
+        error instanceof Error 
+          ? error.message 
+          : 'Error al obtener información de seguimiento'
+      );
+    } finally {
+      setIsLoadingTracking(false);
+    }
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'pending':
@@ -42,35 +106,27 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
     }
   };
 
-  const getTrackingSteps = () => {
-    const steps = [
-      {
-        id: 'pending',
-        label: 'Pedido Creado',
-        description: 'El pedido ha sido registrado en el sistema',
-        completed: true,
-        date: order.createdAt
-      },
-      {
-        id: 'ordered',
-        label: 'Pedido Enviado al Distribuidor',
-        description: 'El pedido ha sido enviado al distribuidor',
-        completed: order.status === 'ordered' || order.status === 'received',
-        date: order.status === 'ordered' || order.status === 'received' ? order.updatedAt : null
-      },
-      {
-        id: 'received',
-        label: 'Material Recibido',
-        description: 'El material ha sido recibido y está disponible',
-        completed: order.status === 'received',
-        date: order.status === 'received' ? order.updatedAt : null
-      }
-    ];
 
-    return steps;
+
+  const formatTrackingDate = (dateStr: string, timeStr: string) => {
+    try {
+      // Parse the date format "25/07/2025" and time "18:44 hrs."
+      const [day, month, year] = dateStr.split('/');
+      const cleanTime = timeStr.replace(' hrs.', '');
+      const [hours, minutes] = cleanTime.split(':');
+      
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+      return date.toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return `${dateStr} ${timeStr}`;
+    }
   };
-
-  const trackingSteps = getTrackingSteps();
 
   return (
     <Modal
@@ -88,7 +144,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                 Pedido de Material
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                ID: {order.id}
+                Paquetería: {order.parcel_service}
               </p>
             </div>
             <Badge variant={getStatusBadgeVariant(order.status)}>
@@ -122,7 +178,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                 </div>
               </div>
             )}
-            
+{/*             
             {order.estimatedDelivery && (
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 text-gray-400 mr-2" />
@@ -135,72 +191,135 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                   </p>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
-        {/* Tracking Timeline */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Estado del Pedido
-          </h4>
-          
+
+        {/* Real-time Tracking Information */}
+        {order.trackingNumber && (
           <div className="space-y-4">
-            {trackingSteps.map((step, index) => (
-              <div key={step.id} className="flex items-start">
-                <div className="flex-shrink-0">
-                  <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center
-                    ${step.completed 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
-                    }
-                  `}>
-                    {step.completed ? (
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    ) : (
-                      <span className="text-sm font-medium">{index + 1}</span>
-                    )}
+            <div className="flex justify-between items-center">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Seguimiento en Tiempo Real
+              </h4>
+              {trackingData?.cached && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                  Información en caché
+                </span>
+              )}
+            </div>
+
+            {isLoadingTracking && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Obteniendo información de seguimiento...
+                </span>
+              </div>
+            )}
+
+            {trackingError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                  <div>
+                    <h5 className="text-sm font-medium text-red-800 dark:text-red-300">
+                      Error al obtener seguimiento
+                    </h5>
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      {trackingError}
+                    </p>
                   </div>
-                  
-                  {index < trackingSteps.length - 1 && (
-                    <div className={`
-                      w-0.5 h-8 mx-auto mt-2
-                      ${step.completed ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}
-                    `} />
-                  )}
                 </div>
-                
-                <div className="ml-4 flex-1">
-                  <div className="flex justify-between items-start">
+                <button
+                  onClick={fetchTrackingData}
+                  className="mt-3 text-sm text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 underline"
+                >
+                  Intentar nuevamente
+                </button>
+              </div>
+            )}
+
+            {trackingData && !isLoadingTracking && (
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h5 className={`
-                        text-sm font-medium
-                        ${step.completed 
-                          ? 'text-gray-900 dark:text-white' 
-                          : 'text-gray-500 dark:text-gray-400'
-                        }
-                      `}>
-                        {step.label}
+                      <h5 className="text-sm font-medium text-gray-900 dark:text-white">
+                        Número de Guía: {trackingData.wayBill}
                       </h5>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {step.description}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {trackingData.events.length} eventos registrados
                       </p>
                     </div>
-                    
-                    {step.date && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(step.date)}
-                      </span>
-                    )}
+                    <Truck className="h-6 w-6 text-blue-500" />
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <div className="space-y-4">
+                    {trackingData.events.map((event, index) => {
+                      const isLatest = index === 0;
+                      const isDelivered = event.description.toLowerCase().includes('entregado');
+                      
+                      return (
+                        <div key={index} className="flex items-start">
+                          <div className="flex-shrink-0">
+                            <div className={`
+                              w-3 h-3 rounded-full mt-2
+                              ${isDelivered 
+                                ? 'bg-green-500' 
+                                : isLatest 
+                                  ? 'bg-blue-500' 
+                                  : 'bg-gray-300 dark:bg-gray-600'
+                              }
+                            `} />
+                            
+                            {index < trackingData.events.length - 1 && (
+                              <div className="w-0.5 h-8 bg-gray-200 dark:bg-gray-600 mx-auto mt-2" />
+                            )}
+                          </div>
+                          
+                          <div className="ml-4 flex-1">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className={`
+                                  text-sm font-medium
+                                  ${isDelivered 
+                                    ? 'text-green-700 dark:text-green-300' 
+                                    : isLatest 
+                                      ? 'text-blue-700 dark:text-blue-300' 
+                                      : 'text-gray-700 dark:text-gray-300'
+                                  }
+                                `}>
+                                  {event.description}
+                                </p>
+                                
+                                <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  <span className="mr-3">{event.location}</span>
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  <span>{formatTrackingDate(event.date, event.time)}</span>
+                                </div>
+                              </div>
+                              
+                              {isLatest && (
+                                <Badge variant={isDelivered ? 'success' : 'primary'}>
+                                  {isDelivered ? 'Entregado' : 'Último evento'}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        </div>
+        )}
 
         {/* Order Details */}
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -212,6 +331,12 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               <strong>Descripción:</strong> {order.description || 'Sin descripción'}
             </p>
+            
+            {order.trackingNumber && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <strong>Número de seguimiento:</strong> {order.trackingNumber}
+              </p>
+            )}
             
             <div className="mt-3">
               <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">

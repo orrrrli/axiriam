@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS order_materials (
   description text DEFAULT '',
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'ordered', 'received')),
   tracking_number text DEFAULT '',
-  estimated_delivery timestamptz,
+  parcel_service text CHECK (parcel_service IN ('Estafeta', 'DHL')),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );

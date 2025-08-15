@@ -39,7 +39,7 @@ const Items: React.FC = () => {
 
     const matchesType = typeFilter === '' || item.type === typeFilter;
     
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesType;
   });
   
   const handleAddItem = async (data: ItemFormData) => {

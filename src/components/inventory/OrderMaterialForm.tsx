@@ -150,6 +150,11 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     { value: 'received', label: 'Recibido' },
   ];
 
+  const parcelOptions = [
+    { value: 'Estafeta', label: 'Estafeta' },
+    { value: 'DHL', label: 'DHL' },
+  ];
+
   const formatNumber = (value: number, isInteger: boolean = false): string => {
     if (isInteger && Number.isInteger(value)) {
       return value.toString();
@@ -339,6 +344,23 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
           placeholder="Nombre del distribuidor"
           error={errors.distributor}
           required
+          fullWidth
+        />
+
+        <Select
+          label="Paqueteria"
+          value={formData.parcel_service}
+          onChange={(value) => handleChange('parcel_service', value as 'Estafeta' | 'DHL')}
+          options={parcelOptions}
+          required
+          fullWidth
+        />
+
+        <Input
+          label="Numero de Seguimiento"
+          value={formData.trackingNumber}
+          onChange={(e) => handleChange('trackingNumber', e.target.value)}
+          placeholder="Escribe el numero de guia"
           fullWidth
         />
 

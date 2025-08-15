@@ -47,7 +47,7 @@ export interface OrderMaterial {
   description: string;
   status: 'pending' | 'ordered' | 'received';
   trackingNumber?: string; // Optional tracking number for shipment
-  estimatedDelivery?: Date; // Optional estimated delivery date
+  parcel_service?: 'Estafeta' | 'DHL' ; // New field for parcel service
   createdAt: Date;
   updatedAt: Date;
 }

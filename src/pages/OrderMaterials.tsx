@@ -254,7 +254,7 @@ const OrderMaterials: React.FC = () => {
               description: currentOrder.description,
               status: currentOrder.status,
               trackingNumber: currentOrder.trackingNumber,
-              estimatedDelivery: currentOrder.estimatedDelivery
+              parcel_service: currentOrder.parcel_service
             }}
             onSubmit={handleEditOrder}
             onCancel={() => setIsEditModalOpen(false)}

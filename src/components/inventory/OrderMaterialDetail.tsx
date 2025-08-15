@@ -49,6 +49,13 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
         <p className="text-sm text-gray-500 dark:text-gray-400">{order.description}</p>
       </div>
       
+      <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Paquetería</span>
+          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
+            {order.parcel_service || 'No disponible'}
+          </span>
+        </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Cantidad Total</span>
@@ -59,7 +66,9 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Distribuidor</span>
           <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">{order.distributor}</span>
         </div>
+        
       </div>
+      
       
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Materiales Solicitados</h4>
@@ -80,8 +89,7 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
               <div className="space-y-3">
                 {materialGroup.designs.map((design, designIndex) => {
                   const material = rawMaterials.find(m => m.id === design.rawMaterialId);
-                  const totalArea = design.height * design.width;
-                  
+                  const totalArea = parseFloat((design.height * design.width).toFixed(3));
                   return (
                     <div key={designIndex} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                       <div className="flex justify-between items-start mb-2">
