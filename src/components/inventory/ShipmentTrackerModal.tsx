@@ -357,10 +357,10 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                   <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
                   <div>
                     <h5 className="text-sm font-medium text-red-800 dark:text-red-300">
-                      Error al obtener seguimiento
+                      No se pudo obtener la información de seguimiento
                     </h5>
                     <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                      {trackingError}
+                      Por favor, verifica el número de seguimiento o intenta más tarde.
                     </p>
                   </div>
                 </div>

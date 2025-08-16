@@ -5,12 +5,12 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import ItemForm from '../components/inventory/ItemForm';
 import ItemDetail from '../components/inventory/ItemDetail';
-import GiftQuantityModal from '../components/inventory/GiftQuantityModal';
+import ReduceQuantityModal from '../components/inventory/ReduceQuantityModal';
 import Badge from '../components/ui/Badge';
 import Select from '../components/ui/Select';
 import { Item, ItemFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle, Gift, MinusCircle } from 'lucide-react';
+import { Trash2, Pencil, Search, PlusCircle, MinusCircle } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
 const LOW_STOCK_THRESHOLD = 10;
@@ -23,7 +23,7 @@ const Items: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
+  const [isReduceModalOpen, setIsReduceModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -87,13 +87,13 @@ const Items: React.FC = () => {
     }
   };
 
-  const handleGiftConfirm = async (quantity: number) => {
+  const handleReduceConfirm = async (quantity: number) => {
     if (!currentItem) return;
     
     setIsSubmitting(true);
     try {
       await reduceItemQuantity(currentItem.id, quantity);
-      setIsGiftModalOpen(false);
+      setIsReduceModalOpen(false);
       setCurrentItem(null);
     } catch (error) {
       console.error('Failed to reduce item quantity:', error);
@@ -118,13 +118,13 @@ const Items: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const openGiftModal = (item: Item) => {
+  const openReduceModal = (item: Item) => {
     if (item.quantity <= 0) {
       alert('No hay stock disponible para este artículo.');
       return;
     }
     setCurrentItem(item);
-    setIsGiftModalOpen(true);
+    setIsReduceModalOpen(true);
   };
 
    // Funciones para TIPO
@@ -247,10 +247,10 @@ const Items: React.FC = () => {
       accessor: (item: Item) => (
         <div className="flex space-x-2 justify-center">
           <button
-            onClick={(e) => { e.stopPropagation(); openGiftModal(item); }}
+            onClick={(e) => { e.stopPropagation(); openReduceModal(item); }}
             className="text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
-            aria-label="Gift"
-            title="Reducir por regalo"
+            aria-label="Reduce Stock"
+            title="Reducir stock"
           >
             <MinusCircle size={18} />
           </button>
@@ -416,13 +416,13 @@ const Items: React.FC = () => {
         )}
       </Modal>
 
-      {/* Gift Quantity Modal */}
+      {/* Reduce Quantity Modal */}
       {currentItem && (
-        <GiftQuantityModal
-          isOpen={isGiftModalOpen}
-          onClose={() => setIsGiftModalOpen(false)}
+        <ReduceQuantityModal
+          isOpen={isReduceModalOpen}
+          onClose={() => setIsReduceModalOpen(false)}
           item={currentItem}
-          onConfirm={handleGiftConfirm}
+          onConfirm={handleReduceConfirm}
           isSubmitting={isSubmitting}
         />
       )}

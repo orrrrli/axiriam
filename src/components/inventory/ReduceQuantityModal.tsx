@@ -3,9 +3,9 @@ import { Item } from '../../types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
-import { Gift } from 'lucide-react';
+import { MinusCircle } from 'lucide-react';
 
-interface GiftQuantityModalProps {
+interface ReduceQuantityModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: Item;
@@ -13,7 +13,7 @@ interface GiftQuantityModalProps {
   isSubmitting?: boolean;
 }
 
-const GiftQuantityModal: React.FC<GiftQuantityModalProps> = ({
+const ReduceQuantityModal: React.FC<ReduceQuantityModalProps> = ({
   isOpen,
   onClose,
   item,
@@ -51,13 +51,13 @@ const GiftQuantityModal: React.FC<GiftQuantityModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Reducir Cantidad por Regalo"
+      title="Reducir Cantidad en Stock"
       size="sm"
     >
       <form onSubmit={handleSubmit}>
         <div className="text-center mb-6">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 mb-4">
-            <Gift className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900 mb-4">
+            <MinusCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {item.name}
@@ -93,10 +93,10 @@ const GiftQuantityModal: React.FC<GiftQuantityModalProps> = ({
           </Button>
           <Button
             type="submit"
-            variant="success"
+            variant="primary"
             isLoading={isSubmitting}
           >
-            Confirmar Regalo
+            Reducir Stock
           </Button>
         </div>
       </form>
@@ -104,4 +104,4 @@ const GiftQuantityModal: React.FC<GiftQuantityModalProps> = ({
   );
 };
 
-export default GiftQuantityModal;
+export default ReduceQuantityModal;
