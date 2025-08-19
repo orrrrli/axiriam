@@ -67,13 +67,41 @@ export interface Sale {
   nationalShippingCarrier?: 'estafeta' | 'dhl' | 'fedex' | 'correos';
   shippingDescription?: string;
   totalAmount: number;
-  items: string[]; // IDs of items sold
+  items: string[]; // Keep for backward compatibility
+  saleItems: SaleItem[]; // Items sold with quantities
+  extras: SaleExtra[]; // Extra services/products
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface SaleItem {
+  itemId: string;
+  quantity: number;
+}
+
+export interface SaleExtra {
+  category: 'botones' | 'tira-absorbente' | 'nombre-bordado' | 'personalizado' | 'nombre-vinil';
+  price: number;
+}
+
+export interface SaleFormData {
+  name: string;
+  status: 'pending' | 'shipped' | 'delivered';
+  socialMediaPlatform: 'facebook' | 'instagram' | 'whatsapp';
+  socialMediaUsername: string;
+  trackingNumber: string;
+  invoiceRequired: boolean;
+  shippingType: 'local' | 'nacional';
+  localShippingOption?: 'meeting-point' | 'pzexpress';
+  localAddress?: string;
+  nationalShippingCarrier?: 'estafeta' | 'dhl' | 'fedex' | 'correos';
+  shippingDescription?: string;
+  totalAmount: number;
+  items: string[]; // Keep for backward compatibility
+  saleItems: SaleItem[];
+  extras: SaleExtra[];
 }
 
 export type ItemFormData = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
 export type RawMaterialFormData = Omit<RawMaterial, 'id' | 'createdAt' | 'updatedAt'>;
 export type OrderMaterialFormData = Omit<OrderMaterial, 'id' | 'createdAt' | 'updatedAt'>;
-export type SaleFormData = Omit<Sale, 'id' | 'createdAt' | 'updatedAt' | 'saleId'>;
-

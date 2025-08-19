@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { SaleFormData, Item } from '../../types';
+import { SaleFormData, Item, SaleItem, SaleExtra } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
+import { Trash2, Plus } from 'lucide-react';
 
 interface SaleFormProps {
   initialData?: SaleFormData;
@@ -32,7 +33,9 @@ const SaleForm: React.FC<SaleFormProps> = ({
     nationalShippingCarrier: 'estafeta',
     shippingDescription: '',
     totalAmount: 0,
-    items: []
+    items: [], // Keep for backward compatibility
+    saleItems: [],
+    extras: []
   };
 
   const [formData, setFormData] = useState<SaleFormData>(initialData || defaultFormData);
@@ -43,6 +46,27 @@ const SaleForm: React.FC<SaleFormProps> = ({
       setFormData(initialData);
     }
   }, [initialData]);
+
+  // Calculate total amount whenever items or extras change
+  useEffect(() => {
+    calculateTotalAmount();
+  }, [formData.saleItems, formData.extras]);
+
+  const calculateTotalAmount = () => {
+    // Calculate items total
+    const itemsTotal = formData.saleItems.reduce((total, saleItem) => {
+      const item = items.find(item => item.id === saleItem.itemId);
+      return total + (item ? item.price * saleItem.quantity : 0);
+    }, 0);
+
+    // Calculate extras total
+    const extrasTotal = formData.extras.reduce((total, extra) => {
+      return total + extra.price;
+    }, 0);
+
+    const newTotal = itemsTotal + extrasTotal;
+    setFormData(prev => ({ ...prev, totalAmount: newTotal }));
+  };
 
   const handleChange = (field: keyof SaleFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -58,22 +82,60 @@ const SaleForm: React.FC<SaleFormProps> = ({
     handleChange(field, numValue);
   };
 
-  const handleItemToggle = (itemId: string) => {
-    setFormData(prev => {
-      const isSelected = prev.items.includes(itemId);
-      
-      if (isSelected) {
-        return {
-          ...prev,
-          items: prev.items.filter(id => id !== itemId)
-        };
-      } else {
-        return {
-          ...prev,
-          items: [...prev.items, itemId]
-        };
-      }
-    });
+  // Sale Items Management
+  const addSaleItem = () => {
+    const newSaleItem: SaleItem = {
+      itemId: '',
+      quantity: 1
+    };
+    setFormData(prev => ({
+      ...prev,
+      saleItems: [...prev.saleItems, newSaleItem]
+    }));
+  };
+
+  const removeSaleItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      saleItems: prev.saleItems.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateSaleItem = (index: number, field: keyof SaleItem, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      saleItems: prev.saleItems.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  // Extras Management
+  const addExtra = () => {
+    const newExtra: SaleExtra = {
+      category: 'botones',
+      price: 0
+    };
+    setFormData(prev => ({
+      ...prev,
+      extras: [...prev.extras, newExtra]
+    }));
+  };
+
+  const removeExtra = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      extras: prev.extras.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateExtra = (index: number, field: keyof SaleExtra, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      extras: prev.extras.map((extra, i) => 
+        i === index ? { ...extra, [field]: value } : extra
+      )
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -98,6 +160,16 @@ const SaleForm: React.FC<SaleFormProps> = ({
     if (formData.shippingType === 'local' && formData.localShippingOption === 'pzexpress' && !formData.localAddress?.trim()) {
       newErrors.localAddress = 'La dirección es requerida para PZ Express';
     }
+
+    // Validate sale items
+    if (formData.saleItems.some(item => !item.itemId || item.quantity <= 0)) {
+      newErrors.saleItems = 'Todos los productos deben tener un artículo seleccionado y cantidad mayor a 0';
+    }
+
+    // Validate extras
+    if (formData.extras.some(extra => extra.price < 0)) {
+      newErrors.extras = 'El precio de los extras no puede ser negativo';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -107,7 +179,13 @@ const SaleForm: React.FC<SaleFormProps> = ({
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit(formData);
+      // Update backward compatibility items array
+      const itemIds = formData.saleItems.map(saleItem => saleItem.itemId);
+      const submitData = {
+        ...formData,
+        items: itemIds
+      };
+      onSubmit(submitData);
     }
   };
 
@@ -140,6 +218,19 @@ const SaleForm: React.FC<SaleFormProps> = ({
     { value: 'correos', label: 'Correos' }
   ];
 
+  const extraCategoryOptions = [
+    { value: 'botones', label: 'Botones' },
+    { value: 'tira-absorbente', label: 'Tira absorbente' },
+    { value: 'nombre-bordado', label: 'Nombre bordado' },
+    { value: 'personalizado', label: 'Personalizado' },
+    { value: 'nombre-vinil', label: 'Nombre vinil' }
+  ];
+
+  const itemOptions = items.map(item => ({
+    value: item.id,
+    label: `${item.name} - $${item.price}`
+  }));
+
   const getSocialMediaPlaceholder = () => {
     switch (formData.socialMediaPlatform) {
       case 'facebook':
@@ -155,7 +246,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Basic Information */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Nombre"
@@ -197,28 +289,170 @@ const SaleForm: React.FC<SaleFormProps> = ({
             fullWidth
           />
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Número de Rastreo"
-            value={formData.trackingNumber}
-            onChange={(e) => handleChange('trackingNumber', e.target.value)}
-            placeholder="Número de seguimiento"
-            fullWidth
-          />
-          
-          <Input
-            label="Monto Total ($)"
-            type="number"
-            value={formData.totalAmount.toString()}
-            onChange={(e) => handleNumberChange('totalAmount', e.target.value)}
-            min="0"
-            step="0.01"
-            error={errors.totalAmount}
-            required
-            fullWidth
-          />
+
+        {/* Products Section */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Productos Vendidos
+            </h3>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={addSaleItem}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Agregar Producto
+            </Button>
+          </div>
+
+          {formData.saleItems.map((saleItem, index) => {
+            const selectedItem = items.find(item => item.id === saleItem.itemId);
+            const subtotal = selectedItem ? selectedItem.price * saleItem.quantity : 0;
+
+            return (
+              <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Producto {index + 1}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => removeSaleItem(index)}
+                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    aria-label="Eliminar producto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <Select
+                      label="Artículo"
+                      value={saleItem.itemId}
+                      onChange={(value) => updateSaleItem(index, 'itemId', value)}
+                      options={itemOptions}
+                      required
+                      fullWidth
+                    />
+                  </div>
+
+                  <Input
+                    label="Cantidad"
+                    type="number"
+                    value={saleItem.quantity.toString()}
+                    onChange={(e) => updateSaleItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                    min="1"
+                    step="1"
+                    required
+                    fullWidth
+                  />
+                </div>
+
+                {selectedItem && (
+                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-blue-900 dark:text-blue-300">
+                        Precio unitario: ${selectedItem.price}
+                      </span>
+                      <span className="font-semibold text-blue-900 dark:text-blue-200">
+                        Subtotal: ${subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {errors.saleItems && (
+            <p className="text-sm text-red-600 dark:text-red-400">{errors.saleItems}</p>
+          )}
         </div>
+
+        {/* Extras Section */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Extras
+            </h3>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={addExtra}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Agregar Extra
+            </Button>
+          </div>
+
+          {formData.extras.map((extra, index) => (
+            <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between items-start mb-3">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Extra {index + 1}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => removeExtra(index)}
+                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                  aria-label="Eliminar extra"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Select
+                  label="Categoría"
+                  value={extra.category}
+                  onChange={(value) => updateExtra(index, 'category', value as SaleExtra['category'])}
+                  options={extraCategoryOptions}
+                  required
+                  fullWidth
+                />
+
+                <Input
+                  label="Precio ($)"
+                  type="number"
+                  value={extra.price.toString()}
+                  onChange={(e) => updateExtra(index, 'price', parseFloat(e.target.value) || 0)}
+                  min="0"
+                  step="0.01"
+                  required
+                  fullWidth
+                />
+              </div>
+            </div>
+          ))}
+
+          {errors.extras && (
+            <p className="text-sm text-red-600 dark:text-red-400">{errors.extras}</p>
+          )}
+        </div>
+
+        {/* Total Amount Display */}
+        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border border-green-200 dark:border-green-700">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold text-green-900 dark:text-green-300">
+              Total de la Venta:
+            </span>
+            <span className="text-xl font-bold text-green-900 dark:text-green-200">
+              ${formData.totalAmount.toFixed(2)}
+            </span>
+          </div>
+        </div>
+        
+        <Input
+          label="Número de Rastreo"
+          value={formData.trackingNumber}
+          onChange={(e) => handleChange('trackingNumber', e.target.value)}
+          placeholder="Número de seguimiento"
+          fullWidth
+        />
         
         <div className="flex items-center">
           <input
@@ -285,33 +519,6 @@ const SaleForm: React.FC<SaleFormProps> = ({
               placeholder="Detalles adicionales del envío"
               fullWidth
             />
-          </div>
-        )}
-
-        {items.length > 0 && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
-              Artículos Vendidos
-            </label>
-            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200 dark:bg-gray-700">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center mb-2 last:mb-0">
-                  <input
-                    type="checkbox"
-                    id={`item-${item.id}`}
-                    checked={formData.items.includes(item.id)}
-                    onChange={() => handleItemToggle(item.id)}
-                    className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor={`item-${item.id}`}
-                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
-                  >
-                    {item.name} - ${item.price}
-                  </label>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>
