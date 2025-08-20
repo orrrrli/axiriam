@@ -158,8 +158,8 @@ const ItemForm: React.FC<ItemFormProps> = ({
           <Input
             label="Cantidad"
             type="number"
-            value={formData.quantity.toString()}
-            onChange={(e) => handleNumberChange('quantity', e.target.value)}
+            value={formData.quantity === 0 ? '' : formData.quantity.toString()}
+            onChange={(e) => handleNumberChange('quantity', e.target.value === '' ? '0' : e.target.value)}
             min="0"
             step="1"
             error={errors.quantity}
@@ -170,8 +170,8 @@ const ItemForm: React.FC<ItemFormProps> = ({
           <Input
             label="Precio ($)"
             type="number"
-            value={formData.price.toString()}
-            onChange={(e) => handleNumberChange('price', e.target.value)}
+            value={formData.price === 0 ? '' : formData.price.toString()}
+            onChange={(e) => handleNumberChange('price', e.target.value === '' ? '0' : e.target.value)}
             min="0"
             step="0.01"
             error={errors.price}

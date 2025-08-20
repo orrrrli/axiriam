@@ -264,8 +264,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Ancho (m)"
             type="number"
-            value={formatNumber(formData.width)}
-            onChange={(e) => handleNumberChange('width', e.target.value)}
+            value={formData.width === 0 ? '' : formatNumber(formData.width)}
+            onChange={(e) => handleNumberChange('width', e.target.value === '' ? '0' : e.target.value)}
             min="0.001"
             step="0.001"
             placeholder="Ej: 1.5"
@@ -277,8 +277,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Alto (m)"
             type="number"
-            value={formatNumber(formData.height)}
-            onChange={(e) => handleNumberChange('height', e.target.value)}
+            value={formData.height === 0 ? '' : formatNumber(formData.height)}
+            onChange={(e) => handleNumberChange('height', e.target.value === '' ? '0' : e.target.value)}
             min="0.001"
             step="0.001"
             placeholder="Ej: 2"
@@ -305,8 +305,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Cantidad"
             type="number"
-            value={formatNumber(formData.quantity, formData.unit === 'piezas')}
-            onChange={(e) => handleNumberChange('quantity', e.target.value)}
+           value={formData.quantity === 0 ? '' : formatNumber(formData.quantity, formData.unit === 'piezas')}
+           onChange={(e) => handleNumberChange('quantity', e.target.value === '' ? '0' : e.target.value)}
             min="0"
             step={getStepValue('quantity')}
             error={errors.quantity}
@@ -336,8 +336,8 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           <Input
             label="Precio ($)"
             type="number"
-            value={formatNumber(formData.price)}
-            onChange={(e) => handleNumberChange('price', e.target.value)}
+            value={formData.price === 0 ? '' : formatNumber(formData.price)}
+            onChange={(e) => handleNumberChange('price', e.target.value === '' ? '0' : e.target.value)}
             min="0"
             step="0.01"
             error={errors.price}

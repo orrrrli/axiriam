@@ -212,10 +212,11 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                 <Input
                   label="Cantidad"
                   type="number"
-                  value={formatNumber(material.quantity, true)}
-                  onChange={(e) =>
-                    handleMaterialQuantityChange(materialIndex, parseInt(e.target.value) || 1)
-                  }
+                 value={material.quantity === 0 ? '' : formatNumber(material.quantity, true)}
+                 onChange={(e) => {
+                   const value = e.target.value === '' ? 1 : parseInt(e.target.value);
+                   handleMaterialQuantityChange(materialIndex, value);
+                 }}
                   min="1"
                   step="1"
                   placeholder="Ej: 5"
@@ -243,13 +244,13 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      )}
+                      value={design.width === 0 ? '' : formatNumber(design.width)}
                     </div>
 
                     <Select
                       label="Seleccionar Tela"
                       value={design.rawMaterialId}
-                      onChange={(value) =>
+                          e.target.value === '' ? 1 : parseFloat(e.target.value)
                         handleDesignChange(materialIndex, designIndex, 'rawMaterialId', value)
                       }
                       options={materialOptions}
@@ -261,13 +262,13 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                       <Input
                         label="Alto (m)"
                         type="number"
-                        value={formatNumber(design.height)}
+                       value={design.height === 0 ? '' : formatNumber(design.height)}
                         onChange={(e) =>
                           handleDesignChange(
                             materialIndex,
                             designIndex,
                             'height',
-                            parseFloat(e.target.value) || 1
+                           e.target.value === '' ? 1 : parseFloat(e.target.value)
                           )
                         }
                         min="0.001"

@@ -80,7 +80,8 @@ export interface SaleItem {
 }
 
 export interface SaleExtra {
-  category: 'botones' | 'tira-absorbente' | 'nombre-bordado' | 'personalizado' | 'nombre-vinil';
+  id?: string;
+  description: string;
   price: number;
 }
 

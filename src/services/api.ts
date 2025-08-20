@@ -181,25 +181,29 @@ class ApiService {
 
   // Sales API
   async getSales() {
-    return this.request<any[]>('/sales');
+    const sales = await this.request<any[]>('/sales');
+    return sales;
   }
 
   async getSale(id: string) {
-    return this.request<any>(`/sales/${id}`);
+    const sale = await this.request<any>(`/sales/${id}`);
+    return sale;
   }
 
   async createSale(data: any) {
-    return this.request<any>('/sales', {
+    const sale = await this.request<any>('/sales', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return sale;
   }
 
   async updateSale(id: string, data: any) {
-    return this.request<any>(`/sales/${id}`, {
+    const sale = await this.request<any>(`/sales/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    return sale;
   }
 
   async deleteSale(id: string) {
@@ -210,6 +214,18 @@ class ApiService {
 
   async getSalesByStatus(status: string) {
     return this.request<any[]>(`/sales/status/${status}`);
+  }
+
+  // Extras API
+  async getExtras() {
+    return this.request<any[]>('/extras');
+  }
+
+  async createExtra(data: any) {
+    return this.request<any>('/extras', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   // Dashboard API
