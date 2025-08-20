@@ -113,7 +113,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
   // Extras Management
   const addExtra = () => {
     const newExtra: SaleExtra = {
-      category: 'botones',
+      description: 'Botones',
       price: 0
     };
     setFormData(prev => ({
@@ -219,11 +219,11 @@ const SaleForm: React.FC<SaleFormProps> = ({
   ];
 
   const extraCategoryOptions = [
-    { value: 'botones', label: 'Botones' },
-    { value: 'tira-absorbente', label: 'Tira absorbente' },
-    { value: 'nombre-bordado', label: 'Nombre bordado' },
-    { value: 'personalizado', label: 'Personalizado' },
-    { value: 'nombre-vinil', label: 'Nombre vinil' }
+    { value: 'Botones', label: 'Botones' },
+    { value: 'Tira absorbente', label: 'Tira absorbente' },
+    { value: 'Nombre bordado', label: 'Nombre bordado' },
+    { value: 'Personalizado', label: 'Personalizado' },
+    { value: 'Nombre vinil', label: 'Nombre vinil' }
   ];
 
   const itemOptions = items.map(item => ({
@@ -342,8 +342,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
                   <Input
                     label="Cantidad"
                     type="number"
-                    value={saleItem.quantity.toString()}
-                    onChange={(e) => updateSaleItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                    value={saleItem.quantity === 0 ? '' : saleItem.quantity.toString()}
+                    onChange={(e) => updateSaleItem(index, 'quantity', e.target.value === '' ? 1 : parseInt(e.target.value))}
                     min="1"
                     step="1"
                     required
@@ -408,8 +408,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select
                   label="Categoría"
-                  value={extra.category}
-                  onChange={(value) => updateExtra(index, 'category', value as SaleExtra['category'])}
+                  value={extra.description}
+                  onChange={(value) => updateExtra(index, 'description', value)}
                   options={extraCategoryOptions}
                   required
                   fullWidth
@@ -418,8 +418,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
                 <Input
                   label="Precio ($)"
                   type="number"
-                  value={extra.price.toString()}
-                  onChange={(e) => updateExtra(index, 'price', parseFloat(e.target.value) || 0)}
+                  value={extra.price === 0 ? '' : extra.price.toString()}
+                  onChange={(e) => updateExtra(index, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                   min="0"
                   step="0.01"
                   required

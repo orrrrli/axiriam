@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { Item, RawMaterial, ItemFormData, RawMaterialFormData, OrderMaterial, OrderMaterialFormData, Sale, SaleFormData } from '../types';
+import { Item, RawMaterial, ItemFormData, RawMaterialFormData, OrderMaterial, OrderMaterialFormData, Sale, SaleFormData, SaleExtra } from '../types';
 import { apiService } from '../services/api';
 
 // Define the state type
@@ -8,6 +8,7 @@ interface InventoryState {
   rawMaterials: RawMaterial[];
   orderMaterials: OrderMaterial[];
   sales: Sale[];
+  extras: SaleExtra[];
   isLoading: boolean;
   error: string | null;
 }
@@ -18,6 +19,7 @@ type InventoryAction =
   | { type: 'SET_RAW_MATERIALS'; payload: RawMaterial[] }
   | { type: 'SET_ORDER_MATERIALS'; payload: OrderMaterial[] }
   | { type: 'SET_SALES'; payload: Sale[] }
+  | { type: 'SET_EXTRAS'; payload: SaleExtra[] }
   | { type: 'ADD_ITEM'; payload: Item }
   | { type: 'UPDATE_ITEM'; payload: Item }
   | { type: 'DELETE_ITEM'; payload: string }
@@ -60,6 +62,7 @@ const initialState: InventoryState = {
   rawMaterials: [],
   orderMaterials: [],
   sales: [],
+  extras: [],
   isLoading: false,
   error: null
 };
@@ -78,6 +81,8 @@ const inventoryReducer = (state: InventoryState, action: InventoryAction): Inven
       return { ...state, orderMaterials: action.payload };
     case 'SET_SALES':
       return { ...state, sales: action.payload };
+    case 'SET_EXTRAS':
+      return { ...state, extras: action.payload };
     case 'ADD_ITEM':
       return { ...state, items: [...state.items, action.payload] };
     case 'UPDATE_ITEM':
@@ -236,7 +241,9 @@ const transformToApiData = {
     local_address: data.localAddress,
     national_shipping_carrier: data.nationalShippingCarrier,
     shipping_description: data.shippingDescription,
-    total_amount: data.totalAmount
+    total_amount: data.totalAmount,
+    sale_items: data.saleItems,
+    extras: data.extras
   })
 };
 
@@ -250,17 +257,19 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     dispatch({ type: 'SET_ERROR', payload: null });
     
     try {
-      const [items, rawMaterials, orderMaterials, sales] = await Promise.all([
+      const [items, rawMaterials, orderMaterials, sales, extras] = await Promise.all([
         apiService.getItems(),
         apiService.getRawMaterials(),
         apiService.getOrderMaterials(),
-        apiService.getSales()
+        apiService.getSales(),
+        apiService.getExtras()
       ]);
 
       dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
       dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
       dispatch({ type: 'SET_ORDER_MATERIALS', payload: orderMaterials.map(transformApiData.orderMaterial) });
       dispatch({ type: 'SET_SALES', payload: sales.map(transformApiData.sale) });
+      dispatch({ type: 'SET_EXTRAS', payload: extras });
     } catch (error) {
       console.error('Failed to load data:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load data' });

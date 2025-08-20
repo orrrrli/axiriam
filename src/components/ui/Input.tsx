@@ -12,9 +12,20 @@ const Input: React.FC<InputProps> = ({
   fullWidth = false,
   className,
   id,
+  type,
   ...props
 }) => {
   const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
+  
+  // Handle numeric input behavior
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (type === 'number' && e.target.value === '0') {
+      e.target.select();
+    }
+    if (props.onFocus) {
+      props.onFocus(e);
+    }
+  };
   
   return (
     <div className={`mb-4 ${fullWidth ? 'w-full' : ''}`}>
@@ -28,6 +39,8 @@ const Input: React.FC<InputProps> = ({
       )}
       <input
         id={inputId}
+        type={type}
+        onFocus={handleFocus}
         className={`
           px-3 py-2 bg-white dark:bg-gray-900 
           border shadow-sm border-gray-300 dark:border-gray-600 

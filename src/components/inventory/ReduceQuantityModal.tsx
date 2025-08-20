@@ -70,9 +70,9 @@ const ReduceQuantityModal: React.FC<ReduceQuantityModalProps> = ({
         <Input
           label="Cantidad a reducir"
           type="number"
-          value={quantity.toString()}
+         value={quantity === 0 ? '' : quantity.toString()}
           onChange={(e) => {
-            setQuantity(parseInt(e.target.value) || 1);
+           setQuantity(e.target.value === '' ? 1 : parseInt(e.target.value));
             setError('');
           }}
           min="1"
