@@ -151,6 +151,22 @@ const OrderMaterials: React.FC = () => {
       )
     },
     {
+      header: 'Paqueteria',
+      accessor: (order: OrderMaterial) => (
+        <Badge variant={getStatusBadgeVariant(order.status)}>
+          {getStatusLabel(order.status)}
+        </Badge>
+      )
+    },
+        {
+      header: '',
+      accessor: (order: OrderMaterial) => (
+        <Badge variant={getStatusBadgeVariant(order.status)}>
+          {getStatusLabel(order.status)}
+        </Badge>
+      )
+    },
+    {
       header: 'Fecha de Creación',
       accessor: (order: OrderMaterial) => formatDate(order.createdAt),
       className: 'text-gray-700 dark:text-gray-300'

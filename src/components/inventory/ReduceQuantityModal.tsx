@@ -56,8 +56,8 @@ const ReduceQuantityModal: React.FC<ReduceQuantityModalProps> = ({
     >
       <form onSubmit={handleSubmit}>
         <div className="text-center mb-6">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900 mb-4">
-            <MinusCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-red-600 mb-4">
+            <MinusCircle className="h-6 w-6 " />
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {item.name}

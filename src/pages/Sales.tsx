@@ -232,7 +232,9 @@ const Sales: React.FC = () => {
               nationalShippingCarrier: currentSale.nationalShippingCarrier,
               shippingDescription: currentSale.shippingDescription,
               totalAmount: currentSale.totalAmount,
-              items: currentSale.items
+              items: currentSale.items,
+              saleItems: currentSale.saleItems,
+              extras: currentSale.extras,
             }}
             onSubmit={handleEditSale}
             onCancel={() => setIsEditModalOpen(false)}

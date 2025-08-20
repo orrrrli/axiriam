@@ -209,19 +209,6 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
 
               {/* Material Quantity */}
               <div className="mb-4">
-                <Input
-                  label="Cantidad"
-                  type="number"
-                  value={formatNumber(material.quantity, true)}
-                  onChange={(e) =>
-                    handleMaterialQuantityChange(materialIndex, parseInt(e.target.value) || 1)
-                  }
-                  min="1"
-                  step="1"
-                  placeholder="Ej: 5"
-                  required
-                  fullWidth
-                />
               </div>
 
               <div className="mt-4 space-y-4">
