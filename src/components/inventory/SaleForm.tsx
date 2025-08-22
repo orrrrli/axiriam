@@ -219,11 +219,11 @@ const SaleForm: React.FC<SaleFormProps> = ({
   ];
 
   const extraCategoryOptions = [
-    { value: 'Botones', label: 'Botones' },
-    { value: 'Tira absorbente', label: 'Tira absorbente' },
-    { value: 'Nombre bordado', label: 'Nombre bordado' },
-    { value: 'Personalizado', label: 'Personalizado' },
-    { value: 'Nombre vinil', label: 'Nombre vinil' }
+    { value: 'botones', label: 'Botones' },
+    { value: 'tira-absorbente', label: 'Tira absorbente' },
+    { value: 'nombre-bordado', label: 'Nombre bordado' },
+    { value: 'personalizado', label: 'Personalizado' },
+    { value: 'nombre-vinil', label: 'Nombre vinil' }
   ];
 
   const itemOptions = items.map(item => ({
