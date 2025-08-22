@@ -212,6 +212,15 @@ const transformApiData = {
     nationalShippingCarrier: apiSale.national_shipping_carrier,
     shippingDescription: apiSale.shipping_description,
     totalAmount: parseFloat(apiSale.total_amount),
+    saleItems: apiSale.sale_items ? apiSale.sale_items.map((saleItem: any) => ({
+      itemId: saleItem.item_id,
+      quantity: saleItem.quantity
+    })) : [],
+    extras: apiSale.sale_extras ? apiSale.sale_extras.map((saleExtra: any) => ({
+      id: saleExtra.id,
+      description: saleExtra.extras.description,
+      price: saleExtra.extras.price
+    })) : [],
     createdAt: new Date(apiSale.created_at),
     updatedAt: new Date(apiSale.updated_at)
   })
