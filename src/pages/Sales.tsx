@@ -201,7 +201,9 @@ const Sales: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         title="Nueva Venta"
         size="xl"
-      >
+            items: currentSale.items,
+            saleItems: currentSale.saleItems || [],
+            extras: currentSale.extras || []
         <SaleForm
           onSubmit={handleAddSale}
           onCancel={() => setIsAddModalOpen(false)}
