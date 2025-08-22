@@ -257,19 +257,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     dispatch({ type: 'SET_ERROR', payload: null });
     
     try {
-      const [items, rawMaterials, orderMaterials, sales, extras] = await Promise.all([
+      const [items, rawMaterials, orderMaterials, sales] = await Promise.all([
         apiService.getItems(),
         apiService.getRawMaterials(),
         apiService.getOrderMaterials(),
         apiService.getSales(),
-        apiService.getExtras()
       ]);
 
       dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
       dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
       dispatch({ type: 'SET_ORDER_MATERIALS', payload: orderMaterials.map(transformApiData.orderMaterial) });
       dispatch({ type: 'SET_SALES', payload: sales.map(transformApiData.sale) });
-      dispatch({ type: 'SET_EXTRAS', payload: extras });
     } catch (error) {
       console.error('Failed to load data:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load data' });

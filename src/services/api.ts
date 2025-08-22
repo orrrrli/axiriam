@@ -216,17 +216,6 @@ class ApiService {
     return this.request<any[]>(`/sales/status/${status}`);
   }
 
-  // Extras API
-  async getExtras() {
-    return this.request<any[]>('/extras');
-  }
-
-  async createExtra(data: any) {
-    return this.request<any>('/extras', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
 
   // Dashboard API
   async getDashboardStats() {
