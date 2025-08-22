@@ -9,8 +9,6 @@ interface SaleDetailProps {
 }
 
 const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
-  const soldItems = items.filter(item => sale.items.includes(item.id));
-  
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'pending':
@@ -28,6 +26,16 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
     const platform = sale.socialMediaPlatform.charAt(0).toUpperCase() + sale.socialMediaPlatform.slice(1);
     return `${platform}: ${sale.socialMediaUsername}`;
   };
+
+  // Calculate totals
+  const itemsTotal = sale.saleItems?.reduce((total, saleItem) => {
+    const item = items.find(item => item.id === saleItem.itemId);
+    return total + (item ? item.price * saleItem.quantity : 0);
+  }, 0) || 0;
+
+  const extrasTotal = sale.extras?.reduce((total, extra) => {
+    return total + extra.price;
+  }, 0) || 0;
   
   return (
     <div className="space-y-6">
@@ -111,21 +119,103 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
       
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Artículos Vendidos</h4>
-        {soldItems.length > 0 ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
-            {soldItems.map(item => (
-              <li key={item.id} className="p-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(item.price)}</span>
+        {sale.saleItems && sale.saleItems.length > 0 ? (
+          <div className="space-y-2">
+            {sale.saleItems.map((saleItem, index) => {
+              const item = items.find(item => item.id === saleItem.itemId);
+              const subtotal = item ? item.price * saleItem.quantity : 0;
+              
+              return (
+                <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {item?.name || 'Artículo no encontrado'}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatCurrency(subtotal)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {item?.description || 'Sin descripción'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatCurrency(item?.price || 0)} × {saleItem.quantity}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.description}</p>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-700">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                  Subtotal Artículos:
+                </span>
+                <span className="text-sm font-bold text-blue-900 dark:text-blue-200">
+                  {formatCurrency(itemsTotal)}
+                </span>
+              </div>
+            </div>
+          </div>
         ) : (
           <p className="text-sm text-gray-500 dark:text-gray-400">No se especificaron artículos</p>
         )}
+      </div>
+
+      {/* Extras Section */}
+      {sale.extras && sale.extras.length > 0 && (
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Extras</h4>
+          <div className="space-y-2">
+            {sale.extras.map((extra, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                    {extra.description}
+                  </span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {formatCurrency(extra.price)}
+                  </span>
+                </div>
+              </div>
+            ))}
+            
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-md border border-purple-200 dark:border-purple-700">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-purple-900 dark:text-purple-300">
+                  Subtotal Extras:
+                </span>
+                <span className="text-sm font-bold text-purple-900 dark:text-purple-200">
+                  {formatCurrency(extrasTotal)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Total Summary */}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border border-green-200 dark:border-green-700">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold text-green-900 dark:text-green-300">
+              Total de la Venta:
+            </span>
+            <span className="text-xl font-bold text-green-900 dark:text-green-200">
+              {formatCurrency(sale.totalAmount)}
+            </span>
+          </div>
+          {(itemsTotal + extrasTotal !== sale.totalAmount) && (
+            <p className="text-xs text-green-700 dark:text-green-400 mt-1">
+              * El total puede incluir ajustes adicionales
+            </p>
+          )}
+        </div>
       </div>
       
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
