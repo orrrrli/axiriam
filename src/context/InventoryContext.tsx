@@ -216,11 +216,23 @@ const transformApiData = {
       itemId: saleItem.item_id,
       quantity: saleItem.quantity
     })) : [],
-    extras: apiSale.sale_extras ? apiSale.sale_extras.map((saleExtra: any) => ({
-      id: saleExtra.id,
-      description: saleExtra.extras.description,
-      price: saleExtra.extras.price
-    })) : [],
+    extras: (() => {
+      // Handle both sale_extras (detailed) and extras (simplified) formats
+      if (apiSale.sale_extras && Array.isArray(apiSale.sale_extras)) {
+        return apiSale.sale_extras.map((saleExtra: any) => ({
+          id: saleExtra.id,
+          description: saleExtra.extras?.description || saleExtra.extra?.description || 'Unknown',
+          price: saleExtra.extras?.price || saleExtra.extra?.price || 0
+        }));
+      } else if (apiSale.extras && Array.isArray(apiSale.extras)) {
+        return apiSale.extras.map((extra: any) => ({
+          id: extra.id || extra.extra_id,
+          description: extra.description || extra.extra?.description || 'Unknown',
+          price: extra.price !== null ? extra.price : (extra.extra?.price || 0)
+        }));
+      }
+      return [];
+    })(),
     createdAt: new Date(apiSale.created_at),
     updatedAt: new Date(apiSale.updated_at)
   })

@@ -10,9 +10,10 @@ interface SaleDetailProps {
 
 
 const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
-    console.log('🔍 SaleDetail - Datos recibidos:');
-    console.log('📋 Sale objeto completo:', JSON.stringify(sale, null, 2));
-    console.log('🛍️ Items array:', JSON.stringify(items, null, 2));
+  console.log('🔍 SaleDetail - Datos recibidos:');
+  console.log('📋 Sale objeto completo:', JSON.stringify(sale, null, 2));
+  console.log('🛍️ Items array:', JSON.stringify(items, null, 2));
+  console.log('🎁 Extras array:', JSON.stringify(sale.extras, null, 2));
     
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
