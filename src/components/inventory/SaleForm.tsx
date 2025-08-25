@@ -162,7 +162,9 @@ const SaleForm: React.FC<SaleFormProps> = ({
     }
 
     // Validate sale items
-    if (formData.saleItems.some(item => !item.itemId || item.quantity <= 0)) {
+    if (formData.saleItems.length === 0) {
+      newErrors.saleItems = 'Debe agregar al menos un producto';
+    } else if (formData.saleItems.some(item => !item.itemId || item.quantity <= 0)) {
       newErrors.saleItems = 'Todos los productos deben tener un artículo seleccionado y cantidad mayor a 0';
     }
 
@@ -522,6 +524,23 @@ const SaleForm: React.FC<SaleFormProps> = ({
           </div>
         )}
       </div>
+
+      {/* Error Summary - Show all validation errors at bottom */}
+      {Object.keys(errors).length > 0 && (
+        <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md">
+          <h4 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
+            Por favor corrige los siguientes errores:
+          </h4>
+          <ul className="text-sm text-red-700 dark:text-red-400 space-y-1">
+            {Object.entries(errors).map(([field, error]) => (
+              <li key={field} className="flex items-start">
+                <span className="text-red-500 mr-2">•</span>
+                {error}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-6 flex justify-end space-x-3">
         <Button 
