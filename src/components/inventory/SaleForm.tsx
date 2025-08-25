@@ -220,10 +220,10 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   const extraCategoryOptions = [
     { value: 'botones', label: 'Botones' },
-    { value: 'tira-absorbente', label: 'Tira absorbente' },
-    { value: 'nombre-bordado', label: 'Nombre bordado' },
+    { value: 'tira absorbente', label: 'Tira absorbente' },
+    { value: 'nombre bordado', label: 'Nombre bordado' },
     { value: 'personalizado', label: 'Personalizado' },
-    { value: 'nombre-vinil', label: 'Nombre vinil' }
+    { value: 'nombre vinil', label: 'Nombre vinil' }
   ];
 
   const itemOptions = items.map(item => ({
@@ -343,8 +343,8 @@ const SaleForm: React.FC<SaleFormProps> = ({
                     label="Cantidad"
                     type="number"
                     value={saleItem.quantity === 0 ? '' : saleItem.quantity.toString()}
-                    onChange={(e) => updateSaleItem(index, 'quantity', e.target.value === '' ? 1 : parseInt(e.target.value))}
-                    min="1"
+                    onChange={(e) => updateSaleItem(index, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                    min="0"
                     step="1"
                     required
                     fullWidth
@@ -421,7 +421,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
                   value={extra.price === 0 ? '' : extra.price.toString()}
                   onChange={(e) => updateExtra(index, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                   min="0"
-                  step="0.01"
+                  step="1"
                   required
                   fullWidth
                 />

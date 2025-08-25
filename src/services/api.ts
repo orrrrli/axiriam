@@ -188,6 +188,7 @@ class ApiService {
   async getSale(id: string) {
     const sale = await this.request<any>(`/sales/${id}`);
     return sale;
+    
   }
 
   async createSale(data: any) {

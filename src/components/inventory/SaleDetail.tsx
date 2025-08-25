@@ -8,7 +8,12 @@ interface SaleDetailProps {
   items: Item[];
 }
 
+
 const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
+    console.log('🔍 SaleDetail - Datos recibidos:');
+    console.log('📋 Sale objeto completo:', JSON.stringify(sale, null, 2));
+    console.log('🛍️ Items array:', JSON.stringify(items, null, 2));
+    
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'pending':
