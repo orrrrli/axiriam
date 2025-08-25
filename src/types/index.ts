@@ -2,7 +2,7 @@ export interface Item {
   id: string;
   name: string;
   category: 'sencillo' | 'doble-vista' | 'completo';
-  type: 'sencillo-algodon' | 'completo-algodon' | 'stretch'; // New field for item type
+  type: 'algodon' | 'normal' | 'microfibra'; // New field for item type
   description: string;
   quantity: number;
   price: number;
@@ -18,7 +18,6 @@ export interface RawMaterial {
   width: number; // in meters
   height: number; // in meters
   quantity: number; // quantity in stock
-  unit: string; // unit of measurement (e.g., 'm²', 'metros', 'piezas')
   price: number;
   supplier: string;
   imageUrl?: string; // Optional design image URL

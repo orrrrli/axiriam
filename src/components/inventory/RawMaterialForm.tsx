@@ -23,7 +23,6 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
     width: 0,
     height: 0,
     quantity: 0,
-    unit: 'm²',
     price: 0,
     supplier: '',
     imageUrl: ''
@@ -149,7 +148,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   ];
 
   const getStepValue = (field: string) => {
-    if (field === 'quantity' && formData.unit === 'piezas') {
+    if (field === 'quantity') {
       return "1";
     }
     return "0.001";
@@ -303,9 +302,9 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Cantidad"
+            label="Gorritos resultantes"
             type="number"
-           value={formData.quantity === 0 ? '' : formatNumber(formData.quantity, formData.unit === 'piezas')}
+           value={formData.quantity === 0 ? '' : formatNumber(formData.quantity)}
            onChange={(e) => handleNumberChange('quantity', e.target.value === '' ? '0' : e.target.value)}
             min="0"
             step={getStepValue('quantity')}
@@ -313,25 +312,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
             required
             fullWidth
           />
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Unidad
-            </label>
-            <select
-              value={formData.unit}
-              onChange={(e) => handleChange('unit', e.target.value)}
-              className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
-            >
-              {unitOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
-        
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Precio ($)"

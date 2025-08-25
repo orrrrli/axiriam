@@ -25,7 +25,7 @@ const RawMaterialDetail: React.FC<RawMaterialDetailProps> = ({ material, items }
       <div className="space-y-2">
         <div className="flex justify-between items-start">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">{material.name}</h3>
-          <Badge>{formatNumber(material.quantity, material.unit === 'piezas')} {material.unit}</Badge>
+          <Badge>{formatNumber(material.quantity)}</Badge>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">{material.description}</p>
       </div>
@@ -62,15 +62,10 @@ const RawMaterialDetail: React.FC<RawMaterialDetailProps> = ({ material, items }
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Cantidad</span>
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Cantidad de gorritos</span>
           <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
-            {formatNumber(material.quantity, material.unit === 'piezas')} {material.unit}
+            {formatNumber(material.quantity)}
           </span>
-        </div>
-        
-        <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Área Total</span>
-          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">{formatNumber(totalArea)} m²</span>
         </div>
       </div>
       

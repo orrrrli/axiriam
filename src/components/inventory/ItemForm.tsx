@@ -22,7 +22,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
   const defaultFormData: ItemFormData = {
     name: '',
     category: 'sencillo',
-    type: 'sencillo-algodon',
+    type: 'algodon',
     description: '',
     quantity: 0,
     price: 0,
@@ -108,9 +108,9 @@ const ItemForm: React.FC<ItemFormProps> = ({
   ];
 
   const typeOptions = [
-    { value: 'sencillo-algodon', label: 'Sencillo algodón' },
-    { value: 'completo-algodon', label: 'Completo algodón' },
-    { value: 'stretch', label: 'Stretch' },
+    { value: 'algodon', label: 'Algodón' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'microfibra', label: 'Microfibra' },
   ];
 
   return (

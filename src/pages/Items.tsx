@@ -157,11 +157,11 @@ const Items: React.FC = () => {
   // Funciones para MATERIAL
   const getMaterialBadgeVariant = (type: string) => {
     switch (type) {
-      case 'sencillo-algodon':
+      case 'algodon':
         return 'success';
-      case 'completo-algodon':
+      case 'normal':
         return 'danger';
-      case 'stretch':
+      case 'microfibra':
         return 'default';
       default:
         return 'default';
@@ -170,12 +170,12 @@ const Items: React.FC = () => {
 
   const getMaterialLabel = (type: string) => {
     switch (type) {
-      case 'sencillo-algodon':
-        return 'Sencillo algodón';
-      case 'completo-algodon':
-        return 'Completo algodón';
-      case 'stretch':
-        return 'Stretch';
+      case 'algodon':
+        return 'Algodón';
+      case 'normal':
+        return 'Normal';
+      case 'microfibra':
+        return 'Microfibra';
       default:
         return type;
     }
@@ -186,7 +186,7 @@ const Items: React.FC = () => {
   };
 
   const isMaterialCategory = (type: string) => {
-    return ['sencillo-algodon', 'completo-algodon', 'stretch'].includes(type);
+    return ['algodon', 'normal', 'microfibra'].includes(type);
   };
   
   const columns: TableColumn<Item>[] = [
