@@ -217,21 +217,41 @@ const transformApiData = {
       quantity: saleItem.quantity
     })) : [],
     extras: (() => {
-      // Handle both sale_extras (detailed) and extras (simplified) formats
+      console.log('🔍 Transforming extras for sale:', apiSale.sale_id);
+      console.log('📋 Raw apiSale.sale_extras:', JSON.stringify(apiSale.sale_extras, null, 2));
+      console.log('📋 Raw apiSale.extras:', JSON.stringify(apiSale.extras, null, 2));
+      
+      let transformedExtras: any[] = [];
+      
+      // Priority 1: Use sale_extras if available (most detailed)
       if (apiSale.sale_extras && Array.isArray(apiSale.sale_extras)) {
-        return apiSale.sale_extras.map((saleExtra: any) => ({
-          id: saleExtra.id,
-          description: saleExtra.extras?.description || saleExtra.extra?.description || 'Unknown',
-          price: saleExtra.extras?.price || saleExtra.extra?.price || 0
-        }));
-      } else if (apiSale.extras && Array.isArray(apiSale.extras)) {
-        return apiSale.extras.map((extra: any) => ({
-          id: extra.id || extra.extra_id,
-          description: extra.description || extra.extra?.description || 'Unknown',
-          price: extra.price !== null ? extra.price : (extra.extra?.price || 0)
-        }));
+        transformedExtras = apiSale.sale_extras.map((saleExtra: any) => {
+          const extraData = saleExtra.extras || saleExtra.extra || {};
+          const result = {
+            id: saleExtra.id,
+            description: extraData.description || 'Unknown',
+            price: extraData.price !== undefined && extraData.price !== null ? extraData.price : 0
+          };
+          console.log('🎁 Transformed sale_extra:', result);
+          return result;
+        });
       }
-      return [];
+      // Priority 2: Use extras array if sale_extras not available
+      else if (apiSale.extras && Array.isArray(apiSale.extras)) {
+        transformedExtras = apiSale.extras.map((extra: any) => {
+          const extraData = extra.extra || extra;
+          const result = {
+            id: extra.id || extra.extra_id || extraData.id,
+            description: extra.description || extraData.description || 'Unknown',
+            price: extra.price !== undefined && extra.price !== null ? extra.price : (extraData.price || 0)
+          };
+          console.log('🎁 Transformed extra:', result);
+          return result;
+        });
+      }
+      
+      console.log('✅ Final transformed extras:', transformedExtras);
+      return transformedExtras;
     })(),
     createdAt: new Date(apiSale.created_at),
     updatedAt: new Date(apiSale.updated_at)

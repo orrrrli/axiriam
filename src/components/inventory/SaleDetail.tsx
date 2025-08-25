@@ -10,10 +10,22 @@ interface SaleDetailProps {
 
 
 const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
-  console.log('🔍 SaleDetail - Datos recibidos:');
-  console.log('📋 Sale objeto completo:', JSON.stringify(sale, null, 2));
-  console.log('🛍️ Items array:', JSON.stringify(items, null, 2));
-  console.log('🎁 Extras array:', JSON.stringify(sale.extras, null, 2));
+  console.log('🔍 SaleDetail - Rendering sale:', sale.saleId);
+  console.log('📋 Sale extras received:', JSON.stringify(sale.extras, null, 2));
+  console.log('🎁 Extras length:', sale.extras?.length || 0);
+  
+  // Debug each extra
+  if (sale.extras && sale.extras.length > 0) {
+    sale.extras.forEach((extra, index) => {
+      console.log(`🎁 Extra ${index + 1}:`, {
+        id: extra.id,
+        description: extra.description,
+        price: extra.price
+      });
+    });
+  } else {
+    console.log('❌ No extras found or extras array is empty');
+  }
     
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
