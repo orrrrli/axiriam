@@ -23,21 +23,21 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   const defaultFormData: OrderMaterialFormData = {
     materials: [
       {
-        designs: [{ rawMaterialId: '', height: 1, width: 1 }],
-        quantity: 1,
+        designs: [{ rawMaterialId: '', quantity: 1, }],
+        
       },
     ],
     distributor: '',
     description: '',
     status: 'pending',
+    parcel_service: 'Estafeta',
   };
 
   const [formData, setFormData] = useState<OrderMaterialFormData>(
     initialData || defaultFormData
   );
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof OrderMaterialFormData, string>>
-  >({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (initialData) {
@@ -47,14 +47,18 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
 
   const handleChange = (field: keyof OrderMaterialFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if (errors[field]) {
+      const newErrors = { ...errors };
+      delete newErrors[field];
+      setErrors(newErrors);
+    }
   };
 
   const handleDesignChange = (
     materialIndex: number,
     designIndex: number,
     field: keyof OrderMaterialFormData['materials'][number]['designs'][number],
-    value: any
+    value: string | number
   ) => {
     const updatedMaterials = [...formData.materials];
     updatedMaterials[materialIndex].designs[designIndex] = {
@@ -62,20 +66,50 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       [field]: value,
     };
     setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
+    
+    // Real-time validation for quantity
+    if (field === 'quantity') {
+      const fieldKey = `quantity_${materialIndex}_${designIndex}`;
+      const newFieldErrors = { ...fieldErrors };
+      
+      if (typeof value === 'number' && value <= 0) {
+        newFieldErrors[fieldKey] = 'La cantidad debe ser mayor a 0';
+      } else {
+        delete newFieldErrors[fieldKey];
+      }
+      
+      setFieldErrors(newFieldErrors);
+      
+      // Clear materials error if all quantity issues are resolved
+      if (errors.materials && Object.keys(newFieldErrors).length === 0) {
+        const newErrors = { ...errors };
+        delete newErrors.materials;
+        setErrors(newErrors);
+      }
+    }
+    
+    // Clear materials error for rawMaterialId changes
+    if (field === 'rawMaterialId' && value && errors.materials) {
+      // Check if all materials now have rawMaterialId selected
+      const allMaterialsSelected = updatedMaterials.every(m => 
+        m.designs.every(d => d.rawMaterialId)
+      );
+      
+      if (allMaterialsSelected) {
+        const newErrors = { ...errors };
+        delete newErrors.materials;
+        setErrors(newErrors);
+      }
+    }
   };
 
-  const handleMaterialQuantityChange = (materialIndex: number, quantity: number) => {
-    const updatedMaterials = [...formData.materials];
-    updatedMaterials[materialIndex].quantity = quantity;
-    setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
-  };
 
   const addMaterial = () => {
     setFormData((prev) => ({
       ...prev,
       materials: [
         ...prev.materials,
-        { designs: [{ rawMaterialId: '', height: 1, width: 1 }], quantity: 1 },
+        { designs: [{ rawMaterialId: '', quantity: 1 }]},
       ],
     }));
   };
@@ -93,8 +127,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     const updatedMaterials = [...formData.materials];
     updatedMaterials[materialIndex].designs.push({
       rawMaterialId: '',
-      height: 1,
-      width: 1,
+      quantity: 1,
     });
     setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
   };
@@ -122,12 +155,8 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
 
     if (
       formData.materials.some((m) =>
-        m.designs.some((d) => d.height <= 0 || d.width <= 0)
+        m.designs.some((d) => d.quantity <= 0)
       )
-    ) newErrors.materials = 'Alto y ancho deben ser mayores a 0';
-
-    if (
-      formData.materials.some((m) => m.quantity <= 0)
     ) newErrors.materials = 'La cantidad debe ser mayor a 0';
 
     setErrors(newErrors);
@@ -181,11 +210,6 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
         </div>
 
         {formData.materials.map((material, materialIndex) => {
-          const designsArea = material.designs.reduce(
-            (sum, d) => sum + d.height * d.width,
-            0
-          );
-
           return (
             <div
               key={materialIndex}
@@ -244,44 +268,27 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                       fullWidth
                     />
 
-                    <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="grid gap-3 mt-2">
                       <Input
-                        label="Alto (m)"
+                        label="Cantidad gorritos"
                         type="number"
-                        value={formatNumber(design.height)}
+                        value={formatNumber(design.quantity)}
                         onChange={(e) =>
                           handleDesignChange(
                             materialIndex,
                             designIndex,
-                            'height',
-                            parseFloat(e.target.value) || 1
+                            'quantity',
+                            parseFloat(e.target.value) || 0
                           )
                         }
-                        min="0.001"
-                        step="0.001"
-                        placeholder="Ej: 1.5"
+                        min="0"
+                        step="1"
+                        placeholder="Ej: 5"
                         required
                         fullWidth
+                        error={fieldErrors[`quantity_${materialIndex}_${designIndex}`]}
                       />
 
-                      <Input
-                        label="Ancho (m)"
-                        type="number"
-                        value={formatNumber(design.width)}
-                        onChange={(e) =>
-                          handleDesignChange(
-                            materialIndex,
-                            designIndex,
-                            'width',
-                            parseFloat(e.target.value) || 1
-                          )
-                        }
-                        min="0.001"
-                        step="0.001"
-                        placeholder="Ej: 2"
-                        required
-                        fullWidth
-                      />
                     </div>
                   </div>
                 ))}
@@ -304,25 +311,15 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     Cantidad total de este material:
                   </span>
                   <span className="text-sm font-bold text-green-900 dark:text-green-200">
-                    {formatNumber(material.quantity, true)} unidades
+                    {formatNumber(material.designs.reduce((total, design) => total + design.quantity, 0), true)} gorrito(s)
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-green-700 dark:text-green-400">
-                    Área total de diseños:
-                  </span>
-                  <span className="text-xs font-medium text-green-700 dark:text-green-300">
-                    {formatNumber(designsArea)} m²
-                  </span>
                 </div>
               </div>
             </div>
           );
         })}
-
-        {errors.materials && (
-          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.materials}</p>
-        )}
 
         <Input
           label="Distribuidor"
@@ -368,6 +365,27 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
           fullWidth
         />
       </div>
+      
+      {errors.materials && (
+        <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                Error en materiales
+              </h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                {errors.materials}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className="mt-6 flex justify-end space-x-3">
         <Button type="button" variant="outline" onClick={onCancel}>

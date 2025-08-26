@@ -137,7 +137,7 @@ const OrderMaterials: React.FC = () => {
     {
       header: 'Cantidad',
       accessor: (order: OrderMaterial) => {
-        const total = order.materials.reduce((sum, m) => sum + m.quantity, 0);
+        const total = order.materials.reduce((sum, m) => sum + m.designs.reduce((designTotal, design) => designTotal + design.quantity, 0), 0);
         return formatNumber(total, true);
       },
       className: 'text-gray-700 dark:text-gray-300'
@@ -152,19 +152,13 @@ const OrderMaterials: React.FC = () => {
     },
     {
       header: 'Paqueteria',
-      accessor: (order: OrderMaterial) => (
-        <Badge variant={getStatusBadgeVariant(order.status)}>
-          {getStatusLabel(order.status)}
-        </Badge>
-      )
+      accessor: (order: OrderMaterial) => order.parcel_service,
+      className: 'text-gray-700 dark:text-gray-300'
     },
         {
-      header: '',
-      accessor: (order: OrderMaterial) => (
-        <Badge variant={getStatusBadgeVariant(order.status)}>
-          {getStatusLabel(order.status)}
-        </Badge>
-      )
+      header: 'Proveedor',
+      accessor: (order: OrderMaterial) => order.distributor,
+      className: 'text-gray-700 dark:text-gray-300'
     },
     {
       header: 'Fecha de Creación',

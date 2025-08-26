@@ -140,12 +140,6 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
 
   const totalArea = formData.width * formData.height;
 
-  const unitOptions = [
-    { value: 'm²', label: 'm²' },
-    { value: 'metros', label: 'metros' },
-    { value: 'piezas', label: 'piezas' },
-    { value: 'rollos', label: 'rollos' }
-  ];
 
   const getStepValue = (field: string) => {
     if (field === 'quantity') {

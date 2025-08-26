@@ -24,7 +24,7 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
   
   const getTotalQuantity = () => {
     return order.materials.reduce((total, material) => {
-      return total + material.quantity;
+      return total + material.designs.reduce((designTotal, design) => designTotal + design.quantity, 0);
     }, 0);
   };
 
@@ -81,15 +81,15 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                 </h5>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    Cantidad: {formatNumber(materialGroup.quantity, true)}
-                  </p>
+                    Cantidad: {materialGroup.designs.reduce((total, design) => total + design.quantity, 0)}
+                  </p>  
                 </div>
               </div>
               
               <div className="space-y-3">
                 {materialGroup.designs.map((design, designIndex) => {
                   const material = rawMaterials.find(m => m.id === design.rawMaterialId);
-                  const totalArea = parseFloat((design.height * design.width).toFixed(3));
+                  const quantityPerDesign = design.quantity;
                   return (
                     <div key={designIndex} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
                       <div className="flex justify-between items-start mb-2">
@@ -103,36 +103,15 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatNumber(totalArea)} m²
+                            {formatNumber(quantityPerDesign)}
                           </p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
-                        <div className="text-center">
-                          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Alto</span>
-                          <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                            {formatNumber(design.height)}m
-                          </span>
-                        </div>
-                        <div className="text-center">
-                          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Ancho</span>
-                          <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                            {formatNumber(design.width)}m
-                          </span>
-                        </div>
-                        <div className="text-center">
-                          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Área</span>
-                          <span className="block mt-1 text-sm font-medium text-gray-900 dark:text-white">
-                            {formatNumber(totalArea)}m²
-                          </span>
                         </div>
                       </div>
                       
                       {material && (
                         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600">
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Proveedor actual: {material.supplier} | Stock disponible: {formatNumber(material.quantity, material.unit === 'piezas')} {material.unit}
+                            Proveedor actual: {material.supplier} | Stock disponible: {formatNumber(material.quantity)}
                           </p>
                         </div>
                       )}

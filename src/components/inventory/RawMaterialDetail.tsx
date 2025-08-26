@@ -11,7 +11,6 @@ interface RawMaterialDetailProps {
 const RawMaterialDetail: React.FC<RawMaterialDetailProps> = ({ material, items }) => {
   // Find items that use this raw material
   const relatedItems = items.filter(item => item.materials.includes(material.id));
-  const totalArea = material.width * material.height;
 
   const formatNumber = (value: number, isInteger: boolean = false): string => {
     if (isInteger && Number.isInteger(value)) {

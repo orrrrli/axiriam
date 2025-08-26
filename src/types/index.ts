@@ -37,10 +37,8 @@ export interface OrderMaterial {
   materials: {
     designs: {
       rawMaterialId: string;
-      height: number;
-      width: number;
+      quantity: number;
     }[];
-    quantity: number; // quantity for this material group
   }[];
   distributor: string;
   description: string;
