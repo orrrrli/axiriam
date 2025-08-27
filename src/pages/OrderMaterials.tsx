@@ -11,6 +11,7 @@ import Badge from '../components/ui/Badge';
 import { OrderMaterial, OrderMaterialFormData } from '../types';
 import { formatDate, getStatusBadgeVariant, getStatusLabel } from '../utils/helpers';
 import type { TableColumn } from '../components/ui/Table';
+import { Truck, Pencil, Trash2, Search, PlusCircle } from 'lucide-react';
 
 const OrderMaterials: React.FC = () => {
   const { state, addOrderMaterial, updateOrderMaterial, deleteOrderMaterial } = useInventory();

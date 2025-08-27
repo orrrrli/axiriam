@@ -5,6 +5,7 @@ import { apiService } from '../../services/api';
 import { useInventory } from '../../context/InventoryContext';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
+import { AlertCircle, Truck, User, Package, Clock, MapPin } from 'lucide-react';
 
 // Estafeta tracking interfaces
 interface EstafetaTrackingEvent {
@@ -210,9 +211,17 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
      
      // Check if shipment is delivered and auto-update order status
      const isDelivered = unifiedData.events.some(event => event.isDelivered);
+     console.log('🔍 Delivery check:', {
+       isDelivered,
+       orderStatus: order.status,
+       orderId: order.id,
+       events: unifiedData.events.map(e => ({ description: e.description, isDelivered: e.isDelivered }))
+     });
+     
      if (isDelivered && order.status === 'ordered') {
        try {
          setIsUpdatingStatus(true);
+         console.log('🚀 Attempting to update order status...');
          await updateOrderStatusIfDelivered(order.id, true);
          console.log('✅ Order status automatically updated to "received" due to delivery confirmation');
        } catch (error) {
@@ -220,6 +229,12 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
        } finally {
          setIsUpdatingStatus(false);
        }
+     } else {
+       console.log('⚠️ Auto-update conditions not met:', {
+         isDelivered,
+         orderStatus: order.status,
+         shouldUpdate: isDelivered && order.status === 'ordered'
+       });
      }
     } catch (error) {
       console.error('Failed to fetch tracking data:', error);

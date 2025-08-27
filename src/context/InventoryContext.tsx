@@ -52,6 +52,7 @@ interface InventoryContextType {
   deleteOrderMaterial: (id: string) => Promise<void>;
   checkOrderDeliveryStatus: (orderId: string) => Promise<boolean>;
   updateOrderStatusIfDelivered: (orderId: string, isDelivered: boolean) => Promise<void>;
+  processOrderInventory: (orderId: string) => Promise<void>;
   addSale: (saleData: SaleFormData) => Promise<void>;
   updateSale: (id: string, saleData: SaleFormData) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
@@ -445,12 +446,46 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const result = await apiService.updateOrderStatusIfDelivered(orderId, isDelivered);
       if (result.updated) {
-        // Refresh order materials to get updated status
-        const orderMaterials = await apiService.getOrderMaterials();
+        // Refresh both order materials and raw materials to get updated data
+        const [orderMaterials, rawMaterials] = await Promise.all([
+          apiService.getOrderMaterials(),
+          apiService.getRawMaterials()
+        ]);
         dispatch({ type: 'SET_ORDER_MATERIALS', payload: orderMaterials.map(transformApiData.orderMaterial) });
+        dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
+        
+        // If order was marked as received, trigger inventory processing
+        if (isDelivered) {
+          try {
+            console.log('🏭 Triggering inventory processing for delivered order...');
+            await processOrderInventory(orderId);
+          } catch (inventoryError) {
+            console.error('❌ Failed to process inventory:', inventoryError);
+            // Don't throw here - status update succeeded, inventory processing is secondary
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to update order status:', error);
+      throw error;
+    }
+  };
+
+  const processOrderInventory = async (orderId: string) => {
+    try {
+      console.log('🔄 Processing inventory for order:', orderId);
+      const result = await apiService.processOrderInventory(orderId);
+      
+      if (result.processed) {
+        console.log('✅ Inventory processing completed successfully');
+        // Refresh raw materials to show updated quantities
+        const rawMaterials = await apiService.getRawMaterials();
+        dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Failed to process order inventory:', error);
       throw error;
     }
   };
@@ -518,6 +553,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     deleteOrderMaterial,
     checkOrderDeliveryStatus,
     updateOrderStatusIfDelivered,
+    processOrderInventory,
     addSale,
     updateSale,
     deleteSale,

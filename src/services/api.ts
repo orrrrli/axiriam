@@ -229,6 +229,12 @@ class ApiService {
     });
   }
 
+  async processOrderInventory(orderId: string) {
+    return this.request<any>(`/order-materials/${orderId}/process-inventory`, {
+      method: 'POST',
+    });
+  }
+
   async getAutomationLogs(tableNames?: string[], recordId?: string, limit: number = 50) {
     const params = new URLSearchParams();
     if (tableNames && tableNames.length > 0) {
