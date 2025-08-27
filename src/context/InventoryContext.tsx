@@ -50,10 +50,13 @@ interface InventoryContextType {
   addOrderMaterial: (orderData: OrderMaterialFormData) => Promise<void>;
   updateOrderMaterial: (id: string, orderData: OrderMaterialFormData) => Promise<void>;
   deleteOrderMaterial: (id: string) => Promise<void>;
+  checkOrderDeliveryStatus: (orderId: string) => Promise<boolean>;
+  updateOrderStatusIfDelivered: (orderId: string, isDelivered: boolean) => Promise<void>;
   addSale: (saleData: SaleFormData) => Promise<void>;
   updateSale: (id: string, saleData: SaleFormData) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  getAutomationLogs: (tableNames?: string[], recordId?: string, limit?: number) => Promise<any[]>;
 }
 
 // Initial state
@@ -428,6 +431,30 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const checkOrderDeliveryStatus = async (orderId: string): Promise<boolean> => {
+    try {
+      const result = await apiService.checkOrderDeliveryStatus(orderId);
+      return result.isDelivered || false;
+    } catch (error) {
+      console.error('Failed to check order delivery status:', error);
+      return false;
+    }
+  };
+
+  const updateOrderStatusIfDelivered = async (orderId: string, isDelivered: boolean) => {
+    try {
+      const result = await apiService.updateOrderStatusIfDelivered(orderId, isDelivered);
+      if (result.updated) {
+        // Refresh order materials to get updated status
+        const orderMaterials = await apiService.getOrderMaterials();
+        dispatch({ type: 'SET_ORDER_MATERIALS', payload: orderMaterials.map(transformApiData.orderMaterial) });
+      }
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      throw error;
+    }
+  };
+
   const addSale = async (saleData: SaleFormData) => {
     try {
       const newSale = await apiService.createSale(transformToApiData.sale(saleData));
@@ -467,6 +494,15 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const getAutomationLogs = async (tableNames?: string[], recordId?: string, limit: number = 50) => {
+    try {
+      return await apiService.getAutomationLogs(tableNames, recordId, limit);
+    } catch (error) {
+      console.error('Failed to get automation logs:', error);
+      throw error;
+    }
+  };
+
   const contextValue: InventoryContextType = {
     state,
     dispatch,
@@ -480,10 +516,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     addOrderMaterial,
     updateOrderMaterial,
     deleteOrderMaterial,
+    checkOrderDeliveryStatus,
+    updateOrderStatusIfDelivered,
     addSale,
     updateSale,
     deleteSale,
-    refreshData
+    refreshData,
+    getAutomationLogs
   };
 
   return (

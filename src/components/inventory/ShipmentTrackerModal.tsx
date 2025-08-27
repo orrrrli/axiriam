@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { OrderMaterial } from '../../types';
 import { formatDate } from '../../utils/helpers';
 import { apiService } from '../../services/api';
+import { useInventory } from '../../context/InventoryContext';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
-import { Package, Truck, MapPin, User, Clock, AlertCircle } from 'lucide-react';
 
 // Estafeta tracking interfaces
 interface EstafetaTrackingEvent {
@@ -101,9 +101,11 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
   onClose,
   order
 }) => {
+  const { updateOrderStatusIfDelivered } = useInventory();
   const [trackingData, setTrackingData] = useState<UnifiedTrackingData | null>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Fetch tracking data when modal opens and tracking number exists
   useEffect(() => {
@@ -205,6 +207,20 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
       }
       
       setTrackingData(unifiedData);
+     
+     // Check if shipment is delivered and auto-update order status
+     const isDelivered = unifiedData.events.some(event => event.isDelivered);
+     if (isDelivered && order.status === 'ordered') {
+       try {
+         setIsUpdatingStatus(true);
+         await updateOrderStatusIfDelivered(order.id, true);
+         console.log('✅ Order status automatically updated to "received" due to delivery confirmation');
+       } catch (error) {
+         console.error('❌ Failed to auto-update order status:', error);
+       } finally {
+         setIsUpdatingStatus(false);
+       }
+     }
     } catch (error) {
       console.error('Failed to fetch tracking data:', error);
       setTrackingError(
@@ -287,6 +303,12 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {order.distributor}
                 </p>
+                {isUpdatingStatus && (
+                  <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    Actualizando estado...
+                  </div>
+                )}
               </div>
             </div>
             
@@ -429,6 +451,14 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                                 <Badge variant={isDelivered ? 'success' : 'primary'}>
                                   {isDelivered ? 'Entregado' : 'Último evento'}
                                 </Badge>
+                              )}
+                              
+                              {isDelivered && order.status === 'ordered' && (
+                                <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-700">
+                                  <p className="text-xs text-green-700 dark:text-green-300">
+                                    🎉 ¡Paquete entregado! El estado del pedido se actualizará automáticamente.
+                                  </p>
+                                </div>
                               )}
                             </div>
                           </div>

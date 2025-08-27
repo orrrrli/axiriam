@@ -217,6 +217,30 @@ class ApiService {
     return this.request<any[]>(`/sales/status/${status}`);
   }
 
+  // Order Automation API
+  async checkOrderDeliveryStatus(orderId: string) {
+    return this.request<any>(`/order-materials/${orderId}/check-delivery`);
+  }
+
+  async updateOrderStatusIfDelivered(orderId: string, isDelivered: boolean) {
+    return this.request<any>(`/order-materials/${orderId}/update-delivery-status`, {
+      method: 'POST',
+      body: JSON.stringify({ isDelivered }),
+    });
+  }
+
+  async getAutomationLogs(tableNames?: string[], recordId?: string, limit: number = 50) {
+    const params = new URLSearchParams();
+    if (tableNames && tableNames.length > 0) {
+      params.append('tables', tableNames.join(','));
+    }
+    if (recordId) {
+      params.append('recordId', recordId);
+    }
+    params.append('limit', limit.toString());
+    
+    return this.request<any[]>(`/automation-logs?${params.toString()}`);
+  }
 
   // Dashboard API
   async getDashboardStats() {

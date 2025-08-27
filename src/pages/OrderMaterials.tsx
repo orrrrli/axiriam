@@ -6,10 +6,10 @@ import Modal from '../components/ui/Modal';
 import OrderMaterialForm from '../components/inventory/OrderMaterialForm';
 import OrderMaterialDetail from '../components/inventory/OrderMaterialDetail';
 import ShipmentTrackerModal from '../components/inventory/ShipmentTrackerModal';
+import AutomationLogsModal from '../components/inventory/AutomationLogsModal';
 import Badge from '../components/ui/Badge';
 import { OrderMaterial, OrderMaterialFormData } from '../types';
 import { formatDate, getStatusBadgeVariant, getStatusLabel } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle, Truck } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
 
 const OrderMaterials: React.FC = () => {
@@ -21,6 +21,7 @@ const OrderMaterials: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTrackerModalOpen, setIsTrackerModalOpen] = useState(false);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderMaterial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,6 +104,11 @@ const OrderMaterials: React.FC = () => {
   const openTrackerModal = (order: OrderMaterial) => {
     setCurrentOrder(order);
     setIsTrackerModalOpen(true);
+  };
+
+  const openLogsModal = (order: OrderMaterial) => {
+    setCurrentOrder(order);
+    setIsLogsModalOpen(true);
   };
 
   const formatNumber = (value: number, isInteger: boolean = false): string => {

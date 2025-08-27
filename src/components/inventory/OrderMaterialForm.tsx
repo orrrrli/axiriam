@@ -165,7 +165,21 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) onSubmit(formData);
+    if (validateForm()) {
+      // Ensure status is set correctly based on tracking number
+      const submitData = { ...formData };
+      
+      // Auto-set status based on tracking number (frontend validation)
+      if (!initialData) { // Only for new orders
+        if (!submitData.trackingNumber || submitData.trackingNumber.trim() === '') {
+          submitData.status = 'pending';
+        } else {
+          submitData.status = 'ordered';
+        }
+      }
+      
+      onSubmit(submitData);
+    }
   };
 
   const materialOptions = rawMaterials.map((material) => ({
