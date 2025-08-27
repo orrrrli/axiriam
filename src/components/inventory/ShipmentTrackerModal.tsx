@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { OrderMaterial } from '../../types';
 import { formatDate } from '../../utils/helpers';
+import { apiService } from '../../services/api';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
 import { Package, Truck, MapPin, User, Clock, AlertCircle } from 'lucide-react';
@@ -181,45 +182,23 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
 
     setIsLoadingTracking(true);
     setTrackingError(null);
+    setTrackingData(null); // Clear previous tracking data
 
     try {
-      let apiUrl: string;
-      
-      let response: Response;
+      const trackingNumber = order.trackingNumber.trim();
+      const result = await apiService.getTracking(order.parcel_service, trackingNumber);
 
-      if (order.parcel_service === 'Estafeta') {
-        apiUrl = `http://localhost:3001/api/tracking/${order.trackingNumber.trim()}`;
-        response = await fetch(apiUrl);
-
-      } else if (order.parcel_service === 'DHL') {
-        apiUrl = `https://api-eu.dhl.com/track/shipments?trackingNumber=${order.trackingNumber.trim()}`;
-        response = await fetch(apiUrl, {
-          headers: {
-            'DHL-API-Key': import.meta.env.VITE_DHL_API_KEY
-          }
-        });
-
-      } else {
-        throw new Error(`Servicio de paquetería no soportado: ${order.parcel_service}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      console.log(`Fetching tracking data from: ${order.trackingNumber.trim()}`);
+      console.log(`Fetching tracking data from: ${trackingNumber}`);
 
       let unifiedData: UnifiedTrackingData;
       
       if (order.parcel_service === 'Estafeta') {
-        const result: EstafetaTrackingResponse = await response.json();
         if (result.success && result.data) {
           unifiedData = parseEstafetaData(result);
         } else {
           throw new Error('No tracking data available from Estafeta');
         }
       } else if (order.parcel_service === 'DHL') {
-        const result: DHLTrackingResponse = await response.json();
         unifiedData = parseDHLData(result);
       } else {
         throw new Error('Unsupported parcel service');

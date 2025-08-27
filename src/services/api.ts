@@ -239,6 +239,48 @@ class ApiService {
     return this.request<any>('/dashboard/sales-summary');
   }
 
+  // Tracking API
+  async getEstafetaTracking(trackingNumber: string) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/tracking/${trackingNumber.trim()}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
+  }
+
+  async getDHLTracking(trackingNumber: string) {
+    const dhlApiKey = import.meta.env.VITE_DHL_API_KEY;
+    if (!dhlApiKey) {
+      throw new Error('DHL API key no configurada');
+    }
+
+    const response = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber.trim()}`, {
+      headers: {
+        'DHL-API-Key': dhlApiKey
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async getTracking(service: string, trackingNumber: string) {
+    switch (service) {
+      case 'Estafeta':
+        return this.getEstafetaTracking(trackingNumber);
+      case 'DHL':
+        return this.getDHLTracking(trackingNumber);
+      default:
+        throw new Error(`Servicio de paquetería no soportado: ${service}`);
+    }
+  }
+
   // Health check
   async healthCheck() {
     return this.request<any>('/health');
