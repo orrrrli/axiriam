@@ -320,6 +320,16 @@ const OrderMaterials: React.FC = () => {
         />
       )}
       
+      {/* Automation Logs Modal */}
+      {currentOrder && (
+        <AutomationLogsModal
+          isOpen={isLogsModalOpen}
+          onClose={() => setIsLogsModalOpen(false)}
+          recordId={currentOrder.id}
+          tableName="order_materials"
+        />
+      )}
+      
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={isDeleteModalOpen}
