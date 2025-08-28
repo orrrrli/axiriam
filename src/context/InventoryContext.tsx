@@ -497,10 +497,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             
             console.log(`📈 Updating raw material ${design.rawMaterialId}: ${currentQuantity} + ${design.quantity} = ${newQuantity}`);
             
-            // Update the raw material quantity in the backend
+            // Update the raw material quantity in the backend, preserving all existing data
+            const currentMaterial = updatedRawMaterials[rawMaterialIndex];
             const updatedMaterial = await apiService.updateRawMaterial(design.rawMaterialId, {
-              ...updatedRawMaterials[rawMaterialIndex],
-              quantity: newQuantity
+              name: currentMaterial.name,
+              description: currentMaterial.description,
+              width: currentMaterial.width,
+              height: currentMaterial.height,
+              quantity: newQuantity,
+              price: currentMaterial.price,
+              supplier: currentMaterial.supplier,
+              imageUrl: currentMaterial.imageUrl
             });
             
             // Update local state

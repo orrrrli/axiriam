@@ -248,9 +248,9 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
+      <div className="space-y-2">
         {/* Basic Information */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Input
             label="Nombre"
             value={formData.name}
@@ -290,152 +290,213 @@ const SaleForm: React.FC<SaleFormProps> = ({
             required
             fullWidth
           />
+
+          <Select
+            label="Tipo de Envío"
+            value={formData.shippingType}
+            onChange={(value) => handleChange('shippingType', value as 'local' | 'nacional')}
+            options={shippingTypeOptions}
+            required
+            fullWidth
+          />
+
+                  
+        {formData.shippingType === 'local' && (
+          <div className="space-y-4">
+            <Select
+              label="Opción de Envío Local"
+              value={formData.localShippingOption || 'meeting-point'}
+              onChange={(value) => handleChange('localShippingOption', value as 'meeting-point' | 'pzexpress')}
+              options={localShippingOptions}
+              fullWidth
+            />
+
+          </div>
+        )}
+        
+        {formData.shippingType === 'nacional' && (
+          <div className="space-y-4">
+            <Select
+              label="Paquetería"
+              value={formData.nationalShippingCarrier || 'estafeta'}
+              onChange={(value) => handleChange('nationalShippingCarrier', value as 'estafeta' | 'dhl' | 'fedex' | 'correos')}
+              options={nationalCarrierOptions}
+              fullWidth
+            />
+          </div>
+        )}
+          
         </div>
 
-        {/* Products Section */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Productos Vendidos
-            </h3>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={addSaleItem}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Agregar Producto
-            </Button>
-          </div>
+        <div>
+          <Input
+              label="Dirección"
+              value={formData.localAddress || ''}
+              onChange={(e) => handleChange('localAddress', e.target.value)}
+              placeholder={
+                formData.localShippingOption === 'meeting-point' 
+                  ? "Dirección del punto de encuentro" 
+                  : "Dirección para PZ Express"
+              }
+              error={errors.localAddress}
+              required
+              fullWidth
+            />
+                    
+          <Input
+            label="Número de Rastreo"
+            value={formData.trackingNumber}
+            onChange={(e) => handleChange('trackingNumber', e.target.value)}
+            placeholder="Número de seguimiento"
+            fullWidth
+          />
 
-          {formData.saleItems.map((saleItem, index) => {
-            const selectedItem = items.find(item => item.id === saleItem.itemId);
-            const subtotal = selectedItem ? selectedItem.price * saleItem.quantity : 0;
+        </div>
+        <div className="space-y-6">
+          {/* Products Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Productos
+              </h3>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={addSaleItem}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Agregar Producto
+              </Button>
+            </div>
 
-            return (
-              <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
-                <div className="flex justify-between items-start mb-3">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Producto {index + 1}
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => removeSaleItem(index)}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                    aria-label="Eliminar producto"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+            {formData.saleItems.map((saleItem, index) => {
+              const selectedItem = items.find(item => item.id === saleItem.itemId);
+              const subtotal = selectedItem ? selectedItem.price * saleItem.quantity : 0;
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2">
-                    <Select
-                      label="Artículo"
-                      value={saleItem.itemId}
-                      onChange={(value) => updateSaleItem(index, 'itemId', value)}
-                      options={itemOptions}
+              return (
+                <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Producto {index + 1}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => removeSaleItem(index)}
+                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                      aria-label="Eliminar producto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="sm:col-span-2">
+                      <Select
+                        label="Artículo"
+                        value={saleItem.itemId}
+                        onChange={(value) => updateSaleItem(index, 'itemId', value)}
+                        options={itemOptions}
+                        required
+                        fullWidth
+                      />
+                    </div>
+
+                    <Input
+                      label="Cantidad"
+                      type="number"
+                      value={saleItem.quantity === 0 ? '' : saleItem.quantity.toString()}
+                      onChange={(e) => updateSaleItem(index, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                      min="0"
+                      step="1"
                       required
                       fullWidth
                     />
                   </div>
 
+                  {selectedItem && (
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-900 dark:text-blue-300">
+                          Precio unitario: ${selectedItem.price}
+                        </span>
+                        <span className="font-semibold text-blue-900 dark:text-blue-200">
+                          Subtotal: ${subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {errors.saleItems && (
+              <p className="text-sm text-red-600 dark:text-red-400">{errors.saleItems}</p>
+            )}
+          </div>
+
+          {/* Extras Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Extras
+              </h3>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={addExtra}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Agregar Extra
+              </Button>
+            </div>
+
+            {formData.extras.map((extra, index) => (
+              <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Extra {index + 1}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => removeExtra(index)}
+                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    aria-label="Eliminar extra"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Select
+                    label="Categoría"
+                    value={extra.description}
+                    onChange={(value) => updateExtra(index, 'description', value)}
+                    options={extraCategoryOptions}
+                    required
+                    fullWidth
+                  />
+
                   <Input
-                    label="Cantidad"
+                    label="Precio ($)"
                     type="number"
-                    value={saleItem.quantity === 0 ? '' : saleItem.quantity.toString()}
-                    onChange={(e) => updateSaleItem(index, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                    value={extra.price === 0 ? '' : extra.price.toString()}
+                    onChange={(e) => updateExtra(index, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                     min="0"
                     step="1"
                     required
                     fullWidth
                   />
                 </div>
-
-                {selectedItem && (
-                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-blue-900 dark:text-blue-300">
-                        Precio unitario: ${selectedItem.price}
-                      </span>
-                      <span className="font-semibold text-blue-900 dark:text-blue-200">
-                        Subtotal: ${subtotal.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
-            );
-          })}
+            ))}
 
-          {errors.saleItems && (
-            <p className="text-sm text-red-600 dark:text-red-400">{errors.saleItems}</p>
-          )}
-        </div>
-
-        {/* Extras Section */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Extras
-            </h3>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={addExtra}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Agregar Extra
-            </Button>
+            {errors.extras && (
+              <p className="text-sm text-red-600 dark:text-red-400">{errors.extras}</p>
+            )}
           </div>
-
-          {formData.extras.map((extra, index) => (
-            <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
-              <div className="flex justify-between items-start mb-3">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Extra {index + 1}
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => removeExtra(index)}
-                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                  aria-label="Eliminar extra"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select
-                  label="Categoría"
-                  value={extra.description}
-                  onChange={(value) => updateExtra(index, 'description', value)}
-                  options={extraCategoryOptions}
-                  required
-                  fullWidth
-                />
-
-                <Input
-                  label="Precio ($)"
-                  type="number"
-                  value={extra.price === 0 ? '' : extra.price.toString()}
-                  onChange={(e) => updateExtra(index, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                  min="0"
-                  step="1"
-                  required
-                  fullWidth
-                />
-              </div>
-            </div>
-          ))}
-
-          {errors.extras && (
-            <p className="text-sm text-red-600 dark:text-red-400">{errors.extras}</p>
-          )}
         </div>
-
         {/* Total Amount Display */}
         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border border-green-200 dark:border-green-700">
           <div className="flex justify-between items-center">
@@ -447,14 +508,6 @@ const SaleForm: React.FC<SaleFormProps> = ({
             </span>
           </div>
         </div>
-        
-        <Input
-          label="Número de Rastreo"
-          value={formData.trackingNumber}
-          onChange={(e) => handleChange('trackingNumber', e.target.value)}
-          placeholder="Número de seguimiento"
-          fullWidth
-        />
         
         <div className="flex items-center">
           <input
@@ -468,61 +521,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
             Factura requerida
           </label>
         </div>
-        
-        <Select
-          label="Tipo de Envío"
-          value={formData.shippingType}
-          onChange={(value) => handleChange('shippingType', value as 'local' | 'nacional')}
-          options={shippingTypeOptions}
-          required
-          fullWidth
-        />
-        
-        {formData.shippingType === 'local' && (
-          <div className="space-y-4">
-            <Select
-              label="Opción de Envío Local"
-              value={formData.localShippingOption || 'meeting-point'}
-              onChange={(value) => handleChange('localShippingOption', value as 'meeting-point' | 'pzexpress')}
-              options={localShippingOptions}
-              fullWidth
-            />
-            
-            <Input
-              label="Dirección"
-              value={formData.localAddress || ''}
-              onChange={(e) => handleChange('localAddress', e.target.value)}
-              placeholder={
-                formData.localShippingOption === 'meeting-point' 
-                  ? "Dirección del punto de encuentro" 
-                  : "Dirección para PZ Express"
-              }
-              error={errors.localAddress}
-              required
-              fullWidth
-            />
-          </div>
-        )}
-        
-        {formData.shippingType === 'nacional' && (
-          <div className="space-y-4">
-            <Select
-              label="Paquetería"
-              value={formData.nationalShippingCarrier || 'estafeta'}
-              onChange={(value) => handleChange('nationalShippingCarrier', value as 'estafeta' | 'dhl' | 'fedex' | 'correos')}
-              options={nationalCarrierOptions}
-              fullWidth
-            />
-            
-            <Input
-              label="Descripción del Envío"
-              value={formData.shippingDescription || ''}
-              onChange={(e) => handleChange('shippingDescription', e.target.value)}
-              placeholder="Detalles adicionales del envío"
-              fullWidth
-            />
-          </div>
-        )}
+
       </div>
 
       {/* Error Summary - Show all validation errors at bottom */}

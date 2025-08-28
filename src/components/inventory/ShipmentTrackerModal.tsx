@@ -351,11 +351,6 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
               <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Seguimiento en Tiempo Real
               </h4>
-              {trackingData?.cached !== undefined && trackingData.cached && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                  Información en caché
-                </span>
-              )}
             </div>
 
             {isLoadingTracking && (
@@ -454,11 +449,15 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
                                   {event.description}
                                 </p>
                                 
-                                <div className="flex items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                  <MapPin className="h-3 w-3 mr-1" />
-                                  <span className="mr-3">{event.location}</span>
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  <span>{formatTrackingTimestamp(event.timestamp)}</span>
+                                <div className="mt-2 space-y-1">
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <MapPin className="h-3 w-3 mr-2 flex-shrink-0" />
+                                    <span className="truncate">{event.location}</span>
+                                  </div>
+                                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <Clock className="h-3 w-3 mr-2 flex-shrink-0" />
+                                    <span>{formatTrackingTimestamp(event.timestamp)}</span>
+                                  </div>
                                 </div>
                               </div>
                               

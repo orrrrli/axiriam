@@ -296,14 +296,14 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Gorritos resultantes"
+            label="Cantidad en Stock"
             type="number"
            value={formData.quantity === 0 ? '' : formatNumber(formData.quantity)}
            onChange={(e) => handleNumberChange('quantity', e.target.value === '' ? '0' : e.target.value)}
             min="0"
             step={getStepValue('quantity')}
+            placeholder="0 para crear pedido"
             error={errors.quantity}
-            required
             fullWidth
           />
         </div>
