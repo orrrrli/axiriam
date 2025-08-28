@@ -52,7 +52,7 @@ interface InventoryContextType {
   deleteOrderMaterial: (id: string) => Promise<void>;
   checkOrderDeliveryStatus: (orderId: string) => Promise<boolean>;
   updateOrderStatusIfDelivered: (orderId: string, isDelivered: boolean) => Promise<void>;
-  processOrderInventory: (orderId: string) => Promise<void>;
+  processOrderInventory: (orderId: string) => Promise<{ processed: boolean; updatedCount: number }>;
   addSale: (saleData: SaleFormData) => Promise<void>;
   updateSale: (id: string, saleData: SaleFormData) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
@@ -474,16 +474,50 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const processOrderInventory = async (orderId: string) => {
     try {
       console.log('🔄 Processing inventory for order:', orderId);
-      const result = await apiService.processOrderInventory(orderId);
       
-      if (result.processed) {
-        console.log('✅ Inventory processing completed successfully');
-        // Refresh raw materials to show updated quantities
-        const rawMaterials = await apiService.getRawMaterials();
-        dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
+      // Find the order to process
+      const order = state.orderMaterials.find(o => o.id === orderId);
+      if (!order) {
+        throw new Error(`Order with ID ${orderId} not found`);
       }
+
+      console.log('📦 Order materials to process:', order.materials);
+
+      // Process each material in the order
+      const updatedRawMaterials = [...state.rawMaterials];
+      let processedCount = 0;
+
+      for (const material of order.materials) {
+        for (const design of material.designs) {
+          const rawMaterialIndex = updatedRawMaterials.findIndex(rm => rm.id === design.rawMaterialId);
+          
+          if (rawMaterialIndex !== -1) {
+            const currentQuantity = updatedRawMaterials[rawMaterialIndex].quantity;
+            const newQuantity = currentQuantity + design.quantity;
+            
+            console.log(`📈 Updating raw material ${design.rawMaterialId}: ${currentQuantity} + ${design.quantity} = ${newQuantity}`);
+            
+            // Update the raw material quantity in the backend
+            const updatedMaterial = await apiService.updateRawMaterial(design.rawMaterialId, {
+              ...updatedRawMaterials[rawMaterialIndex],
+              quantity: newQuantity
+            });
+            
+            // Update local state
+            updatedRawMaterials[rawMaterialIndex] = transformApiData.rawMaterial(updatedMaterial);
+            processedCount++;
+          } else {
+            console.warn(`⚠️ Raw material ${design.rawMaterialId} not found in inventory`);
+          }
+        }
+      }
+
+      // Update the state with new quantities
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: updatedRawMaterials });
       
-      return result;
+      console.log(`✅ Inventory processing completed successfully. Updated ${processedCount} raw materials.`);
+      
+      return { processed: true, updatedCount: processedCount };
     } catch (error) {
       console.error('Failed to process order inventory:', error);
       throw error;
