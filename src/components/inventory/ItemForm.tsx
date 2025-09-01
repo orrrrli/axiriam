@@ -31,6 +31,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
 
   const [formData, setFormData] = useState<ItemFormData>(initialData || defaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof ItemFormData, string>>>({});
+  const [materialSearch, setMaterialSearch] = useState('');
 
   useEffect(() => {
     if (initialData) {
@@ -52,22 +53,11 @@ const ItemForm: React.FC<ItemFormProps> = ({
     handleChange(field, numValue);
   };
 
-  const handleMaterialToggle = (materialId: string) => {
-    setFormData(prev => {
-      const isSelected = prev.materials.includes(materialId);
-      
-      if (isSelected) {
-        return {
-          ...prev,
-          materials: prev.materials.filter(id => id !== materialId)
-        };
-      } else {
-        return {
-          ...prev,
-          materials: [...prev.materials, materialId]
-        };
-      }
-    });
+  const handleMaterialSelect = (materialId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: [materialId] // Only allow one material selection
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -87,6 +77,22 @@ const ItemForm: React.FC<ItemFormProps> = ({
     
     if (formData.price < 0) {
       newErrors.price = 'Price cannot be negative';
+    }
+
+    // Validate raw material availability
+    if (formData.materials.length > 0 && formData.quantity > 0) {
+      const insufficientMaterials: string[] = [];
+      
+      for (const materialId of formData.materials) {
+        const material = rawMaterials.find(rm => rm.id === materialId);
+        if (material && material.quantity < formData.quantity) {
+          insufficientMaterials.push(`${material.name} (disponible: ${material.quantity})`);
+        }
+      }
+      
+      if (insufficientMaterials.length > 0) {
+        newErrors.quantity = `Materiales insuficientes: ${insufficientMaterials.join(', ')}`;
+      }
     }
     
     setErrors(newErrors);
@@ -183,26 +189,81 @@ const ItemForm: React.FC<ItemFormProps> = ({
         {rawMaterials.length > 0 && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
-              Materiales Usados
+              Material Usado (selecciona uno)
             </label>
-            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200 dark:bg-gray-700">
-              {rawMaterials.map((material) => (
+            
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={materialSearch}
+                onChange={(e) => setMaterialSearch(e.target.value)}
+                placeholder="Buscar material..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200"
+              />
+              {materialSearch && (
+                <button
+                  type="button"
+                  onClick={() => setMaterialSearch('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            
+            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200 dark:bg-gray-700 mt-2">
+              {rawMaterials
+                .filter(material => 
+                  material.name.toLowerCase().includes(materialSearch.toLowerCase())
+                )
+                .map((material) => (
                 <div key={material.id} className="flex items-center mb-2 last:mb-0">
                   <input
-                    type="checkbox"
+                    type="radio"
                     id={`material-${material.id}`}
+                    name="material-selection"
                     checked={formData.materials.includes(material.id)}
-                    onChange={() => handleMaterialToggle(material.id)}
-                    className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
+                    onChange={() => handleMaterialSelect(material.id)}
+                    className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300"
                   />
                   <label
                     htmlFor={`material-${material.id}`}
-                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                    className={`ml-2 block text-sm cursor-pointer flex-1 ${
+                      material.quantity === 0 
+                        ? 'text-red-500 dark:text-red-400' 
+                        : material.quantity < formData.quantity && formData.quantity > 0
+                          ? 'text-orange-500 dark:text-orange-400'
+                          : 'text-gray-700 dark:text-gray-300'
+                    }`}
                   >
                     {material.name} ({material.width}x{material.height}m)
+                    <span className={`ml-2 text-xs ${
+                      material.quantity === 0 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : material.quantity < formData.quantity && formData.quantity > 0
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                    }`}>
+                      - Stock: {material.quantity}
+                    </span>
                   </label>
                 </div>
               ))}
+              
+              {rawMaterials.filter(material => 
+                material.name.toLowerCase().includes(materialSearch.toLowerCase())
+              ).length === 0 && materialSearch && (
+                <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-2">
+                  No se encontraron materiales
+                </div>
+              )}
             </div>
           </div>
         )}

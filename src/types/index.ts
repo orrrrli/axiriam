@@ -63,6 +63,7 @@ export interface Sale {
   localAddress?: string;
   nationalShippingCarrier?: 'estafeta' | 'dhl' | 'fedex' | 'correos';
   shippingDescription?: string;
+  discount: number;
   totalAmount: number;
   items: string[]; // Keep for backward compatibility
   saleItems: SaleItem[]; // Items sold with quantities
@@ -94,6 +95,7 @@ export interface SaleFormData {
   localAddress?: string;
   nationalShippingCarrier?: 'estafeta' | 'dhl' | 'fedex' | 'correos';
   shippingDescription?: string;
+  discount: number;
   totalAmount: number;
   items: string[]; // Keep for backward compatibility
   saleItems: SaleItem[];

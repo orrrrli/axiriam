@@ -11,6 +11,7 @@ import Select from '../components/ui/Select';
 import { Item, ItemFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle, MinusCircle } from 'lucide-react';
+import SortButton from '../components/ui/SortButton';
 import type { TableColumn } from '../components/ui/Table';
 
 const LOW_STOCK_THRESHOLD = 10;
@@ -29,18 +30,34 @@ const Items: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
   
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = categoryFilter === '' || item.category === categoryFilter;
+  const filteredAndSortedItems = (() => {
+    let filtered = items.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = categoryFilter === '' || item.category === categoryFilter;
+      const matchesType = typeFilter === '' || item.type === typeFilter;
+      
+      return matchesSearch && matchesCategory && matchesType;
+    });
 
-    const matchesType = typeFilter === '' || item.type === typeFilter;
-    
-    return matchesSearch && matchesCategory && matchesType;
-  });
+    if (sortOrder) {
+      filtered = [...filtered].sort((a, b) => {
+        const dateA = new Date(a.updatedAt).getTime();
+        const dateB = new Date(b.updatedAt).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+    }
+
+    return filtered;
+  })();
+
+  const handleSort = (order: 'asc' | 'desc') => {
+    setSortOrder(order);
+  };
   
   const handleAddItem = async (data: ItemFormData) => {
     setIsSubmitting(true);
@@ -321,6 +338,14 @@ const Items: React.FC = () => {
           />
         </div>
         
+        <div className="w-full sm:w-auto">
+          <SortButton
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            label="Ordenar por fecha"
+          />
+        </div>
+        
         <div className="relative flex-1">
           <div className="absolute left-0 w-10 h-10 grid place-items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
@@ -337,7 +362,7 @@ const Items: React.FC = () => {
       
       <Table
         columns={columns}
-        data={filteredItems}
+        data={filteredAndSortedItems}
         isLoading={isLoading}
         onRowClick={openViewModal}
         keyExtractor={(item) => item.id}

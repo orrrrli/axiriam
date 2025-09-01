@@ -8,6 +8,7 @@ import OrderMaterialDetail from '../components/inventory/OrderMaterialDetail';
 import ShipmentTrackerModal from '../components/inventory/ShipmentTrackerModal';
 import AutomationLogsModal from '../components/inventory/AutomationLogsModal';
 import Badge from '../components/ui/Badge';
+import SortButton from '../components/ui/SortButton';
 import { OrderMaterial, OrderMaterialFormData } from '../types';
 import { formatDate, getStatusBadgeVariant, getStatusLabel } from '../utils/helpers';
 import type { TableColumn } from '../components/ui/Table';
@@ -26,6 +27,7 @@ const OrderMaterials: React.FC = () => {
   const [currentOrder, setCurrentOrder] = useState<OrderMaterial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
   
   const filteredOrders = orderMaterials.filter(order => {
     const materialNames = order.materials.flatMap(m => 
@@ -40,6 +42,11 @@ const OrderMaterials: React.FC = () => {
       order.distributor.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
+  }).sort((a, b) => {
+    if (!sortOrder) return 0;
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
   
   const handleAddOrder = async (data: OrderMaterialFormData) => {
@@ -54,6 +61,7 @@ const OrderMaterials: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
   
   const handleEditOrder = async (data: OrderMaterialFormData) => {
     if (!currentOrder) return;
@@ -107,9 +115,8 @@ const OrderMaterials: React.FC = () => {
     setIsTrackerModalOpen(true);
   };
 
-  const openLogsModal = (order: OrderMaterial) => {
-    setCurrentOrder(order);
-    setIsLogsModalOpen(true);
+  const handleSort = (order: 'asc' | 'desc') => {
+    setSortOrder(order);
   };
 
   const formatNumber = (value: number, isInteger: boolean = false): string => {
@@ -219,17 +226,26 @@ const OrderMaterials: React.FC = () => {
         </Button>
       </div>
       
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-auto">
+          <SortButton
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            label="Ordenar por fecha"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Buscar pedidos..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-        />
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar pedidos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
+          />
+        </div>
       </div>
       
       <Table

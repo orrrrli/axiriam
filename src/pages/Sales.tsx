@@ -6,6 +6,7 @@ import Modal from '../components/ui/Modal';
 import SaleForm from '../components/inventory/SaleForm';
 import SaleDetail from '../components/inventory/SaleDetail';
 import Badge from '../components/ui/Badge';
+import SortButton from '../components/ui/SortButton';
 import { Sale, SaleFormData } from '../types';
 import { formatCurrency, formatDate, getStatusBadgeVariant, getStatusLabel } from '../utils/helpers';
 import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
@@ -22,12 +23,18 @@ const Sales: React.FC = () => {
   const [currentSale, setCurrentSale] = useState<Sale | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
   
   const filteredSales = sales.filter(sale => 
     sale.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     sale.socialMediaUsername.toLowerCase().includes(searchQuery.toLowerCase()) ||
     sale.saleId.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ).sort((a, b) => {
+    if (!sortOrder) return 0;
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  });
   
   const handleAddSale = async (data: SaleFormData) => {
     setIsSubmitting(true);
@@ -87,6 +94,10 @@ const Sales: React.FC = () => {
   const openDeleteModal = (sale: Sale) => {
     setCurrentSale(sale);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleSort = (order: 'asc' | 'desc') => {
+    setSortOrder(order);
   };
   
   const columns: TableColumn<Sale>[] = [
@@ -173,17 +184,26 @@ const Sales: React.FC = () => {
         </Button>
       </div>
       
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-auto">
+          <SortButton
+            sortOrder={sortOrder}
+            onSort={handleSort}
+            label="Ordenar por fecha"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Buscar ventas..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-        />
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar ventas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
+          />
+        </div>
       </div>
       
       <Table
@@ -231,6 +251,7 @@ const Sales: React.FC = () => {
               localAddress: currentSale.localAddress,
               nationalShippingCarrier: currentSale.nationalShippingCarrier,
               shippingDescription: currentSale.shippingDescription,
+              discount: currentSale.discount || 0,
               totalAmount: currentSale.totalAmount,
               items: currentSale.items,
               saleItems: currentSale.saleItems,

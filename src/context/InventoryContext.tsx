@@ -334,8 +334,61 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Action creators
   const addItem = async (itemData: ItemFormData) => {
     try {
+      // Validate raw material availability before creating item
+      const insufficientMaterials: string[] = [];
+      
+      for (const materialId of itemData.materials) {
+        const material = state.rawMaterials.find(rm => rm.id === materialId);
+        if (!material) {
+          throw new Error(`Raw material with ID ${materialId} not found`);
+        }
+        
+        if (material.quantity < itemData.quantity) {
+          insufficientMaterials.push(`${material.name} (disponible: ${material.quantity}, necesario: ${itemData.quantity})`);
+        }
+      }
+      
+      if (insufficientMaterials.length > 0) {
+        throw new Error(`Materiales insuficientes: ${insufficientMaterials.join(', ')}`);
+      }
+
+      // Create the item
       const newItem = await apiService.createItem(itemData);
       dispatch({ type: 'ADD_ITEM', payload: transformApiData.item(newItem) });
+
+      // Reduce raw material quantities
+      const updatedRawMaterials = [...state.rawMaterials];
+      
+      for (const materialId of itemData.materials) {
+        const materialIndex = updatedRawMaterials.findIndex(rm => rm.id === materialId);
+        
+        if (materialIndex !== -1) {
+          const currentMaterial = updatedRawMaterials[materialIndex];
+          const newQuantity = currentMaterial.quantity - itemData.quantity;
+          
+          console.log(`📉 Reducing raw material ${materialId}: ${currentMaterial.quantity} - ${itemData.quantity} = ${newQuantity}`);
+          
+          // Update the raw material quantity in the backend
+          const updatedMaterial = await apiService.updateRawMaterial(materialId, {
+            name: currentMaterial.name,
+            description: currentMaterial.description,
+            width: currentMaterial.width,
+            height: currentMaterial.height,
+            quantity: newQuantity,
+            price: currentMaterial.price,
+            supplier: currentMaterial.supplier,
+            imageUrl: currentMaterial.imageUrl
+          });
+          
+          // Update local state
+          updatedRawMaterials[materialIndex] = transformApiData.rawMaterial(updatedMaterial);
+        }
+      }
+      
+      // Update the state with new quantities
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: updatedRawMaterials });
+      
+      console.log(`✅ Item created and ${itemData.materials.length} raw materials updated`);
     } catch (error) {
       console.error('Failed to add item:', error);
       throw error;
@@ -533,11 +586,60 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addSale = async (saleData: SaleFormData) => {
     try {
+      // Validate item availability before creating sale
+      const insufficientItems: string[] = [];
+      
+      for (const saleItem of saleData.saleItems) {
+        const item = state.items.find(i => i.id === saleItem.itemId);
+        if (!item) {
+          throw new Error(`Item with ID ${saleItem.itemId} not found`);
+        }
+        
+        if (item.quantity < saleItem.quantity) {
+          insufficientItems.push(`${item.name} (disponible: ${item.quantity}, necesario: ${saleItem.quantity})`);
+        }
+      }
+      
+      if (insufficientItems.length > 0) {
+        throw new Error(`Stock insuficiente: ${insufficientItems.join(', ')}`);
+      }
+
+      // Create the sale
       const newSale = await apiService.createSale(transformToApiData.sale(saleData));
       dispatch({ type: 'ADD_SALE', payload: transformApiData.sale(newSale) });
-      // Refresh items to get updated quantities
-      const items = await apiService.getItems();
-      dispatch({ type: 'SET_ITEMS', payload: items.map(transformApiData.item) });
+
+      // Reduce item quantities
+      const updatedItems = [...state.items];
+      
+      for (const saleItem of saleData.saleItems) {
+        const itemIndex = updatedItems.findIndex(i => i.id === saleItem.itemId);
+        
+        if (itemIndex !== -1) {
+          const currentItem = updatedItems[itemIndex];
+          const newQuantity = currentItem.quantity - saleItem.quantity;
+          
+          console.log(`📉 Reducing item ${saleItem.itemId}: ${currentItem.quantity} - ${saleItem.quantity} = ${newQuantity}`);
+          
+          // Update the item quantity in the backend
+          const updatedItem = await apiService.updateItem(saleItem.itemId, {
+            name: currentItem.name,
+            category: currentItem.category,
+            type: currentItem.type,
+            description: currentItem.description,
+            quantity: newQuantity,
+            price: currentItem.price,
+            materials: currentItem.materials
+          });
+          
+          // Update local state
+          updatedItems[itemIndex] = transformApiData.item(updatedItem);
+        }
+      }
+      
+      // Update the state with new quantities
+      dispatch({ type: 'SET_ITEMS', payload: updatedItems });
+      
+      console.log(`✅ Sale created and ${saleData.saleItems.length} items updated`);
     } catch (error) {
       console.error('Failed to add sale:', error);
       throw error;

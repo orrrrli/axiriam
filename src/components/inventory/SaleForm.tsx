@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SaleFormData, Item, SaleItem, SaleExtra } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import SearchableSelect from '../ui/SearchableSelect';
 import Button from '../ui/Button';
 import { Trash2, Plus } from 'lucide-react';
 
@@ -32,6 +33,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
     localAddress: '',
     nationalShippingCarrier: 'estafeta',
     shippingDescription: '',
+    discount: 0,
     totalAmount: 0,
     items: [], // Keep for backward compatibility
     saleItems: [],
@@ -47,10 +49,10 @@ const SaleForm: React.FC<SaleFormProps> = ({
     }
   }, [initialData]);
 
-  // Calculate total amount whenever items or extras change
+  // Calculate total amount whenever items, extras, or discount change
   useEffect(() => {
     calculateTotalAmount();
-  }, [formData.saleItems, formData.extras]);
+  }, [formData.saleItems, formData.extras, formData.discount]);
 
   const calculateTotalAmount = () => {
     // Calculate items total
@@ -64,7 +66,11 @@ const SaleForm: React.FC<SaleFormProps> = ({
       return total + extra.price;
     }, 0);
 
-    const newTotal = itemsTotal + extrasTotal;
+    // Calculate subtotal before discount
+    const subtotal = itemsTotal + extrasTotal;
+    
+    // Apply discount
+    const newTotal = Math.max(0, subtotal - formData.discount);
     setFormData(prev => ({ ...prev, totalAmount: newTotal }));
   };
 
@@ -77,7 +83,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
     }
   };
 
-  const handleNumberChange = (field: 'totalAmount', value: string) => {
+  const handleNumberChange = (field: 'totalAmount' | 'discount', value: string) => {
     const numValue = value === '' ? 0 : parseFloat(value);
     handleChange(field, numValue);
   };
@@ -392,11 +398,12 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-2">
-                      <Select
+                      <SearchableSelect
                         label="Artículo"
                         value={saleItem.itemId}
                         onChange={(value) => updateSaleItem(index, 'itemId', value)}
                         options={itemOptions}
+                        placeholder="Buscar producto..."
                         required
                         fullWidth
                       />
@@ -415,14 +422,46 @@ const SaleForm: React.FC<SaleFormProps> = ({
                   </div>
 
                   {selectedItem && (
-                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-900 dark:text-blue-300">
-                          Precio unitario: ${selectedItem.price}
-                        </span>
-                        <span className="font-semibold text-blue-900 dark:text-blue-200">
-                          Subtotal: ${subtotal.toFixed(2)}
-                        </span>
+                    <div className="mt-3 space-y-2">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-blue-900 dark:text-blue-300">
+                            Precio unitario: ${selectedItem.price}
+                          </span>
+                          <span className="font-semibold text-blue-900 dark:text-blue-200">
+                            Subtotal: ${subtotal.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className={`p-3 rounded-md border ${
+                        selectedItem.quantity === 0 
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
+                          : selectedItem.quantity < saleItem.quantity && saleItem.quantity > 0
+                            ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700'
+                            : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                      }`}>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className={`${
+                            selectedItem.quantity === 0 
+                              ? 'text-red-900 dark:text-red-300'
+                              : selectedItem.quantity < saleItem.quantity && saleItem.quantity > 0
+                                ? 'text-orange-900 dark:text-orange-300'
+                                : 'text-green-900 dark:text-green-300'
+                          }`}>
+                            Stock disponible: {selectedItem.quantity}
+                          </span>
+                          {selectedItem.quantity < saleItem.quantity && saleItem.quantity > 0 && (
+                            <span className="text-orange-700 dark:text-orange-400 font-medium text-xs">
+                              ⚠️ Stock insuficiente
+                            </span>
+                          )}
+                          {selectedItem.quantity === 0 && (
+                            <span className="text-red-700 dark:text-red-400 font-medium text-xs">
+                              ❌ Sin stock
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -497,15 +536,59 @@ const SaleForm: React.FC<SaleFormProps> = ({
             )}
           </div>
         </div>
+        
+        {/* Discount Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Descuento
+          </h3>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
+            <Input
+              label="Descuento ($)"
+              type="number"
+              value={formData.discount === 0 ? '' : formData.discount.toString()}
+              onChange={(e) => handleNumberChange('discount', e.target.value)}
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              fullWidth
+            />
+          </div>
+        </div>
+        
         {/* Total Amount Display */}
         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border border-green-200 dark:border-green-700">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold text-green-900 dark:text-green-300">
-              Total de la Venta:
-            </span>
-            <span className="text-xl font-bold text-green-900 dark:text-green-200">
-              ${formData.totalAmount.toFixed(2)}
-            </span>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-green-800 dark:text-green-400">
+                Subtotal (productos + extras):
+              </span>
+              <span className="text-green-800 dark:text-green-400">
+                ${(formData.saleItems.reduce((total, saleItem) => {
+                  const item = items.find(item => item.id === saleItem.itemId);
+                  return total + (item ? item.price * saleItem.quantity : 0);
+                }, 0) + formData.extras.reduce((total, extra) => total + extra.price, 0)).toFixed(2)}
+              </span>
+            </div>
+            {formData.discount > 0 && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-red-600 dark:text-red-400">
+                  Descuento:
+                </span>
+                <span className="text-red-600 dark:text-red-400">
+                  -${formData.discount.toFixed(2)}
+                </span>
+              </div>
+            )}
+            <hr className="border-green-300 dark:border-green-600" />
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-green-900 dark:text-green-300">
+                Total de la Venta:
+              </span>
+              <span className="text-xl font-bold text-green-900 dark:text-green-200">
+                ${formData.totalAmount.toFixed(2)}
+              </span>
+            </div>
           </div>
         </div>
         
