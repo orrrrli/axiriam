@@ -3,6 +3,7 @@ import { useInventory } from '../context/InventoryContext';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import ErrorModal from '../components/ui/ErrorModal';
 import ItemForm from '../components/inventory/ItemForm';
 import ItemDetail from '../components/inventory/ItemDetail';
 import ReduceQuantityModal from '../components/inventory/ReduceQuantityModal';
@@ -25,7 +26,9 @@ const Items: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isReduceModalOpen, setIsReduceModalOpen] = useState(false);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
+  const [deleteError, setDeleteError] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -98,7 +101,26 @@ const Items: React.FC = () => {
       setCurrentItem(null);
     } catch (error) {
       console.error('Failed to delete item:', error);
-      alert('Failed to delete item. Please try again.');
+      setDeleteError(error);
+      setIsErrorModalOpen(true);
+      setIsDeleteModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRetryDelete = async () => {
+    if (!currentItem) return;
+    
+    setIsSubmitting(true);
+    try {
+      await deleteItem(currentItem.id);
+      setIsErrorModalOpen(false);
+      setCurrentItem(null);
+      setDeleteError(null);
+    } catch (error) {
+      console.error('Retry failed to delete item:', error);
+      setDeleteError(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -484,6 +506,21 @@ const Items: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Error Modal for Deletion Failures */}
+      <ErrorModal
+        isOpen={isErrorModalOpen}
+        onClose={() => {
+          setIsErrorModalOpen(false);
+          setDeleteError(null);
+          setCurrentItem(null);
+        }}
+        title="Error al Eliminar Producto"
+        message="No se pudo eliminar el producto. Revisa los detalles del error a continuación."
+        error={deleteError}
+        onRetry={handleRetryDelete}
+        isRetrying={isSubmitting}
+      />
     </div>
   );
 };

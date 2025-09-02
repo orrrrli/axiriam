@@ -20,29 +20,31 @@ const ReduceQuantityModal: React.FC<ReduceQuantityModalProps> = ({
   onConfirm,
   isSubmitting = false
 }) => {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | ''>('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (quantity <= 0) {
+    const numQuantity = typeof quantity === 'string' ? parseInt(quantity) || 0 : quantity;
+    
+    if (numQuantity <= 0) {
       setError('La cantidad debe ser mayor a 0');
       return;
     }
     
-    if (quantity > item.quantity) {
+    if (numQuantity > item.quantity) {
       setError(`No hay suficiente stock. Disponible: ${item.quantity}`);
       return;
     }
     
-    onConfirm(quantity);
-    setQuantity(1);
+    onConfirm(numQuantity);
+    setQuantity('');
     setError('');
   };
 
   const handleClose = () => {
-    setQuantity(1);
+    setQuantity('');
     setError('');
     onClose();
   };
@@ -70,16 +72,24 @@ const ReduceQuantityModal: React.FC<ReduceQuantityModalProps> = ({
         <Input
           label="Cantidad a reducir"
           type="number"
-         value={quantity === 0 ? '' : quantity.toString()}
+          value={quantity.toString()}
           onChange={(e) => {
-           setQuantity(e.target.value === '' ? 1 : parseInt(e.target.value));
+            const value = e.target.value;
+            if (value === '') {
+              setQuantity('');
+            } else {
+              const numValue = parseInt(value);
+              if (!isNaN(numValue)) {
+                setQuantity(numValue);
+              }
+            }
             setError('');
           }}
           min="1"
           max={item.quantity}
           step="1"
           error={error}
-          required
+          placeholder="Ingresa la cantidad"
           fullWidth
         />
 

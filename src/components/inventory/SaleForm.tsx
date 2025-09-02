@@ -254,7 +254,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   const itemOptions = items.map(item => ({
     value: item.id,
-    label: `${item.name} - $${item.price}`
+    label: `${item.name} - ${item.category} - ${item.type} - $${item.price}`
   }));
 
   const getSocialMediaPlaceholder = () => {
@@ -673,7 +673,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
         <DateInput
           label="Fecha de entrega (opcional)"
-          value={formData.deliveryDate}
+          value={formData.deliveryDate ? formData.deliveryDate.toISOString().split('T')[0] : ''}
           onChange={(e) => handleChange('deliveryDate', e.target.value ? new Date(e.target.value) : undefined)}
           fullWidth
         />

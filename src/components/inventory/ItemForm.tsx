@@ -114,9 +114,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
   ];
 
   const typeOptions = [
-    { value: 'algodon', label: 'Algodón' },
+    { value: 'algodon', label: 'Algodon' },
     { value: 'normal', label: 'Normal' },
-    { value: 'microfibra', label: 'Microfibra' },
+    { value: 'stretch', label: 'Stretch' },
+    { value: 'satin', label: 'Satin' },
   ];
 
   return (
