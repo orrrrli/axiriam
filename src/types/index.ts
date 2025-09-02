@@ -38,6 +38,8 @@ export interface OrderMaterial {
     designs: {
       rawMaterialId: string;
       quantity: number;
+      addToInventory?: boolean; // Whether this design should use existing raw material
+      customDesignName?: string; // Custom design name for non-inventory items
     }[];
   }[];
   distributor: string;

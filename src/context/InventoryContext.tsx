@@ -387,8 +387,80 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updateItem = async (id: string, itemData: ItemFormData) => {
     try {
-      const updatedItem = await apiService.updateItem(id, itemData);
-      dispatch({ type: 'UPDATE_ITEM', payload: transformApiData.item(updatedItem) });
+      // Get the current item to compare quantities
+      const currentItem = state.items.find(item => item.id === id);
+      if (!currentItem) {
+        throw new Error(`Item with ID ${id} not found`);
+      }
+
+      // Calculate the quantity difference
+      const quantityDifference = itemData.quantity - currentItem.quantity;
+      
+      // Only reduce raw materials if quantity is being increased
+      if (quantityDifference > 0) {
+        console.log(`📈 Item quantity increased by ${quantityDifference}, checking raw materials...`);
+        
+        // Validate raw material availability for the additional quantity
+        const insufficientMaterials: string[] = [];
+        
+        for (const materialId of itemData.materials) {
+          const material = state.rawMaterials.find(rm => rm.id === materialId);
+          if (!material) {
+            throw new Error(`Raw material with ID ${materialId} not found`);
+          }
+          
+          if (material.quantity < quantityDifference) {
+            insufficientMaterials.push(`${material.name} (disponible: ${material.quantity}, necesario: ${quantityDifference})`);
+          }
+        }
+        
+        if (insufficientMaterials.length > 0) {
+          throw new Error(`Materiales insuficientes para el aumento de cantidad: ${insufficientMaterials.join(', ')}`);
+        }
+
+        // Update the item first
+        const updatedItem = await apiService.updateItem(id, itemData);
+        dispatch({ type: 'UPDATE_ITEM', payload: transformApiData.item(updatedItem) });
+
+        // Reduce raw material quantities by the difference
+        const updatedRawMaterials = [...state.rawMaterials];
+        
+        for (const materialId of itemData.materials) {
+          const materialIndex = updatedRawMaterials.findIndex(rm => rm.id === materialId);
+          
+          if (materialIndex !== -1) {
+            const currentMaterial = updatedRawMaterials[materialIndex];
+            const newQuantity = currentMaterial.quantity - quantityDifference;
+            
+            console.log(`📉 Reducing raw material ${materialId}: ${currentMaterial.quantity} - ${quantityDifference} = ${newQuantity}`);
+            
+            // Update the raw material quantity in the backend
+            const updatedMaterial = await apiService.updateRawMaterial(materialId, {
+              name: currentMaterial.name,
+              description: currentMaterial.description,
+              width: currentMaterial.width,
+              height: currentMaterial.height,
+              quantity: newQuantity,
+              price: currentMaterial.price,
+              supplier: currentMaterial.supplier,
+              imageUrl: currentMaterial.imageUrl
+            });
+            
+            // Update local state
+            updatedRawMaterials[materialIndex] = transformApiData.rawMaterial(updatedMaterial);
+          }
+        }
+        
+        // Update the state with new quantities
+        dispatch({ type: 'SET_RAW_MATERIALS', payload: updatedRawMaterials });
+        
+        console.log(`✅ Item updated and ${itemData.materials.length} raw materials reduced by ${quantityDifference}`);
+      } else {
+        // Just update the item without touching raw materials
+        console.log(`📝 Item updated without quantity change (${currentItem.quantity} → ${itemData.quantity})`);
+        const updatedItem = await apiService.updateItem(id, itemData);
+        dispatch({ type: 'UPDATE_ITEM', payload: transformApiData.item(updatedItem) });
+      }
     } catch (error) {
       console.error('Failed to update item:', error);
       throw error;
@@ -447,8 +519,57 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addOrderMaterial = async (orderData: OrderMaterialFormData) => {
     try {
-      const newOrder = await apiService.createOrderMaterial(transformToApiData.orderMaterial(orderData));
+      console.log('🚀 Adding order material with data:', orderData);
+      
+      // First, create raw materials for custom designs and get their IDs
+      const processedOrderData = { ...orderData };
+      
+      for (let materialIndex = 0; materialIndex < processedOrderData.materials.length; materialIndex++) {
+        const material = processedOrderData.materials[materialIndex];
+        
+        for (let designIndex = 0; designIndex < material.designs.length; designIndex++) {
+          const design = material.designs[designIndex];
+          
+          // If it's a custom design, create the raw material first
+          if (!design.addToInventory && design.customDesignName) {
+            try {
+              console.log(`🎨 Creating raw material for custom design: ${design.customDesignName}`);
+              
+              const rawMaterialData = {
+                name: design.customDesignName || 'Diseño personalizado',
+                description: `Diseño personalizado creado desde pedido de material`,
+                width: 1.5, // Default dimensions
+                height: 1.0,
+                quantity: 0, // Will be updated when order is received
+                price: 0, // Can be updated later
+                supplier: 'Diseño personalizado',
+                imageUrl: ''
+              };
+              
+              const newRawMaterial = await apiService.createRawMaterial(transformToApiData.rawMaterial(rawMaterialData));
+              console.log(`✅ Raw material created for: ${design.customDesignName}`, newRawMaterial);
+              
+              // Update the design to use the new raw material ID
+              processedOrderData.materials[materialIndex].designs[designIndex].rawMaterialId = newRawMaterial.id;
+              
+            } catch (error) {
+              console.error(`❌ Failed to create raw material for ${design.customDesignName}:`, error);
+              throw new Error(`No se pudo crear el material personalizado: ${design.customDesignName}`);
+            }
+          }
+        }
+      }
+      
+      // Now create the order with valid raw material IDs
+      const newOrder = await apiService.createOrderMaterial(transformToApiData.orderMaterial(processedOrderData));
+      console.log('✅ Order material created successfully:', newOrder);
       dispatch({ type: 'ADD_ORDER_MATERIAL', payload: transformApiData.orderMaterial(newOrder) });
+
+      // Refresh raw materials to show any newly created ones
+      const rawMaterials = await apiService.getRawMaterials();
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
+      
+      console.log(`✅ Order material created successfully with all custom designs`);
     } catch (error) {
       console.error('Failed to add order material:', error);
       throw error;
@@ -612,12 +733,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           console.log(`🎨 Creating raw material for custom design: ${customItem.customDesignName}`);
           
           const rawMaterialData = {
-            name: customItem.customDesignName,
+            name: customItem.customDesignName || 'Diseño personalizado',
             description: `Diseño personalizado creado desde venta ${newSale.sale_id || 'N/A'}`,
             width: 1.5, // Default dimensions
             height: 1.0,
             quantity: customItem.quantity,
-            unit: 'piezas',
             price: 0, // Can be updated later
             supplier: 'Diseño personalizado',
             imageUrl: ''

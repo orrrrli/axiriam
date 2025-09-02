@@ -58,7 +58,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   const calculateTotalAmount = () => {
     // Calculate items total
-    const itemsTotal = formData.saleItems.filter(item => item.addToInventory).reduce((total, saleItem) => {
+    const itemsTotal = formData.saleItems.reduce((total, saleItem) => {
       const item = items.find(item => item.id === saleItem.itemId);
       return total + (item ? item.price * saleItem.quantity : 0);
     }, 0);
@@ -175,20 +175,13 @@ const SaleForm: React.FC<SaleFormProps> = ({
     if (formData.saleItems.length === 0) {
       newErrors.saleItems = 'Debe agregar al menos un producto';
     } else {
-      // Validate inventory items
-      const invalidInventoryItems = formData.saleItems.filter(item => 
-        item.addToInventory && (!item.itemId || item.quantity <= 0)
+      // Validate that all items have itemId and quantity > 0
+      const invalidItems = formData.saleItems.filter(item => 
+        !item.itemId || item.quantity <= 0
       );
       
-      // Validate custom design items
-      const invalidCustomItems = formData.saleItems.filter(item => 
-        !item.addToInventory && (!item.customDesignName?.trim() || item.quantity <= 0)
-      );
-      
-      if (invalidInventoryItems.length > 0) {
-        newErrors.saleItems = 'Los productos de inventario deben tener un artículo seleccionado y cantidad mayor a 0';
-      } else if (invalidCustomItems.length > 0) {
-        newErrors.saleItems = 'Los diseños personalizados deben tener un nombre y cantidad mayor a 0';
+      if (invalidItems.length > 0) {
+        newErrors.saleItems = 'Todos los productos deben tener un artículo seleccionado y cantidad mayor a 0';
       }
     }
 
@@ -256,6 +249,11 @@ const SaleForm: React.FC<SaleFormProps> = ({
     value: item.id,
     label: `${item.name} - ${item.category} - ${item.type} - $${item.price}`
   }));
+
+  // Debug logging
+  console.log('SaleForm - Items received:', items);
+  console.log('SaleForm - Items count:', items.length);
+  console.log('SaleForm - Item options:', itemOptions);
 
   const getSocialMediaPlaceholder = () => {
     switch (formData.socialMediaPlatform) {
@@ -381,18 +379,42 @@ const SaleForm: React.FC<SaleFormProps> = ({
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Productos
+                Productos {items.length === 0 && <span className="text-red-500 text-sm font-normal">(No hay productos disponibles)</span>}
               </h3>
               <Button
                 type="button"
                 variant="primary"
                 size="sm"
                 onClick={addSaleItem}
+                disabled={items.length === 0}
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Agregar Producto
               </Button>
             </div>
+
+            {items.length === 0 && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      No hay productos disponibles
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                      <p>
+                        Para crear una venta necesitas tener productos en tu inventario. 
+                        Ve a la sección de <strong>Productos</strong> para crear algunos productos primero.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {formData.saleItems.map((saleItem, index) => {
               const selectedItem = items.find(item => item.id === saleItem.itemId);
@@ -414,44 +436,17 @@ const SaleForm: React.FC<SaleFormProps> = ({
                     </button>
                   </div>
 
-                  {/* Inventory Toggle */}
-                  <div className="mb-4">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`addToInventory-${index}`}
-                        checked={saleItem.addToInventory}
-                        onChange={(e) => updateSaleItem(index, 'addToInventory', e.target.checked)}
-                        className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor={`addToInventory-${index}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Agregar a inventario (usar producto existente)
-                      </label>
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-2">
-                      {saleItem.addToInventory ? (
-                        <SearchableSelect
-                          label="Artículo"
-                          value={saleItem.itemId}
-                          onChange={(value) => updateSaleItem(index, 'itemId', value)}
-                          options={itemOptions}
-                          placeholder="Buscar producto..."
-                          required
-                          fullWidth
-                        />
-                      ) : (
-                        <Input
-                          label="Nombre del diseño personalizado"
-                          value={saleItem.customDesignName || ''}
-                          onChange={(e) => updateSaleItem(index, 'customDesignName', e.target.value)}
-                          placeholder="Ej: Diseño especial Batman"
-                          required
-                          fullWidth
-                        />
-                      )}
+                      <SearchableSelect
+                        label="Artículo"
+                        value={saleItem.itemId}
+                        onChange={(value) => updateSaleItem(index, 'itemId', value)}
+                        options={itemOptions}
+                        placeholder="Buscar producto..."
+                        required
+                        fullWidth
+                      />
                     </div>
                     <Input
                       label="Cantidad"
@@ -465,7 +460,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
                     />
                   </div>
 
-                  {saleItem.addToInventory && selectedItem && (
+                  {selectedItem && (
                     <div className="mt-3 space-y-2">
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
                         <div className="flex justify-between items-center text-sm">
@@ -510,17 +505,6 @@ const SaleForm: React.FC<SaleFormProps> = ({
                     </div>
                   )}
 
-                  {!saleItem.addToInventory && saleItem.customDesignName && (
-                    <div className="mt-3">
-                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-200 dark:border-amber-700">
-                        <div className="flex items-center text-sm">
-                          <span className="text-amber-900 dark:text-amber-300">
-                            ⚠️ Diseño personalizado: Se creará automáticamente en materiales
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -620,7 +604,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
                 Subtotal (productos + extras):
               </span>
               <span className="text-green-800 dark:text-green-400">
-                ${(formData.saleItems.filter(item => item.addToInventory).reduce((total, saleItem) => {
+                ${(formData.saleItems.reduce((total, saleItem) => {
                   const item = items.find(item => item.id === saleItem.itemId);
                   return total + (item ? item.price * saleItem.quantity : 0);
                 }, 0) + formData.extras.reduce((total, extra) => total + extra.price, 0)).toFixed(2)}
