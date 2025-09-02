@@ -253,6 +253,7 @@ const Sales: React.FC = () => {
               shippingDescription: currentSale.shippingDescription,
               discount: currentSale.discount || 0,
               totalAmount: currentSale.totalAmount,
+              deliveryDate: currentSale.deliveryDate,
               items: currentSale.items,
               saleItems: currentSale.saleItems,
               extras: currentSale.extras,

@@ -99,6 +99,15 @@ const SaleDetail: React.FC<SaleDetailProps> = ({ sale, items }) => {
         </div>
       </div>
       
+      {sale.deliveryDate && (
+        <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+          <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Fecha de Entrega</span>
+          <span className="block mt-1 text-lg font-medium text-gray-900 dark:text-white">
+            {formatDate(sale.deliveryDate)}
+          </span>
+        </div>
+      )}
+      
       {sale.trackingNumber && (
         <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
           <span className="block text-xs text-gray-500 dark:text-gray-400 uppercase">Número de Rastreo</span>

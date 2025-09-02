@@ -576,10 +576,15 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addSale = async (saleData: SaleFormData) => {
     try {
+      console.log('🚀 Adding sale with data:', saleData);
+      
       // Validate item availability before creating sale
       const insufficientItems: string[] = [];
       
-      for (const saleItem of saleData.saleItems) {
+      // Only validate inventory items
+      const inventoryItems = saleData.saleItems.filter(item => item.addToInventory);
+      
+      for (const saleItem of inventoryItems) {
         const item = state.items.find(i => i.id === saleItem.itemId);
         if (!item) {
           throw new Error(`Item with ID ${saleItem.itemId} not found`);
@@ -596,12 +601,40 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // Create the sale
       const newSale = await apiService.createSale(transformToApiData.sale(saleData));
+      console.log('✅ Sale created successfully:', newSale);
       dispatch({ type: 'ADD_SALE', payload: transformApiData.sale(newSale) });
 
-      // Reduce item quantities
+      // Create raw materials for custom designs
+      const customDesigns = saleData.saleItems.filter(item => !item.addToInventory && item.customDesignName);
+      
+      for (const customItem of customDesigns) {
+        try {
+          console.log(`🎨 Creating raw material for custom design: ${customItem.customDesignName}`);
+          
+          const rawMaterialData = {
+            name: customItem.customDesignName,
+            description: `Diseño personalizado creado desde venta ${newSale.sale_id || 'N/A'}`,
+            width: 1.5, // Default dimensions
+            height: 1.0,
+            quantity: customItem.quantity,
+            unit: 'piezas',
+            price: 0, // Can be updated later
+            supplier: 'Diseño personalizado',
+            imageUrl: ''
+          };
+          
+          await apiService.createRawMaterial(transformToApiData.rawMaterial(rawMaterialData));
+          console.log(`✅ Raw material created for: ${customItem.customDesignName}`);
+        } catch (error) {
+          console.error(`❌ Failed to create raw material for ${customItem.customDesignName}:`, error);
+          // Don't fail the entire sale if raw material creation fails
+        }
+      }
+
+      // Reduce item quantities for inventory items only
       const updatedItems = [...state.items];
       
-      for (const saleItem of saleData.saleItems) {
+      for (const saleItem of inventoryItems) {
         const itemIndex = updatedItems.findIndex(i => i.id === saleItem.itemId);
         
         if (itemIndex !== -1) {
@@ -629,7 +662,11 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Update the state with new quantities
       dispatch({ type: 'SET_ITEMS', payload: updatedItems });
       
-      console.log(`✅ Sale created and ${saleData.saleItems.length} items updated`);
+      // Refresh raw materials to show any newly created ones
+      const rawMaterials = await apiService.getRawMaterials();
+      dispatch({ type: 'SET_RAW_MATERIALS', payload: rawMaterials.map(transformApiData.rawMaterial) });
+      
+      console.log(`✅ Sale created and ${inventoryItems.length} inventory items updated, ${customDesigns.length} custom designs created`);
     } catch (error) {
       console.error('Failed to add sale:', error);
       throw error;
