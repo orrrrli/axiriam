@@ -65,6 +65,7 @@ export interface Sale {
   shippingDescription?: string;
   discount: number;
   totalAmount: number;
+  deliveryDate?: Date; // New delivery date field
   items: string[]; // Keep for backward compatibility
   saleItems: SaleItem[]; // Items sold with quantities
   extras: SaleExtra[]; // Extra services/products
@@ -75,6 +76,8 @@ export interface Sale {
 export interface SaleItem {
   itemId: string;
   quantity: number;
+  addToInventory: boolean; // Whether this item should affect inventory
+  customDesignName?: string; // Custom design name for non-inventory items
 }
 
 export interface SaleExtra {
@@ -97,6 +100,7 @@ export interface SaleFormData {
   shippingDescription?: string;
   discount: number;
   totalAmount: number;
+  deliveryDate?: Date; // New delivery date field
   items: string[]; // Keep for backward compatibility
   saleItems: SaleItem[];
   extras: SaleExtra[];

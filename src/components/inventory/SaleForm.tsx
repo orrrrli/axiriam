@@ -3,6 +3,7 @@ import { SaleFormData, Item, SaleItem, SaleExtra } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import SearchableSelect from '../ui/SearchableSelect';
+import DateInput from '../ui/DateInput';
 import Button from '../ui/Button';
 import { Trash2, Plus } from 'lucide-react';
 
@@ -35,6 +36,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
     shippingDescription: '',
     discount: 0,
     totalAmount: 0,
+    deliveryDate: undefined,
     items: [], // Keep for backward compatibility
     saleItems: [],
     extras: []
@@ -56,7 +58,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
 
   const calculateTotalAmount = () => {
     // Calculate items total
-    const itemsTotal = formData.saleItems.reduce((total, saleItem) => {
+    const itemsTotal = formData.saleItems.filter(item => item.addToInventory).reduce((total, saleItem) => {
       const item = items.find(item => item.id === saleItem.itemId);
       return total + (item ? item.price * saleItem.quantity : 0);
     }, 0);
@@ -92,7 +94,9 @@ const SaleForm: React.FC<SaleFormProps> = ({
   const addSaleItem = () => {
     const newSaleItem: SaleItem = {
       itemId: '',
-      quantity: 1
+      quantity: 1,
+      addToInventory: true,
+      customDesignName: ''
     };
     setFormData(prev => ({
       ...prev,
@@ -170,8 +174,22 @@ const SaleForm: React.FC<SaleFormProps> = ({
     // Validate sale items
     if (formData.saleItems.length === 0) {
       newErrors.saleItems = 'Debe agregar al menos un producto';
-    } else if (formData.saleItems.some(item => !item.itemId || item.quantity <= 0)) {
-      newErrors.saleItems = 'Todos los productos deben tener un artículo seleccionado y cantidad mayor a 0';
+    } else {
+      // Validate inventory items
+      const invalidInventoryItems = formData.saleItems.filter(item => 
+        item.addToInventory && (!item.itemId || item.quantity <= 0)
+      );
+      
+      // Validate custom design items
+      const invalidCustomItems = formData.saleItems.filter(item => 
+        !item.addToInventory && (!item.customDesignName?.trim() || item.quantity <= 0)
+      );
+      
+      if (invalidInventoryItems.length > 0) {
+        newErrors.saleItems = 'Los productos de inventario deben tener un artículo seleccionado y cantidad mayor a 0';
+      } else if (invalidCustomItems.length > 0) {
+        newErrors.saleItems = 'Los diseños personalizados deben tener un nombre y cantidad mayor a 0';
+      }
     }
 
     // Validate extras
@@ -396,19 +414,45 @@ const SaleForm: React.FC<SaleFormProps> = ({
                     </button>
                   </div>
 
+                  {/* Inventory Toggle */}
+                  <div className="mb-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`addToInventory-${index}`}
+                        checked={saleItem.addToInventory}
+                        onChange={(e) => updateSaleItem(index, 'addToInventory', e.target.checked)}
+                        className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`addToInventory-${index}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                        Agregar a inventario (usar producto existente)
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-2">
-                      <SearchableSelect
-                        label="Artículo"
-                        value={saleItem.itemId}
-                        onChange={(value) => updateSaleItem(index, 'itemId', value)}
-                        options={itemOptions}
-                        placeholder="Buscar producto..."
-                        required
-                        fullWidth
-                      />
+                      {saleItem.addToInventory ? (
+                        <SearchableSelect
+                          label="Artículo"
+                          value={saleItem.itemId}
+                          onChange={(value) => updateSaleItem(index, 'itemId', value)}
+                          options={itemOptions}
+                          placeholder="Buscar producto..."
+                          required
+                          fullWidth
+                        />
+                      ) : (
+                        <Input
+                          label="Nombre del diseño personalizado"
+                          value={saleItem.customDesignName || ''}
+                          onChange={(e) => updateSaleItem(index, 'customDesignName', e.target.value)}
+                          placeholder="Ej: Diseño especial Batman"
+                          required
+                          fullWidth
+                        />
+                      )}
                     </div>
-
                     <Input
                       label="Cantidad"
                       type="number"
@@ -421,7 +465,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
                     />
                   </div>
 
-                  {selectedItem && (
+                  {saleItem.addToInventory && selectedItem && (
                     <div className="mt-3 space-y-2">
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
                         <div className="flex justify-between items-center text-sm">
@@ -461,6 +505,18 @@ const SaleForm: React.FC<SaleFormProps> = ({
                               ❌ Sin stock
                             </span>
                           )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!saleItem.addToInventory && saleItem.customDesignName && (
+                    <div className="mt-3">
+                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-200 dark:border-amber-700">
+                        <div className="flex items-center text-sm">
+                          <span className="text-amber-900 dark:text-amber-300">
+                            ⚠️ Diseño personalizado: Se creará automáticamente en materiales
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -564,12 +620,22 @@ const SaleForm: React.FC<SaleFormProps> = ({
                 Subtotal (productos + extras):
               </span>
               <span className="text-green-800 dark:text-green-400">
-                ${(formData.saleItems.reduce((total, saleItem) => {
+                ${(formData.saleItems.filter(item => item.addToInventory).reduce((total, saleItem) => {
                   const item = items.find(item => item.id === saleItem.itemId);
                   return total + (item ? item.price * saleItem.quantity : 0);
                 }, 0) + formData.extras.reduce((total, extra) => total + extra.price, 0)).toFixed(2)}
               </span>
             </div>
+            {formData.saleItems.some(item => !item.addToInventory) && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-amber-800 dark:text-amber-400">
+                  Diseños personalizados:
+                </span>
+                <span className="text-amber-800 dark:text-amber-400">
+                  {formData.saleItems.filter(item => !item.addToInventory).length} diseño(s)
+                </span>
+              </div>
+            )}
             {formData.discount > 0 && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-red-600 dark:text-red-400">
@@ -605,6 +671,12 @@ const SaleForm: React.FC<SaleFormProps> = ({
           </label>
         </div>
 
+        <DateInput
+          label="Fecha de entrega (opcional)"
+          value={formData.deliveryDate}
+          onChange={(e) => handleChange('deliveryDate', e.target.value ? new Date(e.target.value) : undefined)}
+          fullWidth
+        />
       </div>
 
       {/* Error Summary - Show all validation errors at bottom */}

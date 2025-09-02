@@ -218,7 +218,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
               )}
             </div>
             
-            <div className="bg-gray-50 p-3 rounded-md max-h-40 overflow-y-auto border border-gray-200 dark:bg-gray-700 mt-2">
+            <div className="bg-gray-50 p-3 rounded-md max-h-48 overflow-y-auto border border-gray-200 dark:bg-gray-700 mt-2">
               {rawMaterials
                 .filter(material => 
                   material.name.toLowerCase().includes(materialSearch.toLowerCase())
@@ -235,7 +235,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
                   />
                   <label
                     htmlFor={`material-${material.id}`}
-                    className={`ml-2 block text-sm cursor-pointer flex-1 ${
+                    className={`ml-2 block text-sm cursor-pointer flex-1 leading-relaxed ${
                       material.quantity === 0 
                         ? 'text-red-500 dark:text-red-400' 
                         : material.quantity < formData.quantity && formData.quantity > 0
@@ -243,16 +243,21 @@ const ItemForm: React.FC<ItemFormProps> = ({
                           : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    {material.name} ({material.width}x{material.height}m)
-                    <span className={`ml-2 text-xs ${
+                    <div className="flex flex-col">
+                      <span className="font-medium">{material.name}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Dimensiones: {material.width}x{material.height}m
+                      </span>
+                      <span className={`text-xs ${
                       material.quantity === 0 
                         ? 'text-red-600 dark:text-red-400' 
                         : material.quantity < formData.quantity && formData.quantity > 0
                           ? 'text-orange-600 dark:text-orange-400'
                           : 'text-gray-500 dark:text-gray-400'
-                    }`}>
-                      - Stock: {material.quantity}
-                    </span>
+                      }`}>
+                        Stock: {material.quantity} | Proveedor: {material.supplier || 'N/A'}
+                      </span>
+                    </div>
                   </label>
                 </div>
               ))}

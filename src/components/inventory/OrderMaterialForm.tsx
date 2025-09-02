@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { OrderMaterialFormData, RawMaterial } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import SearchableSelect from '../ui/SearchableSelect';
 import Button from '../ui/Button';
 import { Trash2, Plus } from 'lucide-react';
 

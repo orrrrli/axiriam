@@ -216,38 +216,27 @@ const transformApiData = {
     nationalShippingCarrier: apiSale.national_shipping_carrier,
     shippingDescription: apiSale.shipping_description,
     totalAmount: parseFloat(apiSale.total_amount),
+    deliveryDate: apiSale.delivery_date ? new Date(apiSale.delivery_date) : undefined,
     saleItems: apiSale.sale_items ? apiSale.sale_items.map((saleItem: any) => ({
       itemId: saleItem.item_id,
-      quantity: saleItem.quantity
+      quantity: saleItem.quantity,
+      addToInventory: true, // Default for existing sales
+      customDesignName: undefined
     })) : [],
     extras: (() => {
-      console.log('🔍 Transforming extras for sale:', apiSale.sale_id);
-      console.log('📋 Raw apiSale.sale_extras:', JSON.stringify(apiSale.sale_extras, null, 2));
-      console.log('📋 Raw apiSale.extras:', JSON.stringify(apiSale.extras, null, 2));
+      console.log('🔍 Transforming extras for sale:', apiSale.sale_id || apiSale.id);
+      console.log('📋 Raw sale_extras:', JSON.stringify(apiSale.sale_extras, null, 2));
       
       let transformedExtras: any[] = [];
       
-      // Priority 1: Use sale_extras if available (most detailed)
+      // Use sale_extras from the API response
       if (apiSale.sale_extras && Array.isArray(apiSale.sale_extras)) {
         transformedExtras = apiSale.sale_extras.map((saleExtra: any) => {
-          const extraData = saleExtra.extras || saleExtra.extra || {};
+          const extraData = saleExtra.extras || {};
           const result = {
-            id: saleExtra.id,
+            id: saleExtra.extra_id || extraData.id,
             description: extraData.description || 'Unknown',
-            price: extraData.price !== undefined && extraData.price !== null ? extraData.price : 0
-          };
-          console.log('🎁 Transformed sale_extra:', result);
-          return result;
-        });
-      }
-      // Priority 2: Use extras array if sale_extras not available
-      else if (apiSale.extras && Array.isArray(apiSale.extras)) {
-        transformedExtras = apiSale.extras.map((extra: any) => {
-          const extraData = extra.extra || extra;
-          const result = {
-            id: extra.id || extra.extra_id || extraData.id,
-            description: extra.description || extraData.description || 'Unknown',
-            price: extra.price !== undefined && extra.price !== null ? extra.price : (extraData.price || 0)
+            price: extraData.price !== undefined && extraData.price !== null ? parseFloat(extraData.price) : 0
           };
           console.log('🎁 Transformed extra:', result);
           return result;
@@ -287,7 +276,8 @@ const transformToApiData = {
     national_shipping_carrier: data.nationalShippingCarrier,
     shipping_description: data.shippingDescription,
     total_amount: data.totalAmount,
-    sale_items: data.saleItems,
+    delivery_date: data.deliveryDate ? data.deliveryDate.toISOString().split('T')[0] : null,
+    items: data.saleItems.filter(item => item.addToInventory).map(item => item.itemId),
     extras: data.extras
   })
 };

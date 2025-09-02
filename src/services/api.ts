@@ -181,29 +181,37 @@ class ApiService {
 
   // Sales API
   async getSales() {
+    console.log('📥 Fetching all sales...');
     const sales = await this.request<any[]>('/sales');
+    console.log('📋 Sales received:', JSON.stringify(sales, null, 2));
     return sales;
   }
 
   async getSale(id: string) {
+    console.log('📥 Fetching sale:', id);
     const sale = await this.request<any>(`/sales/${id}`);
+    console.log('📋 Sale received:', JSON.stringify(sale, null, 2));
     return sale;
     
   }
 
   async createSale(data: any) {
+    console.log('🚀 Creating sale with data:', JSON.stringify(data, null, 2));
     const sale = await this.request<any>('/sales', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    console.log('✅ Sale created:', JSON.stringify(sale, null, 2));
     return sale;
   }
 
   async updateSale(id: string, data: any) {
+    console.log('🔄 Updating sale with data:', JSON.stringify(data, null, 2));
     const sale = await this.request<any>(`/sales/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    console.log('✅ Sale updated:', JSON.stringify(sale, null, 2));
     return sale;
   }
 
@@ -309,6 +317,18 @@ class ApiService {
       default:
         throw new Error(`Servicio de paquetería no soportado: ${service}`);
     }
+  }
+
+  // Extras API
+  async getExtras() {
+    return this.request<any[]>('/extras');
+  }
+
+  async createExtra(data: any) {
+    return this.request<any>('/extras', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   // Health check
