@@ -255,7 +255,8 @@ const transformApiData = {
 const transformToApiData = {
   rawMaterial: (data: RawMaterialFormData) => ({
     ...data,
-    image_url: data.imageUrl
+    image_url: data.imageUrl,
+    type: data.type
   }),
   
   orderMaterial: (data: OrderMaterialFormData) => ({
@@ -535,11 +536,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             try {
               console.log(`🎨 Creating raw material for custom design: ${design.customDesignName}`);
               
-              const rawMaterialData = {
+              const rawMaterialData: RawMaterialFormData = {
                 name: design.customDesignName || 'Diseño personalizado',
                 description: `Diseño personalizado creado desde pedido de material`,
                 width: 1.5, // Default dimensions
                 height: 1.0,
+                type: 'normal' as const,
                 quantity: 0, // Will be updated when order is received
                 price: 0, // Can be updated later
                 supplier: 'Diseño personalizado',
@@ -732,11 +734,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         try {
           console.log(`🎨 Creating raw material for custom design: ${customItem.customDesignName}`);
           
-          const rawMaterialData = {
+          const rawMaterialData: RawMaterialFormData = {
             name: customItem.customDesignName || 'Diseño personalizado',
             description: `Diseño personalizado creado desde venta ${newSale.sale_id || 'N/A'}`,
             width: 1.5, // Default dimensions
             height: 1.0,
+            type: 'normal' as const,
             quantity: customItem.quantity,
             price: 0, // Can be updated later
             supplier: 'Diseño personalizado',

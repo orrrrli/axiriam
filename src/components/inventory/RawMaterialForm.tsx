@@ -20,6 +20,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   const defaultFormData: RawMaterialFormData = {
     name: '',
     description: '',
+    type: 'algodon',
     width: 0,
     height: 0,
     quantity: 0,
@@ -175,6 +176,24 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           placeholder="Ingresa una descripción del material"
           fullWidth
         />
+
+        {/* Type Selector */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Tipo de Material
+          </label>
+          <select
+            value={formData.type}
+            onChange={(e) => handleChange('type', e.target.value as 'algodon' | 'stretch' | 'normal' | 'satin')}
+            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 transition-colors duration-200"
+            required
+          >
+            <option value="algodon">Algodon</option>
+            <option value="normal">Normal</option>
+            <option value="stretch">Stretch</option>
+            <option value="satin">Satin</option>
+          </select>
+        </div>
 
         {/* Image Upload Section */}
         <div className="space-y-2">

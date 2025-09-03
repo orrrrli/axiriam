@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ItemFormData, RawMaterial } from '../../types';
 import Input from '../ui/Input';
-import Select from '../ui/Select';
 import Button from '../ui/Button';
+import Select from '../ui/Select';
+import Badge from '../ui/Badge';
 
 interface ItemFormProps {
   initialData?: ItemFormData;
@@ -32,6 +33,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
   const [formData, setFormData] = useState<ItemFormData>(initialData || defaultFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof ItemFormData, string>>>({});
   const [materialSearch, setMaterialSearch] = useState('');
+  const [materialTypeFilter, setMaterialTypeFilter] = useState('');
 
   useEffect(() => {
     if (initialData) {
@@ -54,9 +56,11 @@ const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   const handleMaterialSelect = (materialId: string) => {
+    const selectedMaterial = rawMaterials.find(m => m.id === materialId);
     setFormData(prev => ({
       ...prev,
-      materials: [materialId] // Only allow one material selection
+      materials: [materialId], // Single selection
+      type: selectedMaterial ? selectedMaterial.type : prev.type // Auto-update item type
     }));
   };
 
@@ -119,6 +123,36 @@ const ItemForm: React.FC<ItemFormProps> = ({
     { value: 'stretch', label: 'Stretch' },
     { value: 'satin', label: 'Satin' },
   ];
+
+  const getTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'algodon':
+        return 'primary';
+      case 'normal':
+        return 'secondary';
+      case 'stretch':
+        return 'success';
+      case 'satin':
+        return 'warning';
+      default:
+        return 'primary';
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'algodon':
+        return 'Algodon';
+      case 'normal':
+        return 'Normal';
+      case 'stretch':
+        return 'Stretch';
+      case 'satin':
+        return 'Satin';
+      default:
+        return 'Unknown';
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -219,11 +253,28 @@ const ItemForm: React.FC<ItemFormProps> = ({
               )}
             </div>
             
+            <div className="mb-3">
+              <Select
+                value={materialTypeFilter}
+                onChange={setMaterialTypeFilter}
+                options={[
+                  { value: '', label: 'Todos los tipos' },
+                  { value: 'algodon', label: 'Algodon' },
+                  { value: 'normal', label: 'Normal' },
+                  { value: 'stretch', label: 'Stretch' },
+                  { value: 'satin', label: 'Satin' }
+                ]}
+                fullWidth
+              />
+            </div>
+            
             <div className="bg-gray-50 p-3 rounded-md max-h-48 overflow-y-auto border border-gray-200 dark:bg-gray-700 mt-2">
               {rawMaterials
-                .filter(material => 
-                  material.name.toLowerCase().includes(materialSearch.toLowerCase())
-                )
+                .filter(material => {
+                  const matchesSearch = material.name.toLowerCase().includes(materialSearch.toLowerCase());
+                  const matchesType = materialTypeFilter === '' || material.type === materialTypeFilter;
+                  return matchesSearch && matchesType;
+                })
                 .map((material) => (
                 <div key={material.id} className="flex items-center mb-2 last:mb-0">
                   <input
@@ -245,7 +296,12 @@ const ItemForm: React.FC<ItemFormProps> = ({
                     }`}
                   >
                     <div className="flex flex-col">
-                      <span className="font-medium">{material.name}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{material.name}</span>
+                        <Badge variant={getTypeBadgeVariant(material.type)}>
+                          {getTypeLabel(material.type)}
+                        </Badge>
+                      </div>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         Dimensiones: {material.width}x{material.height}m
                       </span>
@@ -263,9 +319,11 @@ const ItemForm: React.FC<ItemFormProps> = ({
                 </div>
               ))}
               
-              {rawMaterials.filter(material => 
-                material.name.toLowerCase().includes(materialSearch.toLowerCase())
-              ).length === 0 && materialSearch && (
+              {rawMaterials.filter(material => {
+                const matchesSearch = material.name.toLowerCase().includes(materialSearch.toLowerCase());
+                const matchesType = materialTypeFilter === '' || material.type === materialTypeFilter;
+                return matchesSearch && matchesType;
+              }).length === 0 && (materialSearch || materialTypeFilter) && (
                 <div className="text-gray-500 dark:text-gray-400 text-sm text-center py-2">
                   No se encontraron materiales
                 </div>

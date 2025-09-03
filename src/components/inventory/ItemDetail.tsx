@@ -26,12 +26,16 @@ const ItemDetail: React.FC<ItemDetailProps> = ({ item, rawMaterials }) => {
 
   const getTypeMaterialBadge = (type: string) => {
     switch (type) {
-      case 'sencillo-algodon':
-        return <Badge variant="success">Sencillo algodón</Badge>;
-      case 'completo-algodon':
-        return <Badge variant="danger">Completo algodón</Badge>;
+      case 'algodon':
+        return <Badge variant="success">Algodon</Badge>;
+      case 'normal':
+        return <Badge variant="danger">Normal</Badge>;
+      case 'microfibra':
+        return <Badge variant="default">Microfibra</Badge>;
       case 'stretch':
-        return <Badge variant="default">Stretch</Badge>;
+        return <Badge variant="warning">Stretch</Badge>;
+      case 'satin':
+        return <Badge variant="secondary">Satin</Badge>;
       default:
         return <Badge>{type}</Badge>;
     }

@@ -3,6 +3,8 @@ import { useInventory } from '../context/InventoryContext';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import Badge from '../components/ui/Badge';
+import Select from '../components/ui/Select';
 import RawMaterialForm from '../components/inventory/RawMaterialForm';
 import RawMaterialDetail from '../components/inventory/RawMaterialDetail';
 import { RawMaterial, RawMaterialFormData } from '../types';
@@ -23,15 +25,20 @@ const RawMaterials: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentMaterial, setCurrentMaterial] = useState<RawMaterial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
 
   const filteredAndSortedMaterials = (() => {
-    let filtered = rawMaterials.filter(material => 
-      material.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      material.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      material.supplier.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let filtered = rawMaterials.filter(material => {
+      const matchesSearch = material.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        material.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        material.supplier.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = typeFilter === '' || material.type === typeFilter;
+      
+      return matchesSearch && matchesType;
+    });
 
     if (sortOrder) {
       filtered = [...filtered].sort((a, b) => {
@@ -122,6 +129,41 @@ const RawMaterials: React.FC = () => {
     }
     return value.toString();
   };
+
+  // Functions for TYPE badges (matching Items.tsx pattern)
+  const getRawMaterialTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'algodon':
+        return 'success';
+      case 'stretch':
+        return 'warning';
+      case 'normal':
+        return 'danger';
+      case 'satin':
+        return 'secondary';
+      default:
+        return 'default';
+    }
+  };
+
+  const getRawMaterialTypeLabel = (type: string) => {
+    switch (type) {
+      case 'algodon':
+        return 'Algodon';
+      case 'stretch':
+        return 'Stretch';
+      case 'normal':
+        return 'Normal';
+      case 'satin':
+        return 'Satin';
+      default:
+        return type;
+    }
+  };
+
+  const isRawMaterialType = (type: string) => {
+    return ['algodon', 'stretch', 'normal', 'satin'].includes(type);
+  };
   
   const columns: TableColumn<RawMaterial>[] = [
     {
@@ -148,6 +190,20 @@ const RawMaterials: React.FC = () => {
       header: 'Nombre',
       accessor: 'name',
       className: 'font-medium text-gray-900 dark:text-white'
+    },
+    {
+      header: 'Tipo',
+      accessor: (material: RawMaterial) => {
+        if (isRawMaterialType(material.type)) {
+          const variant = getRawMaterialTypeBadgeVariant(material.type);
+          return (
+            <Badge variant={variant}>
+              {getRawMaterialTypeLabel(material.type)}
+            </Badge>
+          );
+        }
+        return <span className="text-gray-400 dark:text-gray-500">-</span>;
+      }
     },
     {
       header: 'Dimensiones',
@@ -190,6 +246,7 @@ const RawMaterials: React.FC = () => {
             onClick={(e) => { e.stopPropagation(); openEditModal(material); }}
             className="text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
             aria-label="Edit"
+            title="Editar material"
           >
             <Pencil size={18} />
           </button>
@@ -197,12 +254,13 @@ const RawMaterials: React.FC = () => {
             onClick={(e) => { e.stopPropagation(); openDeleteModal(material); }}
             className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
             aria-label="Delete"
+            title="Eliminar material"
           >
             <Trash2 size={18} />
           </button>
         </div>
       ),
-      className: 'text-right'
+      className: 'text-center'
     }
   ];
   
@@ -222,7 +280,28 @@ const RawMaterials: React.FC = () => {
       </div>
       
       <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-full sm:w-64">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Filtrar por tipo de material
+          </label>
+          <Select
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[
+              { value: '', label: 'Todos los tipos' },
+              { value: 'algodon', label: 'Algodon' },
+              { value: 'normal', label: 'Normal' },
+              { value: 'stretch', label: 'Stretch' },
+              { value: 'satin', label: 'Satin' }
+            ]}
+            fullWidth
+          />
+        </div>
+        
         <div className="w-full sm:w-auto">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Ordenar
+          </label>
           <SortButton
             sortOrder={sortOrder}
             onSort={handleSort}
@@ -231,16 +310,21 @@ const RawMaterials: React.FC = () => {
         </div>
         
         <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Buscar
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar materiales..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search materials..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-          />
         </div>
       </div>
       
@@ -279,10 +363,10 @@ const RawMaterials: React.FC = () => {
             initialData={{
               name: currentMaterial.name,
               description: currentMaterial.description,
+              type: currentMaterial.type,
               width: currentMaterial.width,
               height: currentMaterial.height,
               quantity: currentMaterial.quantity,
-              unit: currentMaterial.unit,
               price: currentMaterial.price,
               supplier: currentMaterial.supplier,
               imageUrl: currentMaterial.imageUrl

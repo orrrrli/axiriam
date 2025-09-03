@@ -202,6 +202,10 @@ const Items: React.FC = () => {
         return 'danger';
       case 'microfibra':
         return 'default';
+      case 'stretch':
+        return 'warning';
+      case 'satin':
+        return 'secondary';
       default:
         return 'default';
     }
@@ -210,11 +214,15 @@ const Items: React.FC = () => {
   const getMaterialLabel = (type: string) => {
     switch (type) {
       case 'algodon':
-        return 'Algodón';
+        return 'Algodon';
       case 'normal':
         return 'Normal';
       case 'microfibra':
         return 'Microfibra';
+      case 'stretch':
+        return 'Stretch';
+      case 'satin':
+        return 'Satin';
       default:
         return type;
     }
@@ -225,7 +233,7 @@ const Items: React.FC = () => {
   };
 
   const isMaterialCategory = (type: string) => {
-    return ['algodon', 'normal', 'microfibra'].includes(type);
+    return ['algodon', 'normal', 'microfibra', 'stretch', 'satin'].includes(type);
   };
   
   const columns: TableColumn<Item>[] = [
@@ -344,6 +352,9 @@ const Items: React.FC = () => {
       
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="w-full sm:w-64">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Filtrar por categoría
+          </label>
           <Select
             value={categoryFilter}
             onChange={setCategoryFilter}
@@ -352,6 +363,9 @@ const Items: React.FC = () => {
           />
         </div>
         <div className="w-full sm:w-64">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Filtrar por tipo de material
+          </label>
           <Select
             value={typeFilter}
             onChange={setTypeFilter}
@@ -361,6 +375,9 @@ const Items: React.FC = () => {
         </div>
         
         <div className="w-full sm:w-auto">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Ordenar
+          </label>
           <SortButton
             sortOrder={sortOrder}
             onSort={handleSort}
@@ -369,16 +386,21 @@ const Items: React.FC = () => {
         </div>
         
         <div className="relative flex-1">
-          <div className="absolute left-0 w-10 h-10 grid place-items-center pointer-events-none z-10">
-            <Search className="h-5 w-5 text-gray-400" />
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Buscar
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar gorros..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Buscar gorros..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 sm:text-sm transition-colors duration-200"
-          />
         </div>
       </div>
       
