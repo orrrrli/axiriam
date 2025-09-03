@@ -260,7 +260,8 @@ const RawMaterials: React.FC = () => {
           </button>
         </div>
       ),
-      className: 'text-center'
+      className: 'text-center',
+      sticky: 'right'
     }
   ];
   

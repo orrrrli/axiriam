@@ -1,5 +1,5 @@
 import React from 'react';
-import { PackageOpen, Box, LayoutDashboard, ShoppingCart, DollarSign } from 'lucide-react';
+import { PackageOpen, Box, LayoutDashboard, ShoppingCart, DollarSign, FileText } from 'lucide-react';
 
 interface TabNavigationProps {
   activeTab: string;
@@ -12,7 +12,8 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
     { id: 'items', label: 'Gorros', icon: <Box className="w-5 h-5 mr-2" /> },
     { id: 'raw-materials', label: 'Diseños/Material', icon: <PackageOpen className="w-5 h-5 mr-2" /> },
     { id: 'order-materials', label: 'Pedidos', icon: <ShoppingCart className="w-5 h-5 mr-2" /> },
-    { id: 'sales', label: 'Ventas', icon: <DollarSign className="w-5 h-5 mr-2" /> }
+    { id: 'sales', label: 'Ventas', icon: <DollarSign className="w-5 h-5 mr-2" /> },
+    { id: 'cotizaciones', label: 'Cotizaciones', icon: <FileText className="w-5 h-5 mr-2" /> }
   ];
 
   return (

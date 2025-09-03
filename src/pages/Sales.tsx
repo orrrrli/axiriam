@@ -165,7 +165,8 @@ const Sales: React.FC = () => {
           </button>
         </div>
       ),
-      className: 'text-right'
+      className: 'text-right',
+      sticky: 'right'
     }
   ];
   

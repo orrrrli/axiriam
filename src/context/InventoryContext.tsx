@@ -541,7 +541,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 description: `Diseño personalizado creado desde pedido de material`,
                 width: 1.5, // Default dimensions
                 height: 1.0,
-                type: 'normal' as const,
+                type: design.type || 'normal' as const,
                 quantity: 0, // Will be updated when order is received
                 price: 0, // Can be updated later
                 supplier: 'Diseño personalizado',

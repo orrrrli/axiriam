@@ -41,6 +41,7 @@ export interface OrderMaterial {
       quantity: number;
       addToInventory?: boolean; // Whether this design should use existing raw material
       customDesignName?: string; // Custom design name for non-inventory items
+      type?: 'algodon' | 'stretch' | 'normal' | 'satin'; // Material type for custom designs
     }[];
   }[];
   distributor: string;
@@ -109,6 +110,45 @@ export interface SaleFormData {
   extras: SaleExtra[];
 }
 
+export interface Quote {
+  id: string;
+  quoteNumber: string; // Unique quote identifier
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientCompany?: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  validUntil: Date; // Quote expiration date
+  items: QuoteItem[];
+  extras: SaleExtra[];
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  notes?: string; // Additional notes for the client
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface QuoteItem {
+  itemId: string;
+  quantity: number;
+  unitPrice: number; // Price at time of quote (may differ from current item price)
+  description?: string; // Custom description for this quote item
+}
+
+export interface QuoteFormData {
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientCompany?: string;
+  validUntil: Date;
+  items: QuoteItem[];
+  extras: SaleExtra[];
+  discount: number;
+  notes?: string;
+}
+
 export type ItemFormData = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
 export type RawMaterialFormData = Omit<RawMaterial, 'id' | 'createdAt' | 'updatedAt'>;
 export type OrderMaterialFormData = Omit<OrderMaterial, 'id' | 'createdAt' | 'updatedAt'>;
+export type QuoteFormDataType = Omit<Quote, 'id' | 'quoteNumber' | 'subtotal' | 'totalAmount' | 'createdAt' | 'updatedAt'>;

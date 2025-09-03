@@ -51,7 +51,7 @@ const Select: React.FC<SelectProps> = ({
         `}
         {...props}
       >
-        <option value="" disabled>Selecciona una opción</option>
+        {value === undefined && <option value="" disabled>Selecciona una opción</option>}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

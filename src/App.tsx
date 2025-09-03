@@ -10,6 +10,7 @@ import Items from './pages/Items';
 import RawMaterials from './pages/RawMaterials';
 import OrderMaterials from './pages/OrderMaterials';
 import Sales from './pages/Sales';
+import Cotizaciones from './pages/Cotizaciones';
 import Login from './pages/Login';
 
 const AppContent = () => {
@@ -28,6 +29,8 @@ const AppContent = () => {
         return <OrderMaterials />;
       case 'sales':
         return <Sales />;
+      case 'cotizaciones':
+        return <Cotizaciones />;
       default:
         return <Dashboard />;
     }

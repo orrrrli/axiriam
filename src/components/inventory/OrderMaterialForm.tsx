@@ -3,7 +3,8 @@ import { OrderMaterialFormData, RawMaterial } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
-import { Trash2, Plus } from 'lucide-react';
+import Badge from '../ui/Badge';
+import { Trash2, Plus, Search } from 'lucide-react';
 
 interface OrderMaterialFormProps {
   initialData?: OrderMaterialFormData;
@@ -23,7 +24,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   const defaultFormData: OrderMaterialFormData = {
     materials: [
       {
-        designs: [{ rawMaterialId: '', quantity: 1, addToInventory: true, customDesignName: '' }],
+        designs: [{ rawMaterialId: '', quantity: 1, addToInventory: true, customDesignName: '', type: 'algodon' }],
         
       },
     ],
@@ -38,10 +39,28 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   );
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const [materialSearchQueries, setMaterialSearchQueries] = useState<{ [key: string]: string }>({});
+  const [materialTypeFilters, setMaterialTypeFilters] = useState<{ [key: string]: string }>({});
+  const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // When editing an existing order, ensure addToInventory is true for designs that have rawMaterialId
+      // and add default type if missing
+      const processedData = {
+        ...initialData,
+        materials: initialData.materials.map(material => ({
+          ...material,
+          designs: material.designs.map(design => ({
+            ...design,
+            // If design has a rawMaterialId, it means it was already created/selected, so set addToInventory to true
+            addToInventory: design.rawMaterialId ? true : design.addToInventory,
+            // Ensure type field exists with default value
+            type: design.type || 'algodon'
+          }))
+        }))
+      };
+      setFormData(processedData);
     }
   }, [initialData]);
 
@@ -122,7 +141,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       ...prev,
       materials: [
         ...prev.materials,
-        { designs: [{ rawMaterialId: '', quantity: 1, addToInventory: true, customDesignName: '' }]},
+        { designs: [{ rawMaterialId: '', quantity: 1, addToInventory: true, customDesignName: '', type: 'algodon' }]},
       ],
     }));
   };
@@ -142,7 +161,8 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       rawMaterialId: '',
       quantity: 1,
       addToInventory: true,
-      customDesignName: ''
+      customDesignName: '',
+      type: 'algodon'
     });
     setFormData((prev) => ({ ...prev, materials: updatedMaterials }));
   };
@@ -202,10 +222,71 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     }
   };
 
-  const materialOptions = rawMaterials.map((material) => ({
-    value: material.id,
-    label: material.name,
-  }));
+  const handleMaterialSearch = (materialIndex: number, designIndex: number, query: string) => {
+    const searchKey = `${materialIndex}-${designIndex}`;
+    setMaterialSearchQueries(prev => ({
+      ...prev,
+      [searchKey]: query
+    }));
+  };
+
+  const handleMaterialTypeFilter = (materialIndex: number, designIndex: number, type: string) => {
+    const searchKey = `${materialIndex}-${designIndex}`;
+    setMaterialTypeFilters(prev => ({
+      ...prev,
+      [searchKey]: type
+    }));
+  };
+
+  const toggleDropdown = (materialIndex: number, designIndex: number) => {
+    const dropdownKey = `${materialIndex}-${designIndex}`;
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [dropdownKey]: !prev[dropdownKey]
+    }));
+  };
+
+  const selectMaterial = (materialIndex: number, designIndex: number, materialId: string) => {
+    handleDesignChange(materialIndex, designIndex, 'rawMaterialId', materialId);
+    const dropdownKey = `${materialIndex}-${designIndex}`;
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [dropdownKey]: false
+    }));
+  };
+
+  const getFilteredMaterials = (materialIndex: number, designIndex: number) => {
+    const searchKey = `${materialIndex}-${designIndex}`;
+    const searchQuery = materialSearchQueries[searchKey] || '';
+    const typeFilter = materialTypeFilters[searchKey] || '';
+    
+    return rawMaterials.filter(material => {
+      const matchesSearch = material.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        material.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = typeFilter === '' || material.type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  };
+
+  const getTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'algodon': return 'success';
+      case 'normal': return 'danger';
+      case 'stretch': return 'warning';
+      case 'satin': return 'secondary';
+      default: return 'default';
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'algodon': return 'Algodon';
+      case 'normal': return 'Normal';
+      case 'stretch': return 'Stretch';
+      case 'satin': return 'Satin';
+      default: return type;
+    }
+  };
 
   const statusOptions = [
     { value: 'pending', label: 'Pendiente' },
@@ -313,7 +394,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                 : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
                             }`}>
-                              {design.addToInventory ? '🏪 Inventario' : '🎨 Personalizado'}
+                              {design.addToInventory ? '🏪 Inventario' : 'Nuevo diseño'}
                             </span>
                           </div>
                         </div>
@@ -327,31 +408,218 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                             <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
                             <span className="text-sm font-medium text-blue-900 dark:text-blue-300">Material de Inventario</span>
                           </div>
-                          <Select
-                            label="Seleccionar Tela"
-                            value={design.rawMaterialId}
-                            onChange={(value) =>
-                              handleDesignChange(materialIndex, designIndex, 'rawMaterialId', value)
-                            }
-                            options={materialOptions}
-                            required
-                            fullWidth
-                          />
+                          
+                          {design.rawMaterialId ? (
+                            // Selected Material Display
+                            <div className="space-y-3">
+                              {(() => {
+                                const selectedMaterial = rawMaterials.find(m => m.id === design.rawMaterialId);
+                                if (!selectedMaterial) return null;
+                                
+                                return (
+                                  <div className="relative p-3 rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                                    <div className="flex flex-col space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                                          {selectedMaterial.name}
+                                        </h4>
+                                        <Badge variant={getTypeBadgeVariant(selectedMaterial.type)}>
+                                          {getTypeLabel(selectedMaterial.type)}
+                                        </Badge>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                        <div className="flex items-center space-x-1">
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                          </svg>
+                                          <span>{selectedMaterial.width}×{selectedMaterial.height}m</span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                          </svg>
+                                          <span className={selectedMaterial.quantity === 0 ? 'text-red-500 font-medium' : selectedMaterial.quantity < 10 ? 'text-orange-500 font-medium' : ''}>
+                                            Stock: {selectedMaterial.quantity}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-500">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <span>Proveedor: {selectedMaterial.supplier || 'N/A'}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                              
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleDropdown(materialIndex, designIndex)}
+                                className="w-full"
+                              >
+                                Cambiar Material
+                              </Button>
+                            </div>
+                          ) : (
+                            // Material Selection Button
+                            <div className="relative">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => toggleDropdown(materialIndex, designIndex)}
+                                className="w-full flex items-center justify-between"
+                              >
+                                <span>Seleccionar Material</span>
+                                <svg className={`w-4 h-4 transition-transform ${openDropdowns[`${materialIndex}-${designIndex}`] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </Button>
+                              
+                              {openDropdowns[`${materialIndex}-${designIndex}`] && (
+                                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                                  <div className="p-3">
+                                    {/* Search Bar */}
+                                    <div className="mb-3">
+                                      <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                          <Search className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                        <input
+                                          type="text"
+                                          value={materialSearchQueries[`${materialIndex}-${designIndex}`] || ''}
+                                          onChange={(e) => handleMaterialSearch(materialIndex, designIndex, e.target.value)}
+                                          placeholder="Buscar materiales..."
+                                          className="block w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200"
+                                        />
+                                        {materialSearchQueries[`${materialIndex}-${designIndex}`] && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMaterialSearch(materialIndex, designIndex, '')}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                          >
+                                            <svg className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Type Filter */}
+                                    <div className="mb-3">
+                                      <Select
+                                        value={materialTypeFilters[`${materialIndex}-${designIndex}`] || ''}
+                                        onChange={(value) => handleMaterialTypeFilter(materialIndex, designIndex, value)}
+                                        options={[
+                                          { value: '', label: 'Todos los tipos' },
+                                          { value: 'algodon', label: 'Algodon' },
+                                          { value: 'normal', label: 'Normal' },
+                                          { value: 'stretch', label: 'Stretch' },
+                                          { value: 'satin', label: 'Satin' }
+                                        ]}
+                                        fullWidth
+                                      />
+                                    </div>
+
+                                    {/* Material Cards */}
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {getFilteredMaterials(materialIndex, designIndex).map((material) => (
+                                        <div
+                                          key={material.id}
+                                          onClick={() => selectMaterial(materialIndex, designIndex, material.id)}
+                                          className="relative p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-500"
+                                        >
+                                          <div className="flex flex-col space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                {material.name}
+                                              </h4>
+                                              <Badge variant={getTypeBadgeVariant(material.type)}>
+                                                {getTypeLabel(material.type)}
+                                              </Badge>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                              <div className="flex items-center space-x-1">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                                </svg>
+                                                <span>{material.width}×{material.height}m</span>
+                                              </div>
+                                              <div className="flex items-center space-x-1">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                                <span className={material.quantity === 0 ? 'text-red-500 font-medium' : material.quantity < 10 ? 'text-orange-500 font-medium' : ''}>
+                                                  Stock: {material.quantity}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-500">
+                                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                              </svg>
+                                              <span>Proveedor: {material.supplier || 'N/A'}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                      
+                                      {getFilteredMaterials(materialIndex, designIndex).length === 0 && (materialSearchQueries[`${materialIndex}-${designIndex}`] || materialTypeFilters[`${materialIndex}-${designIndex}`]) && (
+                                        <div className="text-center py-8">
+                                          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                          </svg>
+                                          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">No se encontraron materiales</p>
+                                          <p className="text-xs text-gray-400 dark:text-gray-500">Intenta ajustar los filtros de búsqueda</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
                           <div className="flex items-center mb-2">
                             <div className="w-2 h-2 bg-amber-500 rounded-full mr-2"></div>
-                            <span className="text-sm font-medium text-amber-900 dark:text-amber-300">Diseño Personalizado</span>
+                            <span className="text-sm font-medium text-amber-900 dark:text-amber-300">Diseño nuevo / Personalizado </span>
                           </div>
-                          <Input
-                            label="Nombre del diseño personalizado"
-                            value={design.customDesignName || ''}
-                            onChange={(e) => handleDesignChange(materialIndex, designIndex, 'customDesignName', e.target.value)}
-                            placeholder="Ej: Tela especial Batman"
-                            required
-                            fullWidth
-                          />
+                          <div className="space-y-3">
+                            <Input
+                              label="Nombre del diseño"
+                              value={design.customDesignName || ''}
+                              onChange={(e) => handleDesignChange(materialIndex, designIndex, 'customDesignName', e.target.value)}
+                              placeholder="Ej: Tela especial Batman"
+                              required
+                              fullWidth
+                            />
+                            <div className="space-y-2">
+                              <label className="block text-sm font-medium text-amber-900 dark:text-amber-300">
+                                Tipo de Material
+                              </label>
+                              <select
+                                value={design.type || 'algodon'}
+                                onChange={(e) => handleDesignChange(materialIndex, designIndex, 'type', e.target.value as 'algodon' | 'stretch' | 'normal' | 'satin')}
+                                className="block w-full px-3 py-2 border border-amber-300 dark:border-amber-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500 dark:focus:ring-amber-400 focus:border-amber-500 dark:focus:border-amber-400 transition-colors duration-200"
+                                required
+                              >
+                                <option value="algodon">Algodón</option>
+                                <option value="normal">Normal</option>
+                                <option value="stretch">Stretch</option>
+                                <option value="satin">Satin</option>
+                              </select>
+                            </div>
+                          </div>
                           <div className="mt-2 flex items-start space-x-2">
                             <div className="flex-shrink-0 mt-0.5">
                               <div className="w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center">
@@ -427,7 +695,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                     </div>
                   </div>
                   <div className="bg-white dark:bg-gray-800 p-2 rounded">
-                    <div className="text-amber-600 dark:text-amber-400 font-medium">🎨 Personalizado</div>
+                    <div className="text-amber-600 dark:text-amber-400 font-medium">Nuevos diseños</div>
                     <div className="text-gray-700 dark:text-gray-300">
                       {material.designs.filter(d => !d.addToInventory).length} diseño(s)
                     </div>
