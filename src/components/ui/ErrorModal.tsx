@@ -118,7 +118,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
             💡 Sugerencias:
           </h4>
           <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-            <li>• Asegúrate de que el elemento no esté siendo usado en otras partes</li>
+            <li>• Asegúrate de que el elemento no esté siendo usado en otras partes como en ventas, ordenes, etc.</li>
             <li>• Intenta refrescar la página y volver a intentar</li>
             <li>• Si el problema persiste, contacta al soporte técnico</li>
           </ul>

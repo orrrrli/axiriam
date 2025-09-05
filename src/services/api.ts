@@ -281,7 +281,7 @@ class ApiService {
   // Tracking API
   async getEstafetaTracking(trackingNumber: string) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
-    const response = await fetch(`${baseUrl}/tracking/${trackingNumber.trim()}`);
+    const response = await fetch(`${baseUrl}/api/tracking/${trackingNumber.trim()}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

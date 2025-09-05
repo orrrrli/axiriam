@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -9,7 +9,7 @@ import RawMaterialForm from '../components/inventory/RawMaterialForm';
 import RawMaterialDetail from '../components/inventory/RawMaterialDetail';
 import { RawMaterial, RawMaterialFormData } from '../types';
 import { formatCurrency, formatDate } from '../utils/helpers';
-import { Trash2, Pencil, Search, PlusCircle } from 'lucide-react';
+import { Trash2, Pencil, Search, PlusCircle, Copy, ChevronLeft, ChevronRight } from 'lucide-react';
 import SortButton from '../components/ui/SortButton';
 import type { TableColumn } from '../components/ui/Table';
 
@@ -27,7 +27,31 @@ const RawMaterials: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>('desc');
+
+  // Ref for table scroll navigation
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+
+  // Navigation functions for horizontal scrolling
+  const scrollLeft = () => {
+    if (tableScrollRef.current) {
+      // The Table component has overflow-x-auto on its root div
+      const scrollableElement = tableScrollRef.current.querySelector('.overflow-x-auto');
+      if (scrollableElement) {
+        (scrollableElement as HTMLElement).scrollBy({ left: -300, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const scrollRight = () => {
+    if (tableScrollRef.current) {
+      // The Table component has overflow-x-auto on its root div
+      const scrollableElement = tableScrollRef.current.querySelector('.overflow-x-auto');
+      if (scrollableElement) {
+        (scrollableElement as HTMLElement).scrollBy({ left: 300, behavior: 'smooth' });
+      }
+    }
+  };
 
   const filteredAndSortedMaterials = (() => {
     let filtered = rawMaterials.filter(material => {
@@ -40,13 +64,12 @@ const RawMaterials: React.FC = () => {
       return matchesSearch && matchesType;
     });
 
-    if (sortOrder) {
-      filtered = [...filtered].sort((a, b) => {
-        const dateA = new Date(a.updatedAt).getTime();
-        const dateB = new Date(b.updatedAt).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-      });
-    }
+    // Always sort by date, default to newest first
+    filtered = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.updatedAt).getTime();
+      const dateB = new Date(b.updatedAt).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
 
     return filtered;
   })();
@@ -122,6 +145,31 @@ const RawMaterials: React.FC = () => {
     setCurrentMaterial(material);
     setIsDeleteModalOpen(true);
   };
+
+  const handleDuplicate = async (material: RawMaterial) => {
+    setIsSubmitting(true);
+    try {
+      const duplicatedData = {
+        name: `${material.name} (Copia)`,
+        description: material.description,
+        type: material.type,
+        width: material.width,
+        height: material.height,
+        quantity: material.quantity,
+        price: material.price,
+        supplier: material.supplier,
+        imageUrl: material.imageUrl
+      };
+      
+      await addRawMaterial(duplicatedData);
+    } catch (error) {
+      console.error('Failed to duplicate material:', error);
+      alert('Failed to duplicate material. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   const formatNumber = (value: number, isInteger: boolean = false): string => {
     if (isInteger && Number.isInteger(value)) {
@@ -243,6 +291,14 @@ const RawMaterials: React.FC = () => {
       accessor: (material: RawMaterial) => (
         <div className="flex space-x-2 justify-center">
           <button
+            onClick={(e) => { e.stopPropagation(); handleDuplicate(material); }}
+            className="text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
+            aria-label="Duplicate"
+            title="Duplicar material"
+          >
+            <Copy size={18} />
+          </button>
+          <button
             onClick={(e) => { e.stopPropagation(); openEditModal(material); }}
             className="text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
             aria-label="Edit"
@@ -266,8 +322,8 @@ const RawMaterials: React.FC = () => {
   ];
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+    <div className="space-y-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Diseños/Material</h2>
         <Button 
           variant="primary"
@@ -280,11 +336,8 @@ const RawMaterials: React.FC = () => {
         </Button>
       </div>
       
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="w-full sm:w-64">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Filtrar por tipo de material
-          </label>
           <Select
             value={typeFilter}
             onChange={setTypeFilter}
@@ -300,9 +353,6 @@ const RawMaterials: React.FC = () => {
         </div>
         
         <div className="w-full sm:w-auto">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Ordenar
-          </label>
           <SortButton
             sortOrder={sortOrder}
             onSort={handleSort}
@@ -311,9 +361,6 @@ const RawMaterials: React.FC = () => {
         </div>
         
         <div className="relative flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Buscar
-          </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
@@ -323,20 +370,43 @@ const RawMaterials: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar materiales..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200 h-10"
             />
           </div>
         </div>
       </div>
       
-      <Table
-        columns={columns}
-        data={filteredAndSortedMaterials}
-        isLoading={isLoading}
-        onRowClick={openViewModal}
-        keyExtractor={(material) => material.id}
-        emptyMessage="No raw materials found. Add your first material!"
-      />
+      {/* Table with navigation arrows */}
+      <div className="relative">
+        {/* Navigation arrows - positioned on left and right sides */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={scrollLeft}
+            className="p-2 text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
+            title="Scroll left"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={scrollRight}
+            className="p-2 text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-400 transition-colors"
+            title="Scroll right"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </div>
+        {/* Table container */}
+        <div ref={tableScrollRef}>
+          <Table
+            columns={columns}
+            data={filteredAndSortedMaterials}
+            isLoading={isLoading}
+            onRowClick={openViewModal}
+            keyExtractor={(material) => material.id}
+            emptyMessage="No raw materials found. Add your first material!"
+          />
+        </div>
+      </div>
       
       {/* Add Material Modal */}
       <Modal
@@ -356,7 +426,7 @@ const RawMaterials: React.FC = () => {
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Edit Raw Material"
+        title="Editar Material"
         size="lg"
       >
         {currentMaterial && (
@@ -410,34 +480,35 @@ const RawMaterials: React.FC = () => {
         )}
       </Modal>
       
+      
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Raw Material"
+        title="Eliminar Material"
         size="sm"
       >
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 mb-4">
             <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Delete {currentMaterial?.name}?</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">¿Eliminar {currentMaterial?.name}?</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Are you sure you want to delete this material? This action cannot be undone.
+            ¿Estás seguro de que quieres eliminar este material? Esta acción no se puede deshacer.
           </p>
           <div className="flex justify-center space-x-3">
             <Button
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               variant="danger"
               onClick={handleDeleteConfirm}
               isLoading={isSubmitting}
             >
-              Delete
+              Eliminar
             </Button>
           </div>
         </div>

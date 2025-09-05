@@ -470,7 +470,57 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const deleteItem = async (id: string) => {
     try {
+      // Find the item to get its quantity and materials before deletion
+      const itemToDelete = state.items.find(item => item.id === id);
+      if (!itemToDelete) {
+        throw new Error('Item not found');
+      }
+
+      console.log(`🗑️ Deleting item ${itemToDelete.name} with quantity ${itemToDelete.quantity}`);
+      
+      // Delete the item from API
       await apiService.deleteItem(id);
+      
+      // Restock raw materials by adding back the item's quantity
+      if (itemToDelete.quantity > 0 && itemToDelete.materials.length > 0) {
+        console.log(`📦 Restocking ${itemToDelete.materials.length} raw materials with quantity ${itemToDelete.quantity}`);
+        
+        const updatedRawMaterials = [...state.rawMaterials];
+        
+        for (const materialId of itemToDelete.materials) {
+          const materialIndex = updatedRawMaterials.findIndex(rm => rm.id === materialId);
+          
+          if (materialIndex !== -1) {
+            const currentMaterial = updatedRawMaterials[materialIndex];
+            const newQuantity = currentMaterial.quantity + itemToDelete.quantity;
+            
+            console.log(`📈 Restocking raw material ${materialId}: ${currentMaterial.quantity} + ${itemToDelete.quantity} = ${newQuantity}`);
+            
+            // Update the raw material quantity in the backend
+            const updatedMaterial = await apiService.updateRawMaterial(materialId, {
+              name: currentMaterial.name,
+              description: currentMaterial.description,
+              type: currentMaterial.type,
+              width: currentMaterial.width,
+              height: currentMaterial.height,
+              quantity: newQuantity,
+              price: currentMaterial.price,
+              supplier: currentMaterial.supplier,
+              imageUrl: currentMaterial.imageUrl
+            });
+            
+            // Update local state
+            updatedRawMaterials[materialIndex] = transformApiData.rawMaterial(updatedMaterial);
+          }
+        }
+        
+        // Update the state with new quantities
+        dispatch({ type: 'SET_RAW_MATERIALS', payload: updatedRawMaterials });
+        
+        console.log(`✅ Item deleted and ${itemToDelete.materials.length} raw materials restocked with ${itemToDelete.quantity} units each`);
+      }
+      
+      // Remove item from local state
       dispatch({ type: 'DELETE_ITEM', payload: id });
     } catch (error) {
       console.error('Failed to delete item:', error);
@@ -538,13 +588,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               
               const rawMaterialData: RawMaterialFormData = {
                 name: design.customDesignName || 'Diseño personalizado',
-                description: `Diseño personalizado creado desde pedido de material`,
+                description: `Diseño personalizado creado desde pedido de material - Distribuidor: ${processedOrderData.distributor || 'No especificado'}`,
                 width: 1.5, // Default dimensions
                 height: 1.0,
                 type: design.type || 'normal' as const,
                 quantity: 0, // Will be updated when order is received
                 price: 0, // Can be updated later
-                supplier: 'Diseño personalizado',
+                supplier: processedOrderData.distributor || 'Diseño personalizado',
                 imageUrl: ''
               };
               

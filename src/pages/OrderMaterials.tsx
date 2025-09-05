@@ -12,7 +12,7 @@ import SortButton from '../components/ui/SortButton';
 import { OrderMaterial, OrderMaterialFormData } from '../types';
 import { formatDate, getStatusBadgeVariant, getStatusLabel } from '../utils/helpers';
 import type { TableColumn } from '../components/ui/Table';
-import { Truck, Pencil, Trash2, Search, PlusCircle } from 'lucide-react';
+import { Truck, Pencil, Trash2, Search, PlusCircle, Copy } from 'lucide-react';
 
 const OrderMaterials: React.FC = () => {
   const { state, addOrderMaterial, updateOrderMaterial, deleteOrderMaterial } = useInventory();
@@ -24,10 +24,11 @@ const OrderMaterials: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTrackerModalOpen, setIsTrackerModalOpen] = useState(false);
   const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<OrderMaterial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>('desc');
   
   const filteredOrders = orderMaterials.filter(order => {
     const materialNames = order.materials.flatMap(m => 
@@ -43,7 +44,7 @@ const OrderMaterials: React.FC = () => {
       order.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }).sort((a, b) => {
-    if (!sortOrder) return 0;
+    // Always sort by date, default to newest first
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
@@ -113,6 +114,25 @@ const OrderMaterials: React.FC = () => {
   const openTrackerModal = (order: OrderMaterial) => {
     setCurrentOrder(order);
     setIsTrackerModalOpen(true);
+  };
+
+  const openDuplicateModal = (order: OrderMaterial) => {
+    setCurrentOrder(order);
+    setIsDuplicateModalOpen(true);
+  };
+
+  const handleDuplicateOrder = async (data: OrderMaterialFormData) => {
+    setIsSubmitting(true);
+    try {
+      await addOrderMaterial(data);
+      setIsDuplicateModalOpen(false);
+      setCurrentOrder(null);
+    } catch (error) {
+      console.error('Failed to duplicate order:', error);
+      alert('Failed to duplicate order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSort = (order: 'asc' | 'desc') => {
@@ -190,6 +210,14 @@ const OrderMaterials: React.FC = () => {
             title="Seguimiento de envío"
           >
             <Truck size={18} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); openDuplicateModal(order); }}
+            className="text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-400 transition-colors"
+            aria-label="Duplicate"
+            title="Duplicar pedido"
+          >
+            <Copy size={18} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); openEditModal(order); }}
@@ -347,6 +375,30 @@ const OrderMaterials: React.FC = () => {
           tableName="order_materials"
         />
       )}
+      
+      {/* Duplicate Order Modal */}
+      <Modal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => setIsDuplicateModalOpen(false)}
+        title="Duplicar Pedido"
+        size="xl"
+      >
+        {currentOrder && (
+          <OrderMaterialForm
+            initialData={{
+              materials: currentOrder.materials,
+              distributor: currentOrder.distributor,
+              description: `${currentOrder.description} (Copia)`,
+              status: 'pending', // Reset status to pending for new order
+              parcel_service: currentOrder.parcel_service
+            }}
+            onSubmit={handleDuplicateOrder}
+            onCancel={() => setIsDuplicateModalOpen(false)}
+            rawMaterials={rawMaterials}
+            isSubmitting={isSubmitting}
+          />
+        )}
+      </Modal>
       
       {/* Delete Confirmation Modal */}
       <Modal

@@ -33,7 +33,7 @@ const Items: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>('desc');
   
   const filteredAndSortedItems = (() => {
     let filtered = items.filter(item => {
@@ -47,13 +47,12 @@ const Items: React.FC = () => {
       return matchesSearch && matchesCategory && matchesType;
     });
 
-    if (sortOrder) {
-      filtered = [...filtered].sort((a, b) => {
-        const dateA = new Date(a.updatedAt).getTime();
-        const dateB = new Date(b.updatedAt).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-      });
-    }
+    // Always sort by date, default to newest first
+    filtered = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.updatedAt).getTime();
+      const dateB = new Date(b.updatedAt).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
 
     return filtered;
   })();
@@ -353,9 +352,6 @@ const Items: React.FC = () => {
       
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="w-full sm:w-64">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Filtrar por categoría
-          </label>
           <Select
             value={categoryFilter}
             onChange={setCategoryFilter}
@@ -364,9 +360,6 @@ const Items: React.FC = () => {
           />
         </div>
         <div className="w-full sm:w-64">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Filtrar por tipo de material
-          </label>
           <Select
             value={typeFilter}
             onChange={setTypeFilter}
@@ -376,9 +369,6 @@ const Items: React.FC = () => {
         </div>
         
         <div className="w-full sm:w-auto">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Ordenar
-          </label>
           <SortButton
             sortOrder={sortOrder}
             onSort={handleSort}
@@ -387,9 +377,6 @@ const Items: React.FC = () => {
         </div>
         
         <div className="relative flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Buscar
-          </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
@@ -399,7 +386,7 @@ const Items: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar gorros..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-sky-400 dark:focus:border-sky-400 transition-colors duration-200 h-10"
             />
           </div>
         </div>
@@ -467,13 +454,13 @@ const Items: React.FC = () => {
               variant="outline" 
               onClick={() => { setIsViewModalOpen(false); openEditModal(currentItem!); }}
             >
-              Edit
+              Editar
             </Button>
             <Button 
               variant="primary" 
               onClick={() => setIsViewModalOpen(false)}
             >
-              Close
+              Cerrar
             </Button>
           </>
         }
@@ -501,30 +488,30 @@ const Items: React.FC = () => {
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Item"
+        title="Eliminar Gorro"
         size="sm"
       >
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 mb-4">
             <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Delete {currentItem?.name}?</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">¿Eliminar {currentItem?.name}?</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Are you sure you want to delete this item? This action cannot be undone.
+            ¿Estás seguro de que quieres eliminar este gorro? Esta acción no se puede deshacer.
           </p>
           <div className="flex justify-center space-x-3">
             <Button
               variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               variant="danger"
               onClick={handleDeleteConfirm}
               isLoading={isSubmitting}
             >
-              Delete
+              Eliminar
             </Button>
           </div>
         </div>

@@ -465,6 +465,104 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
                               >
                                 Cambiar Material
                               </Button>
+                              
+                              {openDropdowns[`${materialIndex}-${designIndex}`] && (
+                                <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                                  <div className="p-3">
+                                    {/* Search Bar */}
+                                    <div className="mb-3">
+                                      <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                          <Search className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                        <input
+                                          type="text"
+                                          value={materialSearchQueries[`${materialIndex}-${designIndex}`] || ''}
+                                          onChange={(e) => handleMaterialSearch(materialIndex, designIndex, e.target.value)}
+                                          placeholder="Buscar materiales..."
+                                          className="block w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200"
+                                        />
+                                        {materialSearchQueries[`${materialIndex}-${designIndex}`] && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleMaterialSearch(materialIndex, designIndex, '')}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                          >
+                                            <svg className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Type Filter */}
+                                    <div className="mb-3">
+                                      <Select
+                                        value={materialTypeFilters[`${materialIndex}-${designIndex}`] || ''}
+                                        onChange={(value) => handleMaterialTypeFilter(materialIndex, designIndex, value)}
+                                        options={[
+                                          { value: '', label: 'Todos los tipos' },
+                                          { value: 'algodon', label: 'Algodon' },
+                                          { value: 'normal', label: 'Normal' },
+                                          { value: 'stretch', label: 'Stretch' },
+                                          { value: 'satin', label: 'Satin' }
+                                        ]}
+                                        fullWidth
+                                      />
+                                    </div>
+
+                                    {/* Material Cards */}
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                      {getFilteredMaterials(materialIndex, designIndex).map((material) => (
+                                        <div
+                                          key={material.id}
+                                          onClick={() => selectMaterial(materialIndex, designIndex, material.id)}
+                                          className="relative p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-500"
+                                        >
+                                          <div className="flex flex-col space-y-2">
+                                            <div className="flex items-center justify-between">
+                                              <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                {material.name}
+                                              </h4>
+                                              <Badge variant={getTypeBadgeVariant(material.type)}>
+                                                {getTypeLabel(material.type)}
+                                              </Badge>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                              <div className="flex items-center space-x-1">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                                </svg>
+                                                <span>{material.width}×{material.height}m</span>
+                                              </div>
+                                              <div className="flex items-center space-x-1">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                                <span>Stock: {material.quantity}</span>
+                                              </div>
+                                              <div className="flex items-center space-x-1 col-span-2">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                                <span>Proveedor: {material.supplier || 'N/A'}</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                      
+                                      {getFilteredMaterials(materialIndex, designIndex).length === 0 && (
+                                        <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                                          No se encontraron materiales
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ) : (
                             // Material Selection Button

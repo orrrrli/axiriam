@@ -34,6 +34,37 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
     }
     return value.toString();
   };
+
+  // Functions for TYPE badges (matching RawMaterials.tsx pattern)
+  const getRawMaterialTypeBadgeVariant = (type: string) => {
+    switch (type) {
+      case 'algodon':
+        return 'success';
+      case 'normal':
+        return 'danger';
+      case 'stretch':
+        return 'warning';
+      case 'satin':
+        return 'secondary';
+      default:
+        return 'default';
+    }
+  };
+
+  const getRawMaterialTypeLabel = (type: string) => {
+    switch (type) {
+      case 'algodon':
+        return 'Algodón';
+      case 'normal':
+        return 'Normal';
+      case 'stretch':
+        return 'Stretch';
+      case 'satin':
+        return 'Satin';
+      default:
+        return type;
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -100,6 +131,13 @@ const OrderMaterialDetail: React.FC<OrderMaterialDetailProps> = ({ order, rawMat
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {material?.description}
                           </p>
+                          {material && (
+                            <div className="mt-2">
+                              <Badge variant={getRawMaterialTypeBadgeVariant(material.type)}>
+                                {getRawMaterialTypeLabel(material.type)}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
