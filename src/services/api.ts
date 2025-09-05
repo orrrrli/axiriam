@@ -1,4 +1,5 @@
-const API_BASE_URL = 'https://axiriam-api.onrender.com/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface ApiResponse<T> {
   success: boolean;
@@ -279,7 +280,7 @@ class ApiService {
 
   // Tracking API
   async getEstafetaTracking(trackingNumber: string) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const response = await fetch(`${baseUrl}/api/tracking/${trackingNumber.trim()}`);
     
     if (!response.ok) {
@@ -295,7 +296,7 @@ class ApiService {
       throw new Error('DHL API key no configurada');
     }
 
-    const response = await fetch(`https://api-eu.dhl.com/track/shipments?trackingNumber=${trackingNumber.trim()}`, {
+    const response = await fetch(`VITE_API_DHL_URL=${trackingNumber.trim()}`, {
       headers: {
         'DHL-API-Key': dhlApiKey
       }
