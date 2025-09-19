@@ -630,8 +630,27 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const updateOrderMaterial = async (id: string, orderData: OrderMaterialFormData) => {
     try {
+      // Capture current status to detect transition to 'received'
+      const currentOrder = state.orderMaterials.find(o => o.id === id);
+      const wasReceived = currentOrder?.status === 'received';
+
+      // Update the order first
       const updatedOrder = await apiService.updateOrderMaterial(id, transformToApiData.orderMaterial(orderData));
-      dispatch({ type: 'UPDATE_ORDER_MATERIAL', payload: transformApiData.orderMaterial(updatedOrder) });
+      const transformedUpdatedOrder = transformApiData.orderMaterial(updatedOrder);
+      dispatch({ type: 'UPDATE_ORDER_MATERIAL', payload: transformedUpdatedOrder });
+
+      // If the status has transitioned to 'received', trigger inventory processing
+      const isNowReceived = transformedUpdatedOrder.status === 'received';
+      if (!wasReceived && isNowReceived) {
+        try {
+          console.log('🏭 Status changed to received via form. Processing inventory...');
+          await processOrderInventory(id);
+        } catch (inventoryError) {
+          console.error('❌ Inventory processing failed after status change:', inventoryError);
+          // Propagate the error so the UI can notify the user
+          throw inventoryError;
+        }
+      }
     } catch (error) {
       console.error('Failed to update order material:', error);
       throw error;
