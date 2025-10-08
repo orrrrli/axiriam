@@ -120,6 +120,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
   const typeOptions = [
     { value: 'algodon', label: 'Algodon' },
     { value: 'normal', label: 'Normal' },
+    { value: 'microfibra', label: 'Microfibra' },
     { value: 'stretch', label: 'Stretch' },
     { value: 'satin', label: 'Satin' },
   ];
@@ -130,6 +131,8 @@ const ItemForm: React.FC<ItemFormProps> = ({
         return 'primary';
       case 'normal':
         return 'secondary';
+      case 'microfibra':
+        return 'default';
       case 'stretch':
         return 'success';
       case 'satin':
@@ -145,6 +148,8 @@ const ItemForm: React.FC<ItemFormProps> = ({
         return 'Algodon';
       case 'normal':
         return 'Normal';
+      case 'microfibra':
+        return 'Microfibra';
       case 'stretch':
         return 'Stretch';
       case 'satin':

@@ -266,7 +266,7 @@ const ShipmentTrackerModal: React.FC<ShipmentTrackerModalProps> = ({
       case 'pending':
         return 'Pendiente';
       case 'ordered':
-        return 'Ordenado';
+        return 'Enviado';
       case 'received':
         return 'Recibido';
       default:

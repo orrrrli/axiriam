@@ -64,7 +64,7 @@ export const getStatusLabel = (status: string) => {
     case 'pending':
       return 'Pendiente';
     case 'ordered':
-      return 'Ordenado';
+      return 'Enviado';
     case 'received':
       return 'Recibido';
     case 'shipped':

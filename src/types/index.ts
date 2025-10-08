@@ -130,10 +130,14 @@ export interface Quote {
 }
 
 export interface QuoteItem {
-  itemId: string;
+  itemId: string; // Empty string for manual items
   quantity: number;
   unitPrice: number; // Price at time of quote (may differ from current item price)
   description?: string; // Custom description for this quote item
+  // Manual item fields (used when itemId is empty)
+  manualName?: string;
+  manualCategory?: string;
+  manualType?: string;
 }
 
 export interface QuoteFormData {

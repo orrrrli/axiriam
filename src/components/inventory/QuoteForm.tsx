@@ -5,7 +5,7 @@ import Select from '../ui/Select';
 import SearchableSelect from '../ui/SearchableSelect';
 import DateInput from '../ui/DateInput';
 import Button from '../ui/Button';
-import { Trash2, Plus, FileText } from 'lucide-react';
+import { Trash2, Plus, FileText, Package, Tag, DollarSign, FileText as FileTextIcon } from 'lucide-react';
 
 interface QuoteFormProps {
   initialData?: QuoteFormData;
@@ -90,10 +90,14 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
   // Quote Items Management
   const addQuoteItem = () => {
     const newQuoteItem: QuoteItem = {
-      itemId: '',
+      itemId: items.length === 0 ? '' : '', // Empty for manual entry when no products exist
       quantity: 1,
       unitPrice: 0,
-      description: ''
+      description: '',
+      // Manual item fields for when no products exist
+      manualName: items.length === 0 ? '' : undefined,
+      manualCategory: items.length === 0 ? '' : undefined,
+      manualType: items.length === 0 ? '' : undefined
     };
     setFormData(prev => ({
       ...prev,
@@ -179,13 +183,33 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
     if (formData.items.length === 0) {
       newErrors.items = 'Debe agregar al menos un producto';
     } else {
-      // Validate that all items have itemId, quantity > 0, and unitPrice >= 0
-      const invalidItems = formData.items.filter(item => 
-        !item.itemId || item.quantity <= 0 || item.unitPrice < 0
-      );
+      // Validate items based on whether they are manual or from inventory
+      const invalidItems = formData.items.filter(item => {
+        const isManualEntry = items.length === 0 || (item.itemId === '' && item.manualName !== undefined);
+        
+        if (isManualEntry) {
+          // Validate manual items
+          return !item.manualName?.trim() || 
+                 !item.manualCategory?.trim() || 
+                 !item.manualType?.trim() || 
+                 item.quantity <= 0 || 
+                 item.unitPrice <= 0;
+        } else {
+          // Validate inventory items
+          return !item.itemId || item.quantity <= 0 || item.unitPrice < 0;
+        }
+      });
       
       if (invalidItems.length > 0) {
-        newErrors.items = 'Todos los productos deben tener un artículo seleccionado, cantidad mayor a 0 y precio válido';
+        const hasManualItems = formData.items.some(item => 
+          items.length === 0 || (item.itemId === '' && item.manualName !== undefined)
+        );
+        
+        if (hasManualItems) {
+          newErrors.items = 'Todos los productos manuales deben tener nombre, categoría, tipo, cantidad mayor a 0 y precio mayor a 0';
+        } else {
+          newErrors.items = 'Todos los productos deben tener un artículo seleccionado, cantidad mayor a 0 y precio válido';
+        }
       }
     }
 
@@ -293,29 +317,30 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               variant="primary"
               size="sm"
               onClick={addQuoteItem}
-              disabled={items.length === 0}
+              className="flex items-center justify-center"
             >
               <Plus className="w-4 h-4 mr-1" />
-              Agregar Producto
+              {items.length === 0 ? 'Agregar Producto Manual' : 'Agregar Producto'}
             </Button>
           </div>
 
-          {items.length === 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md p-4">
+          {items.length === 0 && formData.items.length === 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-md p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                    No hay productos disponibles
+                  <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    Modo de entrada manual activado
                   </h3>
-                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                  <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
                     <p>
-                      Para crear una cotización necesitas tener productos en tu inventario. 
-                      Ve a la sección de <strong>Productos</strong> para crear algunos productos primero.
+                      No hay productos en tu inventario. Puedes agregar productos manualmente 
+                      para crear la cotización. Los productos se agregarán con la información 
+                      que proporciones.
                     </p>
                   </div>
                 </div>
@@ -326,69 +351,204 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
           {formData.items.map((quoteItem, index) => {
             const selectedItem = items.find(item => item.id === quoteItem.itemId);
             const itemSubtotal = quoteItem.unitPrice * quoteItem.quantity;
+            const isManualEntry = items.length === 0 || (quoteItem.itemId === '' && quoteItem.manualName !== undefined);
 
             return (
-              <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md border border-gray-200 dark:border-gray-600">
-                <div className="flex justify-between items-start mb-3">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Producto {index + 1}
-                  </h4>
+              <div key={index} className={`relative rounded-lg border-2 transition-all duration-200 ${
+                isManualEntry 
+                  ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700' 
+                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+              }`}>
+                {/* Header with improved styling */}
+                <div className="flex justify-between items-center p-4 pb-2">
+                  <div className="flex items-center space-x-2">
+                    {isManualEntry && <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                    <h4 className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                      Producto {index + 1}
+                    </h4>
+                    {isManualEntry && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                        <Package className="w-3 h-3 mr-1" />
+                        Manual
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeQuoteItem(index)}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    className="p-1.5 rounded-md text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 transition-colors duration-200"
                     aria-label="Eliminar producto"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2">
-                    <SearchableSelect
-                      label="Artículo"
-                      value={quoteItem.itemId}
-                      onChange={(value) => updateQuoteItem(index, 'itemId', value)}
-                      options={itemOptions}
-                      placeholder="Buscar producto..."
-                      required
-                      fullWidth
-                    />
-                  </div>
-                  <Input
-                    label="Cantidad"
-                    type="number"
-                    value={quoteItem.quantity === 0 ? '' : quoteItem.quantity.toString()}
-                    onChange={(e) => updateQuoteItem(index, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value))}
-                    min="0"
-                    step="1"
-                    required
-                    fullWidth
-                  />
-                </div>
-
-                <div className="mt-3">
-                  <Input
-                    label="Descripción (Opcional)"
-                    value={quoteItem.description || ''}
-                    onChange={(e) => updateQuoteItem(index, 'description', e.target.value)}
-                    placeholder="Descripción personalizada del producto"
-                    fullWidth
-                  />
-                </div>
-
-                {selectedItem && (
-                  <div className="mt-3">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-900 dark:text-blue-300">
-                          Precio unitario: ${selectedItem.price} | Stock: {selectedItem.quantity}
-                        </span>
-                        <span className="font-semibold text-blue-900 dark:text-blue-200">
-                          Subtotal: ${itemSubtotal.toFixed(2)}
-                        </span>
+                {isManualEntry ? (
+                  // Enhanced Manual entry form
+                  <div className="p-4 pt-0 space-y-6">
+                    {/* Product Identity Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <h5 className="text-sm font-medium text-blue-800 dark:text-blue-300">Información del Producto</h5>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Input
+                          label="Nombre del Producto"
+                          value={quoteItem.manualName || ''}
+                          onChange={(e) => updateQuoteItem(index, 'manualName', e.target.value)}
+                          placeholder="Ej: Playera básica"
+                          required
+                          fullWidth
+                        />
+                        
+                        <Input
+                          label="Categoría"
+                          value={quoteItem.manualCategory || ''}
+                          onChange={(e) => updateQuoteItem(index, 'manualCategory', e.target.value)}
+                          placeholder="Ej: Sencillo, Doble vista"
+                          required
+                          fullWidth
+                        />
+                        
+                        <Input
+                          label="Tipo"
+                          value={quoteItem.manualType || ''}
+                          onChange={(e) => updateQuoteItem(index, 'manualType', e.target.value)}
+                          placeholder="Ej: Algodón"
+                          required
+                          fullWidth
+                        />
                       </div>
                     </div>
+                    
+                    {/* Pricing & Quantity Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <h5 className="text-sm font-medium text-green-800 dark:text-green-300">Precio y Cantidad</h5>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Input
+                          label="Precio Unitario"
+                          type="number"
+                          value={quoteItem.unitPrice === 0 ? '' : quoteItem.unitPrice.toString()}
+                          onChange={(e) => updateQuoteItem(index, 'unitPrice', e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          required
+                          fullWidth
+                        />
+                        
+                        <Input
+                          label="Cantidad"
+                          type="number"
+                          value={quoteItem.quantity === 0 ? '' : quoteItem.quantity.toString()}
+                          onChange={(e) => updateQuoteItem(index, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                          min="1"
+                          step="1"
+                          placeholder="1"
+                          required
+                          fullWidth
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Description Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <FileTextIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <h5 className="text-sm font-medium text-gray-800 dark:text-gray-300">Descripción Adicional</h5>
+                      </div>
+                      
+                      <textarea
+                        value={quoteItem.description || ''}
+                        onChange={(e) => updateQuoteItem(index, 'description', e.target.value)}
+                        placeholder="Descripción adicional del producto (opcional)"
+                        rows={3}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm transition-colors duration-200"
+                      />
+                    </div>
+                    
+                    {/* Enhanced subtotal display */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                              <Package className="w-4 h-4 text-green-600 dark:text-green-300" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-900 dark:text-green-200">
+                              {quoteItem.manualName || 'Producto sin nombre'}
+                            </p>
+                            <p className="text-xs text-green-700 dark:text-green-400">
+                              {quoteItem.manualCategory || 'Sin categoría'} • {quoteItem.manualType || 'Sin tipo'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-green-900 dark:text-green-200">
+                            ${itemSubtotal.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-green-700 dark:text-green-400">
+                            {quoteItem.quantity} × ${quoteItem.unitPrice.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Existing product selection form
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="sm:col-span-2">
+                        <SearchableSelect
+                          label="Artículo"
+                          value={quoteItem.itemId}
+                          onChange={(value) => updateQuoteItem(index, 'itemId', value)}
+                          options={itemOptions}
+                          placeholder="Buscar producto..."
+                          required
+                          fullWidth
+                        />
+                      </div>
+                      <Input
+                        label="Cantidad"
+                        type="number"
+                        value={quoteItem.quantity === 0 ? '' : quoteItem.quantity.toString()}
+                        onChange={(e) => updateQuoteItem(index, 'quantity', e.target.value === '' ? 0 : parseInt(e.target.value))}
+                        min="0"
+                        step="1"
+                        required
+                        fullWidth
+                      />
+                    </div>
+
+                    <Input
+                      label="Descripción (Opcional)"
+                      value={quoteItem.description || ''}
+                      onChange={(e) => updateQuoteItem(index, 'description', e.target.value)}
+                      placeholder="Descripción personalizada del producto"
+                      fullWidth
+                    />
+
+                    {selectedItem && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-blue-900 dark:text-blue-300">
+                            Precio unitario: ${selectedItem.price} | Stock: {selectedItem.quantity}
+                          </span>
+                          <span className="font-semibold text-blue-900 dark:text-blue-200">
+                            Subtotal: ${itemSubtotal.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

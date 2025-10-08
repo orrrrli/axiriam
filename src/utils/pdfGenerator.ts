@@ -97,9 +97,22 @@ export const generateQuotePDF = (
   // Items
   doc.setFont('helvetica', 'normal');
   quoteData.items.forEach((quoteItem, index) => {
-    const item = items.find(i => i.id === quoteItem.itemId);
-    const itemName = item?.name || 'Producto no encontrado';
-    const description = quoteItem.description || itemName;
+    let itemName: string;
+    let itemDetails: string = '';
+    
+    // Check if it's a manual item or inventory item
+    if (quoteItem.manualName) {
+      // Manual item
+      itemName = quoteItem.manualName;
+      itemDetails = `${quoteItem.manualCategory || ''} - ${quoteItem.manualType || ''}`.replace(/^- | -$/, '');
+    } else {
+      // Inventory item
+      const item = items.find(i => i.id === quoteItem.itemId);
+      itemName = item?.name || 'Producto no encontrado';
+      itemDetails = item ? `${item.category} - ${item.type}` : '';
+    }
+    
+    const description = quoteItem.description || `${itemName}${itemDetails ? ` (${itemDetails})` : ''}`;
     const total = quoteItem.quantity * quoteItem.unitPrice;
 
     // Check if we need a new page
