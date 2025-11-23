@@ -45,6 +45,7 @@ const Select: React.FC<SelectProps> = ({
           border border-gray-300 dark:border-gray-600 
           rounded-lg shadow-sm text-gray-900 dark:text-gray-100
           focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 
+          focus:bg-white dark:focus:bg-gray-700 active:bg-white dark:active:bg-gray-700 hover:bg-white dark:hover:bg-gray-700
           sm:text-sm h-10
           ${error ? 'border-red-500 dark:border-red-500' : ''}
           ${className || ''}

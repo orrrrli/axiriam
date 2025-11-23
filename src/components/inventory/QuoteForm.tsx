@@ -90,18 +90,31 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
   // Quote Items Management
   const addQuoteItem = () => {
     const newQuoteItem: QuoteItem = {
-      itemId: items.length === 0 ? '' : '', // Empty for manual entry when no products exist
+      itemId: '',
       quantity: 1,
       unitPrice: 0,
       description: '',
-      // Manual item fields for when no products exist
-      manualName: items.length === 0 ? '' : undefined,
-      manualCategory: items.length === 0 ? '' : undefined,
-      manualType: items.length === 0 ? '' : undefined
+      // No manual fields by default; user selects an inventory item
     };
     setFormData(prev => ({
       ...prev,
       items: [...prev.items, newQuoteItem]
+    }));
+  };
+
+  const addManualQuoteItem = () => {
+    const newManualItem: QuoteItem = {
+      itemId: '',
+      quantity: 1,
+      unitPrice: 0,
+      description: '',
+      manualName: '',
+      manualCategory: '',
+      manualType: ''
+    };
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, newManualItem]
     }));
   };
 
@@ -129,6 +142,26 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
           }
           
           return updatedItem;
+        }
+        return item;
+      })
+    }));
+  };
+
+  const convertToManual = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.map((item, i) => {
+        if (i === index) {
+          return {
+            itemId: '',
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice || 0,
+            description: item.description || '',
+            manualName: '',
+            manualCategory: '',
+            manualType: ''
+          } as QuoteItem;
         }
         return item;
       })
@@ -185,7 +218,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
     } else {
       // Validate items based on whether they are manual or from inventory
       const invalidItems = formData.items.filter(item => {
-        const isManualEntry = items.length === 0 || (item.itemId === '' && item.manualName !== undefined);
+        const isManualEntry = item.manualName !== undefined;
         
         if (isManualEntry) {
           // Validate manual items
@@ -201,9 +234,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
       });
       
       if (invalidItems.length > 0) {
-        const hasManualItems = formData.items.some(item => 
-          items.length === 0 || (item.itemId === '' && item.manualName !== undefined)
-        );
+        const hasManualItems = formData.items.some(item => item.manualName !== undefined);
         
         if (hasManualItems) {
           newErrors.items = 'Todos los productos manuales deben tener nombre, categoría, tipo, cantidad mayor a 0 y precio mayor a 0';
@@ -242,6 +273,21 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
     { value: 'nombre bordado', label: 'Nombre bordado' },
     { value: 'personalizado', label: 'Personalizado' },
     { value: 'nombre vinil', label: 'Nombre vinil' }
+  ];
+
+  // Options to keep manual entry consistent with ItemForm
+  const manualCategoryOptions = [
+    { value: 'sencillo', label: 'Sencillo' },
+    { value: 'doble-vista', label: 'Doble vista' },
+    { value: 'completo', label: 'Completo' },
+  ];
+
+  const manualTypeOptions = [
+    { value: 'algodon', label: 'Algodon' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'microfibra', label: 'Microfibra' },
+    { value: 'stretch', label: 'Stretch' },
+    { value: 'satin', label: 'Satin' },
   ];
 
   const itemOptions = items.map(item => ({
@@ -308,20 +354,34 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
 
         {/* Products Section */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Productos {items.length === 0 && <span className="text-red-500 text-sm font-normal">(No hay productos disponibles)</span>}
             </h3>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={addQuoteItem}
-              className="flex items-center justify-center"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {items.length === 0 ? 'Agregar Producto Manual' : 'Agregar Producto'}
-            </Button>
+            <div className="flex items-center gap-2 gap-y-2 flex-wrap sm:justify-end">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={addQuoteItem}
+                className="flex items-center justify-center"
+                disabled={items.length === 0}
+                title={items.length === 0 ? 'Agrega productos al inventario para usar esta opción' : ''}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Agregar Producto
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={addManualQuoteItem}
+                className="flex items-center justify-center"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Agregar Producto Manual
+              </Button>
+            </div>
           </div>
 
           {items.length === 0 && formData.items.length === 0 && (
@@ -351,7 +411,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
           {formData.items.map((quoteItem, index) => {
             const selectedItem = items.find(item => item.id === quoteItem.itemId);
             const itemSubtotal = quoteItem.unitPrice * quoteItem.quantity;
-            const isManualEntry = items.length === 0 || (quoteItem.itemId === '' && quoteItem.manualName !== undefined);
+            const isManualEntry = quoteItem.manualName !== undefined;
 
             return (
               <div key={index} className={`relative rounded-lg border-2 transition-all duration-200 ${
@@ -398,25 +458,25 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                           label="Nombre del Producto"
                           value={quoteItem.manualName || ''}
                           onChange={(e) => updateQuoteItem(index, 'manualName', e.target.value)}
-                          placeholder="Ej: Playera básica"
+                          placeholder="Ej: Gorrito básico"
                           required
                           fullWidth
                         />
-                        
-                        <Input
+
+                        <Select
                           label="Categoría"
                           value={quoteItem.manualCategory || ''}
-                          onChange={(e) => updateQuoteItem(index, 'manualCategory', e.target.value)}
-                          placeholder="Ej: Sencillo, Doble vista"
+                          onChange={(value) => updateQuoteItem(index, 'manualCategory', value)}
+                          options={manualCategoryOptions}
                           required
                           fullWidth
                         />
-                        
-                        <Input
-                          label="Tipo"
+
+                        <Select
+                          label="Tipo de material"
                           value={quoteItem.manualType || ''}
-                          onChange={(e) => updateQuoteItem(index, 'manualType', e.target.value)}
-                          placeholder="Ej: Algodón"
+                          onChange={(value) => updateQuoteItem(index, 'manualType', value)}
+                          options={manualTypeOptions}
                           required
                           fullWidth
                         />
@@ -505,6 +565,17 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                 ) : (
                   // Existing product selection form
                   <div className="space-y-4">
+                    <div className="flex justify-end pr-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => convertToManual(index)}
+                      >
+                        Usar producto manual
+                      </Button>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="sm:col-span-2">
                         <SearchableSelect

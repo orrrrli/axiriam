@@ -256,6 +256,17 @@ const Items: React.FC = () => {
       }
     },
     {
+      header: 'Base',
+      accessor: (item: Item) => {
+        const usesBase = Array.isArray(item.materials) && item.materials.length > 0;
+        return (
+          <Badge variant={usesBase ? 'success' : 'danger'}>
+            {usesBase ? 'Con base' : 'Sin base'}
+          </Badge>
+        );
+      }
+    },
+    {
       header: 'Material',
       accessor: (item: Item) => {
         if (isMaterialCategory(item.type)) {

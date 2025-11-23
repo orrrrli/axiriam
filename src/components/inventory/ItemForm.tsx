@@ -258,7 +258,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
               )}
             </div>
             
-            <div className="mb-3">
+            <div className="mb-3 mt-2">
               <Select
                 value={materialTypeFilter}
                 onChange={setMaterialTypeFilter}
