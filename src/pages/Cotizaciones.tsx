@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useInventory } from '../context/InventoryContext';
 import Table from '../components/ui/Table';
 import Button from '../components/ui/Button';
@@ -11,12 +11,12 @@ import { formatCurrency, formatDate } from '../utils/helpers';
 import { generateQuotePDFFromFormData, generateQuotePDFFromQuote } from '../utils/pdfGenerator';
 import { Trash2, Pencil, Search, PlusCircle, FileText, Download } from 'lucide-react';
 import type { TableColumn } from '../components/ui/Table';
+import apiService from '../services/api';
 
 const Cotizaciones: React.FC = () => {
   const { state } = useInventory();
   const { items, isLoading } = state;
   
-  // Mock quotes data - in a real app, this would come from context/API
   const [quotes, setQuotes] = useState<Quote[]>([]);
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -27,6 +27,88 @@ const Cotizaciones: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>('desc');
+  
+  // Helpers: API <-> UI mappers
+  const mapApiQuoteToFrontend = (q: any): Quote => {
+    const items = (q.quote_items || []).map((it: any) => ({
+      itemId: it.item_id || '',
+      quantity: Number(it.quantity) || 0,
+      unitPrice: Number(it.unit_price) || 0,
+      description: it.description || undefined,
+      discount: Number(it.discount || 0),
+      manualName: it.manual_name || undefined,
+      manualCategory: it.manual_category || undefined,
+      manualType: it.manual_type || undefined,
+    }));
+    const extras = (q.quote_extras || []).map((ex: any) => ({
+      description: ex.description,
+      price: Number(ex.price) || 0,
+      quantity: ex.quantity != null ? Number(ex.quantity) : 1,
+      discount: Number(ex.discount || 0),
+    }));
+    const iva = (q.iva ?? 16) as 8 | 16;
+    const paymentMethod = q.payment_method || 'Efectivo';
+    return {
+      id: String(q.id),
+      quoteNumber: q.quote_number || 'COT',
+      clientName: q.client_name,
+      clientEmail: q.client_email || undefined,
+      clientPhone: q.client_phone || undefined,
+      clientCompany: q.client_company || undefined,
+      status: q.status || 'draft',
+      validUntil: new Date(q.valid_until),
+      items,
+      extras,
+      subtotal: Number(q.subtotal) || 0,
+      discount: Number(q.discount) || 0,
+      totalAmount: Number(q.total_amount) || 0,
+      notes: q.notes || undefined,
+      iva,
+      paymentMethod,
+      createdAt: new Date(q.created_at || Date.now()),
+      updatedAt: new Date(q.updated_at || Date.now()),
+    };
+  };
+
+  const mapFormToApiPayload = (data: QuoteFormData) => ({
+    clientName: data.clientName,
+    clientEmail: data.clientEmail,
+    clientPhone: data.clientPhone,
+    clientCompany: data.clientCompany,
+    validUntil: data.validUntil,
+    discount: data.hasGeneralDiscount ? data.discount : 0,
+    notes: data.notes,
+    items: data.items.map((it) => ({
+      itemId: it.manualName ? undefined : it.itemId,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      description: it.description,
+      discount: it.discount || 0,
+      manualName: it.manualName,
+      manualCategory: it.manualCategory,
+      manualType: it.manualType,
+    })),
+    extras: data.extras.map((ex) => ({
+      description: ex.description,
+      price: ex.price,
+      quantity: ex.quantity ?? 1,
+      discount: ex.discount || 0,
+    })),
+  });
+
+  // Initial fetch (get all)
+  useEffect(() => {
+    const fetchQuotes = async () => {
+      try {
+        const data = await apiService.getQuotes();
+        const mapped = (data || []).map(mapApiQuoteToFrontend);
+        setQuotes(mapped);
+      } catch (e) {
+        console.error('Failed to fetch quotes:', e);
+      }
+    };
+    fetchQuotes();
+  }, []);
   
   const filteredQuotes = quotes.filter(quote => 
     quote.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,30 +160,17 @@ const Cotizaciones: React.FC = () => {
   const handleAddQuote = async (data: QuoteFormData) => {
     setIsSubmitting(true);
     try {
-      const { subtotal, totalAmount } = calculateTotals(data);
-      
-      const newQuote: Quote = {
-        id: crypto.randomUUID(),
-        quoteNumber: generateQuoteNumber(),
-        clientName: data.clientName,
-        clientEmail: data.clientEmail,
-        clientPhone: data.clientPhone,
-        clientCompany: data.clientCompany,
-        status: 'draft',
-        validUntil: data.validUntil,
-        items: data.items,
-        extras: data.extras,
-        subtotal,
-        discount: data.hasGeneralDiscount ? data.discount : 0,
-        totalAmount,
-        notes: data.notes,
-        iva: data.iva,
-        paymentMethod: data.paymentMethod,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      setQuotes(prev => [...prev, newQuote]);
+      const payload = mapFormToApiPayload(data);
+      const created = await apiService.createQuote(payload);
+      const mapped = mapApiQuoteToFrontend(created);
+      // Preserve client-side fields not yet persisted by backend (iva, paymentMethod)
+      mapped.iva = data.iva;
+      mapped.paymentMethod = data.paymentMethod;
+      // Recompute total with IVA to keep UI consistent
+      const totals = calculateTotals(data);
+      mapped.subtotal = totals.subtotal;
+      mapped.totalAmount = totals.totalAmount;
+      setQuotes(prev => [mapped, ...prev]);
       setIsAddModalOpen(false);
     } catch (error) {
       console.error('Failed to add quote:', error);
@@ -116,29 +185,15 @@ const Cotizaciones: React.FC = () => {
     
     setIsSubmitting(true);
     try {
-      const { subtotal, totalAmount } = calculateTotals(data);
-      
-      const updatedQuote: Quote = {
-        ...currentQuote,
-        clientName: data.clientName,
-        clientEmail: data.clientEmail,
-        clientPhone: data.clientPhone,
-        clientCompany: data.clientCompany,
-        validUntil: data.validUntil,
-        items: data.items,
-        extras: data.extras,
-        subtotal,
-        discount: data.hasGeneralDiscount ? data.discount : 0,
-        totalAmount,
-        notes: data.notes,
-        iva: data.iva,
-        paymentMethod: data.paymentMethod,
-        updatedAt: new Date()
-      };
-      
-      setQuotes(prev => prev.map(quote => 
-        quote.id === currentQuote.id ? updatedQuote : quote
-      ));
+      const payload = mapFormToApiPayload(data);
+      const updated = await apiService.updateQuote(currentQuote.id, payload);
+      let mapped = mapApiQuoteToFrontend(updated);
+      // Preserve client-side fields
+      mapped = { ...mapped, iva: data.iva, paymentMethod: data.paymentMethod };
+      const totals = calculateTotals(data);
+      mapped.subtotal = totals.subtotal;
+      mapped.totalAmount = totals.totalAmount;
+      setQuotes(prev => prev.map(q => q.id === currentQuote.id ? mapped : q));
       setIsEditModalOpen(false);
       setCurrentQuote(null);
     } catch (error) {
@@ -154,6 +209,7 @@ const Cotizaciones: React.FC = () => {
     
     setIsSubmitting(true);
     try {
+      await apiService.deleteQuote(currentQuote.id);
       setQuotes(prev => prev.filter(quote => quote.id !== currentQuote.id));
       setIsDeleteModalOpen(false);
       setCurrentQuote(null);
@@ -184,13 +240,33 @@ const Cotizaciones: React.FC = () => {
     }
   };
   
-  const openEditModal = (quote: Quote) => {
-    setCurrentQuote(quote);
+  const openEditModal = async (quote: Quote) => {
+    try {
+      // Fetch latest from API (get one)
+      const fresh = await apiService.getQuote(quote.id);
+      const mapped = mapApiQuoteToFrontend(fresh);
+      // Preserve UI-only fields if backend lacks them
+      mapped.iva = mapped.iva ?? quote.iva;
+      mapped.paymentMethod = mapped.paymentMethod ?? quote.paymentMethod;
+      setCurrentQuote(mapped);
+    } catch (e) {
+      console.warn('Falling back to local quote for edit:', e);
+      setCurrentQuote(quote);
+    }
     setIsEditModalOpen(true);
   };
   
-  const openViewModal = (quote: Quote) => {
-    setCurrentQuote(quote);
+  const openViewModal = async (quote: Quote) => {
+    try {
+      const fresh = await apiService.getQuote(quote.id);
+      const mapped = mapApiQuoteToFrontend(fresh);
+      mapped.iva = mapped.iva ?? quote.iva;
+      mapped.paymentMethod = mapped.paymentMethod ?? quote.paymentMethod;
+      setCurrentQuote(mapped);
+    } catch (e) {
+      console.warn('Falling back to local quote for view:', e);
+      setCurrentQuote(quote);
+    }
     setIsViewModalOpen(true);
   };
   
@@ -325,6 +401,14 @@ const Cotizaciones: React.FC = () => {
               <span className="ml-2 text-gray-900 dark:text-white">{quote.clientPhone}</span>
             </div>
           )}
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">Forma de pago:</span>
+            <span className="ml-2 text-gray-900 dark:text-white">{quote.paymentMethod}</span>
+          </div>
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">IVA:</span>
+            <span className="ml-2 text-gray-900 dark:text-white">{quote.iva}%</span>
+          </div>
         </div>
       </div>
 
@@ -333,22 +417,30 @@ const Cotizaciones: React.FC = () => {
         <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Productos</h4>
         <div className="space-y-2">
           {quote.items.map((quoteItem, index) => {
-            const item = items.find(i => i.id === quoteItem.itemId);
+            const item = quoteItem.manualName ? null : items.find(i => i.id === quoteItem.itemId);
             return (
               <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                 <div>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {item?.name || 'Producto no encontrado'}
+                    {quoteItem.manualName ? quoteItem.manualName : (item?.name || 'Producto no encontrado')}
                   </span>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {quoteItem.manualName
+                      ? `${quoteItem.manualCategory || 'Sin categoría'} • ${quoteItem.manualType || 'Sin tipo'}`
+                      : item ? `${item.category} • ${item.type}` : ''}
+                  </div>
                   {quoteItem.description && (
                     <div className="text-sm text-gray-600 dark:text-gray-400">{quoteItem.description}</div>
                   )}
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     Cantidad: {quoteItem.quantity} × ${quoteItem.unitPrice}
+                    {quoteItem.discount && quoteItem.discount > 0 && (
+                      <span> • Descuento: -${quoteItem.discount}</span>
+                    )}
                   </div>
                 </div>
                 <span className="font-semibold text-gray-900 dark:text-white">
-                  ${(quoteItem.quantity * quoteItem.unitPrice).toFixed(2)}
+                  {Math.max(0, quoteItem.quantity * quoteItem.unitPrice - (quoteItem.discount || 0)).toFixed(2)}
                 </span>
               </div>
             );
@@ -363,8 +455,18 @@ const Cotizaciones: React.FC = () => {
           <div className="space-y-2">
             {quote.extras.map((extra, index) => (
               <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-                <span className="text-gray-900 dark:text-white">{extra.description}</span>
-                <span className="font-semibold text-gray-900 dark:text-white">${extra.price.toFixed(2)}</span>
+                <div className="text-gray-900 dark:text-white">
+                  <div className="font-medium">{extra.description}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Cantidad: {extra.quantity ?? 1} × ${extra.price}
+                    {extra.discount && extra.discount > 0 && (
+                      <span> • Descuento: -${extra.discount}</span>
+                    )}
+                  </div>
+                </div>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {Math.max(0, (extra.price * (extra.quantity ?? 1)) - (extra.discount || 0)).toFixed(2)}
+                </span>
               </div>
             ))}
           </div>
@@ -384,11 +486,25 @@ const Cotizaciones: React.FC = () => {
               <span className="text-red-600 dark:text-red-400">-${quote.discount.toFixed(2)}</span>
             </div>
           )}
+          {/* IVA */}
+          <div className="flex justify-between text-sm">
+            <span className="text-green-800 dark:text-green-400">IVA ({quote.iva}%):</span>
+            <span className="text-green-800 dark:text-green-400">
+              {(() => {
+                const ivaAmount = (Math.max(0, quote.subtotal - (quote.discount || 0)) * (quote.iva || 0)) / 100;
+                return `$${ivaAmount.toFixed(2)}`;
+              })()}
+            </span>
+          </div>
           <hr className="border-green-300 dark:border-green-600" />
           <div className="flex justify-between">
             <span className="text-lg font-semibold text-green-900 dark:text-green-300">Total:</span>
             <span className="text-xl font-bold text-green-900 dark:text-green-200">
-              ${quote.totalAmount.toFixed(2)}
+              {(() => {
+                const base = Math.max(0, quote.subtotal - (quote.discount || 0));
+                const ivaAmount = (base * (quote.iva || 0)) / 100;
+                return `$${(base + ivaAmount).toFixed(2)}`;
+              })()}
             </span>
           </div>
         </div>

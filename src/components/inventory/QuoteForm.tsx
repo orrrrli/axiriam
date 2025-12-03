@@ -778,7 +778,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                   fullWidth
                 />
                 <Input
-                  label="Descuento por extra ($)"
+                  label="Descuento ($)"
                   type="number"
                   value={extra.discount ? String(extra.discount) : ''}
                   onChange={(e) => updateExtra(index, 'discount', e.target.value === '' ? 0 : parseFloat(e.target.value))}

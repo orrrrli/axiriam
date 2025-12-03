@@ -332,6 +332,36 @@ class ApiService {
     });
   }
 
+  // Quotes API
+  async getQuotes(limit: number = 50, offset: number = 0) {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    return this.request<any[]>(`/quotes?${params.toString()}`);
+  }
+
+  async getQuote(id: string) {
+    return this.request<any>(`/quotes/${id}`);
+  }
+
+  async createQuote(data: any) {
+    return this.request<any>('/quotes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateQuote(id: string, data: any) {
+    return this.request<any>(`/quotes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteQuote(id: string) {
+    return this.request<void>(`/quotes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request<any>('/health');
