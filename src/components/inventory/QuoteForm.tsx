@@ -6,6 +6,7 @@ import SearchableSelect from '../ui/SearchableSelect';
 import DateInput from '../ui/DateInput';
 import Button from '../ui/Button';
 import { Trash2, Plus, FileText, Package, Tag, FileText as FileTextIcon } from 'lucide-react';
+import Toggle from '../ui/Toggle';
 
 interface QuoteFormProps {
   initialData?: QuoteFormData;
@@ -35,6 +36,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
     discount: 0,
     notes: '',
     iva: 16,
+    includingIva: true,
     paymentMethod: 'Efectivo',
     hasGeneralDiscount: false
   };
@@ -45,16 +47,32 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
   const [ivaAmount, setIvaAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
 
+  // Shipping state
+  const [shippingName, setShippingName] = useState('');
+  const [shippingCost, setShippingCost] = useState(0);
+
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // Extract shipping item if it exists
+      const shippingItem = initialData.items.find(item => item.manualCategory === 'shipping');
+      const otherItems = initialData.items.filter(item => item.manualCategory !== 'shipping');
+
+      if (shippingItem) {
+        setShippingName(shippingItem.manualName || '');
+        setShippingCost(shippingItem.unitPrice || 0);
+      }
+
+      setFormData({
+        ...initialData,
+        items: otherItems
+      });
     }
   }, [initialData]);
 
-  // Calculate totals whenever items, extras, discount, or iva change
+  // Calculate totals whenever items, extras, discount, iva, or includingIva change
   useEffect(() => {
     calculateTotals();
-  }, [formData.items, formData.extras, formData.discount, formData.iva]);
+  }, [formData.items, formData.extras, formData.discount, formData.iva, formData.includingIva, shippingCost]);
 
   const calculateTotals = () => {
     // Items total with per-item discount
@@ -73,7 +91,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
     }, 0);
 
     // Subtotal before general discount and IVA
-    const baseSubtotal = itemsTotal + extrasTotal;
+    // Subtotal before general discount and IVA
+    const baseSubtotal = itemsTotal + extrasTotal + shippingCost;
 
     // Apply optional general discount
     const generalDiscount = formData.hasGeneralDiscount ? Math.max(0, formData.discount) : 0;
@@ -81,8 +100,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
 
     // IVA
     const ivaRate = (formData.iva || 0) / 100;
-    const ivaValue = discountedSubtotal * ivaRate;
-    const newTotal = discountedSubtotal + ivaValue;
+    const ivaValue = formData.includingIva ? 0 : (discountedSubtotal * ivaRate);
+    const newTotal = formData.includingIva ? discountedSubtotal : (discountedSubtotal + ivaValue);
 
     setSubtotal(baseSubtotal);
     setIvaAmount(ivaValue);
@@ -91,7 +110,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
 
   const handleChange = (field: keyof QuoteFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when field is updated
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -125,7 +144,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
       unitPrice: 0,
       description: '',
       // Prefill sensible defaults so a manual hat can be created immediately
-      manualName: 'Gorrito básico',
+      manualName: '',
       manualCategory: 'sencillo',
       manualType: 'algodon'
     };
@@ -148,7 +167,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
       items: prev.items.map((item, i) => {
         if (i === index) {
           const updatedItem = { ...item, [field]: value };
-          
+
           // Auto-fill unit price when item is selected
           if (field === 'itemId' && value) {
             const selectedItem = items.find(item => item.id === value);
@@ -157,7 +176,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               updatedItem.description = selectedItem.name;
             }
           }
-          
+
           return updatedItem;
         }
         return item;
@@ -209,7 +228,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
   const updateExtra = (index: number, field: keyof SaleExtra, value: any) => {
     setFormData(prev => ({
       ...prev,
-      extras: prev.extras.map((extra, i) => 
+      extras: prev.extras.map((extra, i) =>
         i === index ? { ...extra, [field]: value } : extra
       )
     }));
@@ -217,44 +236,44 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof QuoteFormData, string>> = {};
-    
+
     if (!formData.clientName.trim()) {
       newErrors.clientName = 'El nombre del cliente es requerido';
     }
-    
+
     if (formData.clientEmail && !/\S+@\S+\.\S+/.test(formData.clientEmail)) {
       newErrors.clientEmail = 'El email no es válido';
     }
-    
+
     if (!formData.validUntil) {
       newErrors.validUntil = 'La fecha de validez es requerida';
     } else if (formData.validUntil <= new Date()) {
       newErrors.validUntil = 'La fecha de validez debe ser futura';
     }
-    
+
     if (formData.items.length === 0) {
       newErrors.items = 'Debe agregar al menos un producto';
     } else {
       // Validate items based on whether they are manual or from inventory
       const invalidItems = formData.items.filter(item => {
         const isManualEntry = item.manualName !== undefined;
-        
+
         if (isManualEntry) {
           // Validate manual items
-          return !item.manualName?.trim() || 
-                 !item.manualCategory?.trim() || 
-                 !item.manualType?.trim() || 
-                 item.quantity <= 0 || 
-                 item.unitPrice < 0; // allow 0 for manual default
+          return !item.manualName?.trim() ||
+            !item.manualCategory?.trim() ||
+            !item.manualType?.trim() ||
+            item.quantity <= 0 ||
+            item.unitPrice < 0; // allow 0 for manual default
         } else {
           // Validate inventory items
           return !item.itemId || item.quantity <= 0 || item.unitPrice < 0;
         }
       });
-      
+
       if (invalidItems.length > 0) {
         const hasManualItems = formData.items.some(item => item.manualName !== undefined);
-        
+
         if (hasManualItems) {
           newErrors.items = 'Todos los productos manuales deben tener nombre, categoría, tipo, cantidad mayor a 0 y precio mayor a 0';
         } else {
@@ -270,16 +289,34 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
     if (formData.extras.some(extra => (extra.quantity ?? 1) <= 0)) {
       newErrors.extras = 'La cantidad de los extras debe ser al menos 1';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
-      onSubmit(formData);
+      const finalItems = [...formData.items];
+
+      // Add shipping as a manual item if cost > 0
+      if (shippingCost > 0) {
+        finalItems.push({
+          itemId: '',
+          quantity: 1,
+          unitPrice: shippingCost,
+          description: 'Costo de envío',
+          manualName: shippingName,
+          manualCategory: 'shipping',
+          manualType: 'service'
+        });
+      }
+
+      onSubmit({
+        ...formData,
+        items: finalItems
+      });
     }
   };
 
@@ -327,7 +364,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Información del Cliente
           </h3>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Nombre del Cliente"
@@ -338,7 +375,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               required
               fullWidth
             />
-            
+
             <Input
               label="Empresa (Opcional)"
               value={formData.clientCompany || ''}
@@ -346,7 +383,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               placeholder="Nombre de la empresa"
               fullWidth
             />
-            
+
             <Input
               label="Email (Opcional)"
               type="email"
@@ -356,7 +393,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               error={errors.clientEmail}
               fullWidth
             />
-            
+
             <Input
               label="Teléfono (Opcional)"
               value={formData.clientPhone || ''}
@@ -364,8 +401,27 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               placeholder="5551234567"
               fullWidth
             />
+
+            <Input
+              label="Concepto de Envío"
+              value={shippingName}
+              onChange={(e) => setShippingName(e.target.value)}
+              placeholder="Envio"
+              fullWidth
+            />
+
+            <Input
+              label="Costo de Envío ($)"
+              type="number"
+              value={shippingCost === 0 ? '' : shippingCost.toString()}
+              onChange={(e) => setShippingCost(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              fullWidth
+            />
           </div>
-          
+
           <DateInput
             label="Válida hasta"
             value={formData.validUntil.toISOString().split('T')[0]}
@@ -383,6 +439,13 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
               required
               fullWidth
             />
+            <div className="pt-6">
+              <Toggle
+                label="IVA incluido en la cotización"
+                checked={!!formData.includingIva}
+                onChange={(checked) => handleChange('includingIva', checked)}
+              />
+            </div>
             <Select
               label="Forma de pago"
               value={formData.paymentMethod}
@@ -445,8 +508,8 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                   </h3>
                   <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
                     <p>
-                      No hay productos en tu inventario. Puedes agregar productos manualmente 
-                      para crear la cotización. Los productos se agregarán con la información 
+                      No hay productos en tu inventario. Puedes agregar productos manualmente
+                      para crear la cotización. Los productos se agregarán con la información
                       que proporciones.
                     </p>
                   </div>
@@ -461,11 +524,10 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
             const isManualEntry = quoteItem.manualName !== undefined;
 
             return (
-              <div key={index} className={`relative rounded-lg border-2 overflow-hidden transition-all duration-200 ${
-                isManualEntry 
-                  ? 'bg-gradient-to-br from-purple-50 to-fuchsia-50 dark:from-purple-900/20 dark:to-fuchsia-900/20 border-purple-200 dark:border-purple-700' 
-                  : 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700'
-              }`}>
+              <div key={index} className={`relative rounded-lg border-2 overflow-hidden transition-all duration-200 ${isManualEntry
+                ? 'bg-gradient-to-br from-purple-50 to-fuchsia-50 dark:from-purple-900/20 dark:to-fuchsia-900/20 border-purple-200 dark:border-purple-700'
+                : 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700'
+                }`}>
                 {/* Header with improved styling */}
                 <div className="flex justify-between items-center p-4 pb-2">
                   <div className="flex items-center space-x-2">
@@ -505,7 +567,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                         <Tag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         <h5 className="text-sm font-medium text-blue-800 dark:text-blue-300">Información del Producto</h5>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <Input
                           label="Nombre del Producto"
@@ -535,7 +597,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                         />
                       </div>
                     </div>
-                    
+
                     {/* Pricing & Quantity Section */}
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -585,7 +647,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                         className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 sm:text-sm transition-colors duration-200"
                       />
                     </div>
-                    
+
                     {/* Enhanced subtotal display */}
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
                       <div className="flex items-center justify-between">
@@ -690,7 +752,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                       fullWidth
                     />
 
-                    
+
 
                     {selectedItem && (
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700">
@@ -794,7 +856,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
             <p className="text-sm text-red-600 dark:text-red-400">{errors.extras}</p>
           )}
         </div>
-        
+
         {/* Discount Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -824,7 +886,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
             />
           </div>
         </div>
-        
+
         {/* Notes Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -840,7 +902,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
             />
           </div>
         </div>
-        
+
         {/* Total Amount Display */}
         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border border-green-200 dark:border-green-700">
           <div className="space-y-2">
@@ -862,14 +924,23 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
                 </span>
               </div>
             )}
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-green-800 dark:text-green-400">
-                IVA ({formData.iva || 0}%):
-              </span>
-              <span className="text-green-800 dark:text-green-400">
-                ${ivaAmount.toFixed(2)}
-              </span>
-            </div>
+            {formData.includingIva ? (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-green-800 dark:text-green-400">
+                  IVA ({formData.iva || 0}%) incluido.
+                </span>
+                <span className="text-green-800 dark:text-green-400">$0.00</span>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-green-800 dark:text-green-400">
+                  IVA ({formData.iva || 0}%):
+                </span>
+                <span className="text-green-800 dark:text-green-400">
+                  ${ivaAmount.toFixed(2)}
+                </span>
+              </div>
+            )}
             <hr className="border-green-300 dark:border-green-600" />
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-green-900 dark:text-green-300">
@@ -901,16 +972,16 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
       )}
 
       <div className="mt-6 flex justify-end space-x-3">
-        <Button 
-          type="button" 
-          variant="outline" 
+        <Button
+          type="button"
+          variant="outline"
           onClick={onCancel}
         >
           Cancelar
         </Button>
         {onGeneratePDF && (
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="secondary"
             onClick={handleGeneratePDF}
             disabled={isSubmitting}
@@ -919,9 +990,9 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
             Generar PDF
           </Button>
         )}
-        <Button 
-          type="submit" 
-          variant="primary" 
+        <Button
+          type="submit"
+          variant="primary"
           isLoading={isSubmitting}
         >
           {initialData ? 'Actualizar Cotización' : 'Crear Cotización'}

@@ -47,6 +47,7 @@ const Cotizaciones: React.FC = () => {
       discount: Number(ex.discount || 0),
     }));
     const iva = (q.iva ?? 16) as 8 | 16;
+    const includingIva = q.including_iva ?? true;
     const paymentMethod = q.payment_method || 'Efectivo';
     return {
       id: String(q.id),
@@ -64,6 +65,7 @@ const Cotizaciones: React.FC = () => {
       totalAmount: Number(q.total_amount) || 0,
       notes: q.notes || undefined,
       iva,
+      includingIva,
       paymentMethod,
       createdAt: new Date(q.created_at || Date.now()),
       updatedAt: new Date(q.updated_at || Date.now()),
@@ -78,6 +80,8 @@ const Cotizaciones: React.FC = () => {
     validUntil: data.validUntil,
     discount: data.hasGeneralDiscount ? data.discount : 0,
     notes: data.notes,
+    iva: data.iva,
+    including_iva: !!data.includingIva,
     items: data.items.map((it) => ({
       itemId: it.manualName ? undefined : it.itemId,
       quantity: it.quantity,
@@ -148,8 +152,8 @@ const Cotizaciones: React.FC = () => {
     const generalDiscount = formData.hasGeneralDiscount ? Math.max(0, formData.discount) : 0;
     const discountedSubtotal = Math.max(0, baseSubtotal - generalDiscount);
     const ivaRate = (formData.iva || 0) / 100;
-    const ivaAmount = discountedSubtotal * ivaRate;
-    const totalAmount = discountedSubtotal + ivaAmount;
+    const ivaAmount = formData.includingIva ? 0 : (discountedSubtotal * ivaRate);
+    const totalAmount = formData.includingIva ? discountedSubtotal : (discountedSubtotal + ivaAmount);
 
     return {
       subtotal: baseSubtotal,
@@ -409,6 +413,12 @@ const Cotizaciones: React.FC = () => {
             <span className="font-medium text-gray-700 dark:text-gray-300">IVA:</span>
             <span className="ml-2 text-gray-900 dark:text-white">{quote.iva}%</span>
           </div>
+          <div>
+            <span className="font-medium text-gray-700 dark:text-gray-300">IVA incluido:</span>
+            <span className="ml-2 text-gray-900 dark:text-white">
+              {quote.includingIva ? 'Sí' : 'No'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -487,21 +497,29 @@ const Cotizaciones: React.FC = () => {
             </div>
           )}
           {/* IVA */}
-          <div className="flex justify-between text-sm">
-            <span className="text-green-800 dark:text-green-400">IVA ({quote.iva}%):</span>
-            <span className="text-green-800 dark:text-green-400">
-              {(() => {
-                const ivaAmount = (Math.max(0, quote.subtotal - (quote.discount || 0)) * (quote.iva || 0)) / 100;
-                return `$${ivaAmount.toFixed(2)}`;
-              })()}
-            </span>
-          </div>
+          {quote.includingIva ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-800 dark:text-green-400">IVA ({quote.iva}%) incluido.</span>
+              <span className="text-green-800 dark:text-green-400">$0.00</span>
+            </div>
+          ) : (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-800 dark:text-green-400">IVA ({quote.iva}%):</span>
+              <span className="text-green-800 dark:text-green-400">
+                {(() => {
+                  const ivaAmount = (Math.max(0, quote.subtotal - (quote.discount || 0)) * (quote.iva || 0)) / 100;
+                  return `$${ivaAmount.toFixed(2)}`;
+                })()}
+              </span>
+            </div>
+          )}
           <hr className="border-green-300 dark:border-green-600" />
           <div className="flex justify-between">
             <span className="text-lg font-semibold text-green-900 dark:text-green-300">Total:</span>
             <span className="text-xl font-bold text-green-900 dark:text-green-200">
               {(() => {
                 const base = Math.max(0, quote.subtotal - (quote.discount || 0));
+                if (quote.includingIva) return `$${base.toFixed(2)}`;
                 const ivaAmount = (base * (quote.iva || 0)) / 100;
                 return `$${(base + ivaAmount).toFixed(2)}`;
               })()}
@@ -604,6 +622,7 @@ const Cotizaciones: React.FC = () => {
               discount: currentQuote.discount,
               notes: currentQuote.notes,
               iva: currentQuote.iva,
+              includingIva: currentQuote.includingIva,
               paymentMethod: currentQuote.paymentMethod,
               hasGeneralDiscount: (currentQuote.discount || 0) > 0
             }}

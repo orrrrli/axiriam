@@ -128,6 +128,7 @@ export interface Quote {
   totalAmount: number;
   notes?: string; // Additional notes for the client
   iva: 8 | 16; // IVA percentage applied
+  includingIva?: boolean; // Whether IVA is already included in totals
   paymentMethod: 'Efectivo' | 'Tarjeta de crédito' | 'Transferencia' | 'Deposito';
   createdAt: Date;
   updatedAt: Date;
@@ -156,6 +157,7 @@ export interface QuoteFormData {
   discount: number;
   notes?: string;
   iva: 8 | 16;
+  includingIva?: boolean;
   paymentMethod: 'Efectivo' | 'Tarjeta de crédito' | 'Transferencia' | 'Deposito';
   hasGeneralDiscount?: boolean;
 }

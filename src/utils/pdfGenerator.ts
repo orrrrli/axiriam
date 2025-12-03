@@ -206,8 +206,9 @@ export const generateQuotePDF = (
   const generalDiscount = (hasGeneralDiscount === false) ? 0 : Math.max(0, (quoteData as any).discount || 0);
   const discountedSubtotal = Math.max(0, baseSubtotal - generalDiscount);
   const ivaRate = ((quoteData as any).iva || 0) / 100;
-  const ivaAmount = discountedSubtotal * ivaRate;
-  const total = discountedSubtotal + ivaAmount;
+  const includingIva = (quoteData as any).includingIva ?? (quoteData as any).including_iva ?? true;
+  const ivaAmount = includingIva ? 0 : (discountedSubtotal * ivaRate);
+  const total = includingIva ? discountedSubtotal : (discountedSubtotal + ivaAmount);
 
   doc.setFont('helvetica', 'normal');
   doc.text('Subtotal:', totalsStartX, yPosition);
@@ -221,9 +222,15 @@ export const generateQuotePDF = (
   }
 
   // IVA line
-  doc.text(`IVA (${Math.round(((quoteData as any).iva || 0))}%):`, totalsStartX, yPosition);
-  doc.text(`$${ivaAmount.toFixed(2)}`, totalsStartX + 40, yPosition);
-  yPosition += 6;
+  const ivaPercentage = Math.round((quoteData as any).iva || 0);
+  if (includingIva) {
+    doc.text(`IVA (${ivaPercentage}%) incluido`, totalsStartX, yPosition);
+    yPosition += 6;
+  } else {
+    doc.text(`IVA (${ivaPercentage}%):`, totalsStartX, yPosition);
+    doc.text(`$${ivaAmount.toFixed(2)}`, totalsStartX + 40, yPosition);
+    yPosition += 6;
+  }
 
 
   // Total line
