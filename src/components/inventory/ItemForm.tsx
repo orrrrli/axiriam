@@ -121,7 +121,9 @@ const ItemForm: React.FC<ItemFormProps> = ({
     { value: 'algodon', label: 'Algodon' },
     { value: 'normal', label: 'Normal' },
     { value: 'microfibra', label: 'Microfibra' },
+    { value: 'microfibra-antifluido', label: 'Microfibra antifluido' },
     { value: 'stretch', label: 'Stretch' },
+    { value: 'stretch-antifluido', label: 'Stretch antifluido' },
     { value: 'satin', label: 'Satin' },
   ];
 
@@ -133,7 +135,11 @@ const ItemForm: React.FC<ItemFormProps> = ({
         return 'secondary';
       case 'microfibra':
         return 'default';
+      case 'microfibra-antifluido':
+        return 'default';
       case 'stretch':
+        return 'success';
+      case 'stretch-antifluido':
         return 'success';
       case 'satin':
         return 'warning';
@@ -150,8 +156,12 @@ const ItemForm: React.FC<ItemFormProps> = ({
         return 'Normal';
       case 'microfibra':
         return 'Microfibra';
+      case 'microfibra-antifluido':
+        return 'Microfibra antifluido';
       case 'stretch':
         return 'Stretch';
+      case 'stretch-antifluido':
+        return 'Stretch antifluido';
       case 'satin':
         return 'Satin';
       default:
@@ -266,7 +276,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
                   { value: '', label: 'Todos los tipos' },
                   { value: 'algodon', label: 'Algodon' },
                   { value: 'normal', label: 'Normal' },
+                  { value: 'microfibra', label: 'Microfibra' },
+                  { value: 'microfibra-antifluido', label: 'Microfibra antifluido' },
                   { value: 'stretch', label: 'Stretch' },
+                  { value: 'stretch-antifluido', label: 'Stretch antifluido' },
                   { value: 'satin', label: 'Satin' }
                 ]}
                 fullWidth

@@ -2,7 +2,7 @@ export interface Item {
   id: string;
   name: string;
   category: 'sencillo' | 'doble-vista' | 'completo';
-  type: 'algodon' | 'normal' | 'microfibra' | 'stretch' | 'satin'; // New field for item type
+  type: 'algodon' | 'normal' | 'microfibra' | 'stretch' | 'satin' | 'stretch-antifluido' | 'microfibra-antifluido'; // New field for item type
   description: string;
   quantity: number;
   price: number;
@@ -15,7 +15,7 @@ export interface RawMaterial {
   id: string;
   name: string;
   description: string;
-  type: 'algodon' | 'stretch' | 'normal' | 'satin'; // Material type
+  type: 'algodon' | 'stretch' | 'normal' | 'satin' | 'stretch-antifluido' | 'microfibra-antifluido'; // Material type
   width: number; // in meters
   height: number; // in meters
   quantity: number; // quantity in stock
@@ -41,7 +41,7 @@ export interface OrderMaterial {
       quantity: number;
       addToInventory?: boolean; // Whether this design should use existing raw material
       customDesignName?: string; // Custom design name for non-inventory items
-      type?: 'algodon' | 'stretch' | 'normal' | 'satin'; // Material type for custom designs
+      type?: 'algodon' | 'stretch' | 'normal' | 'satin' | 'microfibra' | 'stretch-antifluido' | 'microfibra-antifluido'; // Material type for custom designs
     }[];
   }[];
   distributor: string;
@@ -88,6 +88,8 @@ export interface SaleExtra {
   id?: string;
   description: string;
   price: number;
+  quantity?: number;
+  discount?: number;
 }
 
 export interface SaleFormData {
@@ -125,6 +127,8 @@ export interface Quote {
   discount: number;
   totalAmount: number;
   notes?: string; // Additional notes for the client
+  iva: 8 | 16; // IVA percentage applied
+  paymentMethod: 'Efectivo' | 'Tarjeta de crédito' | 'Transferencia' | 'Deposito';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -134,6 +138,7 @@ export interface QuoteItem {
   quantity: number;
   unitPrice: number; // Price at time of quote (may differ from current item price)
   description?: string; // Custom description for this quote item
+  discount?: number; // Optional per-item discount (flat amount)
   // Manual item fields (used when itemId is empty)
   manualName?: string;
   manualCategory?: string;
@@ -150,6 +155,9 @@ export interface QuoteFormData {
   extras: SaleExtra[];
   discount: number;
   notes?: string;
+  iva: 8 | 16;
+  paymentMethod: 'Efectivo' | 'Tarjeta de crédito' | 'Transferencia' | 'Deposito';
+  hasGeneralDiscount?: boolean;
 }
 
 export type ItemFormData = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;

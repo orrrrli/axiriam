@@ -27,15 +27,15 @@ export const generateQuotePDF = (
   doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, pageWidth - margin - 60, yPosition);
   yPosition += 20;
 
-  // Company info (you can customize this)
+  // Company info
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.text('AXIRIAM', margin, yPosition);
   yPosition += 5;
   doc.setFont('helvetica', 'normal');
-  doc.text('Tu empresa de confianza', margin, yPosition);
+  doc.text('Gorros quirurgicos. Ensenada, Baja California.', margin, yPosition);
   yPosition += 5;
-  doc.text('contacto@axiriam.com', margin, yPosition);
+  doc.text('Instagram: axiriam', margin, yPosition);
   yPosition += 15;
 
   // Client information
@@ -68,7 +68,15 @@ export const generateQuotePDF = (
 
   // Valid until
   doc.text(`Válida hasta: ${new Date(quoteData.validUntil).toLocaleDateString('es-MX')}`, margin, yPosition);
-  yPosition += 15;
+  yPosition += 6;
+
+  // Payment method
+  const paymentMethod = (quoteData as any).paymentMethod;
+  if (paymentMethod) {
+    doc.text(`Forma de pago: ${paymentMethod}`, margin, yPosition);
+    yPosition += 5;
+  }
+  yPosition += 5;
 
   // Items table header
   doc.setFontSize(12);
@@ -79,10 +87,11 @@ export const generateQuotePDF = (
   // Table headers
   doc.setFontSize(9);
   const colWidths = {
-    description: 80,
-    quantity: 25,
-    unitPrice: 30,
-    total: 30
+    description: 70,
+    quantity: 20,
+    unitPrice: 28,
+    discount: 28,
+    total: 28
   };
 
   const tableStartX = margin;
@@ -91,7 +100,8 @@ export const generateQuotePDF = (
   doc.text('DESCRIPCIÓN', tableStartX + 2, yPosition);
   doc.text('CANT.', tableStartX + colWidths.description + 2, yPosition);
   doc.text('PRECIO UNIT.', tableStartX + colWidths.description + colWidths.quantity + 2, yPosition);
-  doc.text('TOTAL', tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
+  doc.text('DESC.', tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
+  doc.text('TOTAL', tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.discount + 2, yPosition);
   yPosition += 10;
 
   // Items
@@ -113,7 +123,9 @@ export const generateQuotePDF = (
     }
     
     const description = quoteItem.description || `${itemName}${itemDetails ? ` (${itemDetails})` : ''}`;
-    const total = quoteItem.quantity * quoteItem.unitPrice;
+    const lineSubtotal = (quoteItem.quantity * quoteItem.unitPrice);
+    const lineDiscount = Math.max(0, (quoteItem as any).discount || 0);
+    const total = Math.max(0, lineSubtotal - lineDiscount);
 
     // Check if we need a new page
     if (yPosition > pageHeight - 40) {
@@ -130,8 +142,10 @@ export const generateQuotePDF = (
     doc.text(description, tableStartX + 2, yPosition, { maxWidth: colWidths.description - 4 });
     doc.text(quoteItem.quantity.toString(), tableStartX + colWidths.description + 2, yPosition);
     doc.text(`$${quoteItem.unitPrice.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + 2, yPosition);
-    doc.text(`$${total.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
-    
+    // Discount column
+    doc.text(`$${lineDiscount.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
+    // Total column
+    doc.text(`$${total.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.discount + 2, yPosition);
     yPosition += 8;
   });
 
@@ -154,11 +168,18 @@ export const generateQuotePDF = (
         doc.rect(tableStartX, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
       }
 
+      const qty = (extra.quantity != null && extra.quantity > 0) ? extra.quantity : 1;
+      const extraLineSubtotal = extra.price * qty;
+      const extraLineDiscount = Math.max(0, (extra as any).discount || 0);
+      const extraTotal = Math.max(0, extraLineSubtotal - extraLineDiscount);
+
       doc.text(extra.description, tableStartX + 2, yPosition, { maxWidth: colWidths.description - 4 });
-      doc.text('1', tableStartX + colWidths.description + 2, yPosition);
+      doc.text(String(qty), tableStartX + colWidths.description + 2, yPosition);
       doc.text(`$${extra.price.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + 2, yPosition);
-      doc.text(`$${extra.price.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
-      
+      // Discount column
+      doc.text(`$${extraLineDiscount.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
+      // Total column
+      doc.text(`$${extraTotal.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.discount + 2, yPosition);
       yPosition += 8;
     });
   }
@@ -168,22 +189,41 @@ export const generateQuotePDF = (
   // Totals
   const totalsStartX = pageWidth - margin - 80;
   
-  // Calculate totals
-  const itemsTotal = quoteData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-  const extrasTotal = quoteData.extras ? quoteData.extras.reduce((sum, extra) => sum + extra.price, 0) : 0;
-  const subtotal = itemsTotal + extrasTotal;
-  const total = Math.max(0, subtotal - quoteData.discount);
+  // Calculate totals aligned with UI
+  const itemsTotal = quoteData.items.reduce((sum, item) => {
+    const lineSubtotal = item.quantity * item.unitPrice;
+    const lineDiscount = Math.max(0, (item as any).discount || 0);
+    return sum + Math.max(0, lineSubtotal - lineDiscount);
+  }, 0);
+  const extrasTotal = (quoteData.extras || []).reduce((sum, extra: any) => {
+    const qty = (extra.quantity != null && extra.quantity > 0) ? extra.quantity : 1;
+    const lineSubtotal = extra.price * qty;
+    const lineDiscount = Math.max(0, extra.discount || 0);
+    return sum + Math.max(0, lineSubtotal - lineDiscount);
+  }, 0);
+  const baseSubtotal = itemsTotal + extrasTotal;
+  const hasGeneralDiscount = (quoteData as any).hasGeneralDiscount;
+  const generalDiscount = (hasGeneralDiscount === false) ? 0 : Math.max(0, (quoteData as any).discount || 0);
+  const discountedSubtotal = Math.max(0, baseSubtotal - generalDiscount);
+  const ivaRate = ((quoteData as any).iva || 0) / 100;
+  const ivaAmount = discountedSubtotal * ivaRate;
+  const total = discountedSubtotal + ivaAmount;
 
   doc.setFont('helvetica', 'normal');
   doc.text('Subtotal:', totalsStartX, yPosition);
-  doc.text(`$${subtotal.toFixed(2)}`, totalsStartX + 40, yPosition);
+  doc.text(`$${baseSubtotal.toFixed(2)}`, totalsStartX + 40, yPosition);
   yPosition += 6;
 
-  if (quoteData.discount > 0) {
+  if (generalDiscount > 0) {
     doc.text('Descuento:', totalsStartX, yPosition);
-    doc.text(`-$${quoteData.discount.toFixed(2)}`, totalsStartX + 40, yPosition);
+    doc.text(`-$${generalDiscount.toFixed(2)}`, totalsStartX + 40, yPosition);
     yPosition += 6;
   }
+
+  // IVA line
+  doc.text(`IVA (${Math.round(((quoteData as any).iva || 0))}%):`, totalsStartX, yPosition);
+  doc.text(`$${ivaAmount.toFixed(2)}`, totalsStartX + 40, yPosition);
+  yPosition += 6;
 
 
   // Total line

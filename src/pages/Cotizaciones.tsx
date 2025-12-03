@@ -50,18 +50,27 @@ const Cotizaciones: React.FC = () => {
 
   const calculateTotals = (formData: QuoteFormData) => {
     const itemsTotal = formData.items.reduce((total, item) => {
-      return total + (item.unitPrice * item.quantity);
+      const lineSubtotal = item.unitPrice * item.quantity;
+      const lineDiscount = Math.max(0, item.discount || 0);
+      return total + Math.max(0, lineSubtotal - lineDiscount);
     }, 0);
 
     const extrasTotal = formData.extras.reduce((total, extra) => {
-      return total + extra.price;
+      const qty = extra.quantity && extra.quantity > 0 ? extra.quantity : 1;
+      const lineSubtotal = extra.price * qty;
+      const lineDiscount = Math.max(0, extra.discount || 0);
+      return total + Math.max(0, lineSubtotal - lineDiscount);
     }, 0);
 
-    const subtotal = itemsTotal + extrasTotal;
-    const totalAmount = Math.max(0, subtotal - formData.discount);
+    const baseSubtotal = itemsTotal + extrasTotal;
+    const generalDiscount = formData.hasGeneralDiscount ? Math.max(0, formData.discount) : 0;
+    const discountedSubtotal = Math.max(0, baseSubtotal - generalDiscount);
+    const ivaRate = (formData.iva || 0) / 100;
+    const ivaAmount = discountedSubtotal * ivaRate;
+    const totalAmount = discountedSubtotal + ivaAmount;
 
     return {
-      subtotal,
+      subtotal: baseSubtotal,
       totalAmount
     };
   };
@@ -83,9 +92,11 @@ const Cotizaciones: React.FC = () => {
         items: data.items,
         extras: data.extras,
         subtotal,
-        discount: data.discount,
+        discount: data.hasGeneralDiscount ? data.discount : 0,
         totalAmount,
         notes: data.notes,
+        iva: data.iva,
+        paymentMethod: data.paymentMethod,
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -117,9 +128,11 @@ const Cotizaciones: React.FC = () => {
         items: data.items,
         extras: data.extras,
         subtotal,
-        discount: data.discount,
+        discount: data.hasGeneralDiscount ? data.discount : 0,
         totalAmount,
         notes: data.notes,
+        iva: data.iva,
+        paymentMethod: data.paymentMethod,
         updatedAt: new Date()
       };
       
@@ -473,7 +486,10 @@ const Cotizaciones: React.FC = () => {
               items: currentQuote.items,
               extras: currentQuote.extras,
               discount: currentQuote.discount,
-              notes: currentQuote.notes
+              notes: currentQuote.notes,
+              iva: currentQuote.iva,
+              paymentMethod: currentQuote.paymentMethod,
+              hasGeneralDiscount: (currentQuote.discount || 0) > 0
             }}
             onSubmit={handleEditQuote}
             onCancel={() => setIsEditModalOpen(false)}

@@ -13,7 +13,7 @@ interface FlattenedDesign {
   quantity: number;
   addToInventory: boolean;
   customDesignName: string;
-  type: 'algodon' | 'stretch' | 'normal' | 'satin';
+  type: 'algodon' | 'stretch' | 'normal' | 'satin' | 'microfibra' | 'stretch-antifluido' | 'microfibra-antifluido';
 }
 
 interface OrderMaterialFormProps {
@@ -304,7 +304,10 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     switch (type) {
       case 'algodon': return 'success';
       case 'normal': return 'danger';
+      case 'microfibra': return 'default';
+      case 'microfibra-antifluido': return 'default';
       case 'stretch': return 'warning';
+      case 'stretch-antifluido': return 'warning';
       case 'satin': return 'secondary';
       default: return 'default';
     }
@@ -314,7 +317,10 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
     switch (type) {
       case 'algodon': return 'Algodon';
       case 'normal': return 'Normal';
+      case 'microfibra': return 'Microfibra';
+      case 'microfibra-antifluido': return 'Microfibra antifluido';
       case 'stretch': return 'Stretch';
+      case 'stretch-antifluido': return 'Stretch antifluido';
       case 'satin': return 'Satin';
       default: return type;
     }

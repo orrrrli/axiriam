@@ -184,13 +184,16 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           </label>
           <select
             value={formData.type}
-            onChange={(e) => handleChange('type', e.target.value as 'algodon' | 'stretch' | 'normal' | 'satin')}
+            onChange={(e) => handleChange('type', e.target.value as 'algodon' | 'stretch' | 'normal' | 'satin' | 'microfibra' | 'stretch-antifluido' | 'microfibra-antifluido')}
             className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-sky-500 dark:focus:border-sky-400 transition-colors duration-200"
             required
           >
             <option value="algodon">Algodon</option>
             <option value="normal">Normal</option>
+            <option value="microfibra">Microfibra</option>
+            <option value="microfibra-antifluido">Microfibra antifluido</option>
             <option value="stretch">Stretch</option>
+            <option value="stretch-antifluido">Stretch antifluido</option>
             <option value="satin">Satin</option>
           </select>
         </div>
