@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { QuoteFormData, Item, QuoteItem, SaleExtra } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
@@ -15,16 +15,18 @@ interface QuoteFormProps {
   onGeneratePDF?: (data: QuoteFormData) => void;
   items: Item[];
   isSubmitting?: boolean;
+  hideButtons?: boolean;
 }
 
-const QuoteForm: React.FC<QuoteFormProps> = ({
+const QuoteForm = forwardRef<HTMLFormElement, QuoteFormProps>(({
   initialData,
   onSubmit,
   onCancel,
   onGeneratePDF,
   items,
-  isSubmitting = false
-}) => {
+  isSubmitting = false,
+  hideButtons = false
+}, ref) => {
   const defaultFormData: QuoteFormData = {
     clientName: '',
     clientEmail: '',
@@ -357,7 +359,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
   }));
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} ref={ref} id="add-quote-form">
       <div className="space-y-6">
         {/* Client Information */}
         <div className="space-y-4">
@@ -971,35 +973,39 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
         </div>
       )}
 
-      <div className="mt-6 flex justify-end space-x-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-        >
-          Cancelar
-        </Button>
-        {onGeneratePDF && (
+      {!hideButtons && (
+        <div className="mt-6 flex justify-end space-x-3 sticky bottom-0 bg-white dark:bg-gray-900 py-4 border-t border-gray-200 dark:border-gray-700 -mx-6 px-6">
           <Button
             type="button"
-            variant="secondary"
-            onClick={handleGeneratePDF}
-            disabled={isSubmitting}
+            variant="outline"
+            onClick={onCancel}
           >
-            <FileText className="w-4 h-4 mr-1" />
-            Generar PDF
+            Cancelar
           </Button>
-        )}
-        <Button
-          type="submit"
-          variant="primary"
-          isLoading={isSubmitting}
-        >
-          {initialData ? 'Actualizar Cotización' : 'Crear Cotización'}
-        </Button>
-      </div>
+          {onGeneratePDF && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleGeneratePDF}
+              disabled={isSubmitting}
+            >
+              <FileText className="w-4 h-4 mr-1" />
+              Generar PDF
+            </Button>
+          )}
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={isSubmitting}
+          >
+            {initialData ? 'Actualizar Cotización' : 'Crear Cotización'}
+          </Button>
+        </div>
+      )}
     </form>
   );
-};
+});
+
+QuoteForm.displayName = 'QuoteForm';
 
 export default QuoteForm;

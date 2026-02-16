@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { ItemFormData, RawMaterial } from '../../types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
@@ -11,15 +11,17 @@ interface ItemFormProps {
   onCancel: () => void;
   rawMaterials: RawMaterial[];
   isSubmitting?: boolean;
+  hideButtons?: boolean;
 }
 
-const ItemForm: React.FC<ItemFormProps> = ({
+const ItemForm = forwardRef<HTMLFormElement, ItemFormProps>(({
   initialData,
   onSubmit,
   onCancel,
   rawMaterials,
-  isSubmitting = false
-}) => {
+  isSubmitting = false,
+  hideButtons = false
+}, ref) => {
   const defaultFormData: ItemFormData = {
     name: '',
     category: 'sencillo',
@@ -170,7 +172,7 @@ const ItemForm: React.FC<ItemFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} ref={ref}>
       <div className="space-y-4">
         <Input
           label="Nombre del gorro"
@@ -351,7 +353,8 @@ const ItemForm: React.FC<ItemFormProps> = ({
         )}
       </div>
 
-      <div className="mt-6 flex justify-end space-x-3">
+      {!hideButtons && (
+      <div className="mt-6 flex justify-end space-x-3 sticky bottom-0 bg-white dark:bg-gray-900 py-4 border-t border-gray-200 dark:border-gray-700 -mx-6 px-6">
         <Button 
           type="button" 
           variant="outline" 
@@ -367,8 +370,11 @@ const ItemForm: React.FC<ItemFormProps> = ({
           {initialData ? 'Update Item' : 'Add Item'}
         </Button>
       </div>
+    )}
     </form>
   );
-};
+});
+
+ItemForm.displayName = 'ItemForm';
 
 export default ItemForm;

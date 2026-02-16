@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, forwardRef, useRef } from 'react';
 import { RawMaterialFormData } from '../../types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
@@ -9,14 +9,16 @@ interface RawMaterialFormProps {
   onSubmit: (data: RawMaterialFormData) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  hideButtons?: boolean;
 }
 
-const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
+const RawMaterialForm = forwardRef<HTMLFormElement, RawMaterialFormProps>(({
   initialData,
   onSubmit,
   onCancel,
-  isSubmitting = false
-}) => {
+  isSubmitting = false,
+  hideButtons = false
+}, ref) => {
   const defaultFormData: RawMaterialFormData = {
     name: '',
     description: '',
@@ -157,7 +159,7 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} ref={ref}>
       <div className="space-y-4">
         <Input
           label="Nombre"
@@ -347,12 +349,87 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
             value={formData.supplier}
             onChange={(e) => handleChange('supplier', e.target.value)}
             placeholder="Ingresa el nombre del proveedor"
-            fullWidth
-          />
-        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Ancho (m)"
+          type="number"
+          value={formData.width === 0 ? '' : formatNumber(formData.width)}
+          onChange={(e) => handleNumberChange('width', e.target.value === '' ? '0' : e.target.value)}
+          min="0.001"
+          step="0.001"
+          placeholder="Ej: 1.5"
+          error={errors.width}
+          required
+          fullWidth
+        />
+        
+        <Input
+          label="Alto (m)"
+          type="number"
+          value={formData.height === 0 ? '' : formatNumber(formData.height)}
+          onChange={(e) => handleNumberChange('height', e.target.value === '' ? '0' : e.target.value)}
+          min="0.001"
+          step="0.001"
+          placeholder="Ej: 2"
+          error={errors.height}
+          required
+          fullWidth
+        />
       </div>
 
-      <div className="mt-6 flex justify-end space-x-3">
+      {(formData.width > 0 && formData.height > 0) && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-700">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+              Área total:
+            </span>
+            <span className="text-sm font-bold text-blue-900 dark:text-blue-200">
+              {formatNumber(totalArea)} m²
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Cantidad en Stock"
+          type="number"
+         value={formData.quantity === 0 ? '' : formatNumber(formData.quantity)}
+         onChange={(e) => handleNumberChange('quantity', e.target.value === '' ? '0' : e.target.value)}
+          min="0"
+          step={getStepValue('quantity')}
+          placeholder="0 para crear pedido"
+          error={errors.quantity}
+          fullWidth
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Precio ($)"
+          type="number"
+          value={formData.price === 0 ? '' : formatNumber(formData.price)}
+          onChange={(e) => handleNumberChange('price', e.target.value === '' ? '0' : e.target.value)}
+          min="0"
+          step="0.01"
+          error={errors.price}
+          required
+          fullWidth
+        />
+        
+        <Input
+          label="Proveedor"
+          value={formData.supplier}
+          onChange={(e) => handleChange('supplier', e.target.value)}
+          placeholder="Ingresa el nombre del proveedor"
+          fullWidth
+        />
+      </div>
+    </div>
+
+    {!hideButtons && (
+      <div className="mt-6 flex justify-end space-x-3 sticky bottom-0 bg-white dark:bg-gray-900 py-4 border-t border-gray-200 dark:border-gray-700 -mx-6 px-6">
         <Button 
           type="button" 
           variant="outline" 
@@ -368,8 +445,10 @@ const RawMaterialForm: React.FC<RawMaterialFormProps> = ({
           {initialData ? 'Actualizar Material' : 'Agregar Material'}
         </Button>
       </div>
-    </form>
-  );
-};
+    )}
+  </form>
+);
+
+RawMaterialForm.displayName = 'RawMaterialForm';
 
 export default RawMaterialForm;

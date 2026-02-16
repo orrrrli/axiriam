@@ -592,14 +592,57 @@ const Cotizaciones: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         title="Nueva Cotización"
         size="xl"
+        footer={
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                // Get form element and trigger PDF generation
+                const formElement = document.querySelector('#add-quote-form') as HTMLFormElement;
+                if (formElement) {
+                  // The form will handle the actual data collection
+                  handleGeneratePDF({} as QuoteFormData);
+                }
+              }}
+              disabled={isSubmitting}
+            >
+              <FileText className="w-4 h-4 mr-1" />
+              Generar PDF
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+              onClick={() => {
+                const form = document.querySelector('#add-quote-form') as HTMLFormElement;
+                if (form) {
+                  form.requestSubmit();
+                }
+              }}
+            >
+              Crear Cotización
+            </Button>
+          </div>
+        }
       >
-        <QuoteForm
-          onSubmit={handleAddQuote}
-          onCancel={() => setIsAddModalOpen(false)}
-          onGeneratePDF={handleGeneratePDF}
-          items={items}
-          isSubmitting={isSubmitting}
-        />
+        <div id="quote-form-container">
+          <QuoteForm
+            onSubmit={handleAddQuote}
+            onCancel={() => setIsAddModalOpen(false)}
+            onGeneratePDF={handleGeneratePDF}
+            items={items}
+            isSubmitting={isSubmitting}
+            hideButtons={true}
+          />
+        </div>
       </Modal>
       
       {/* Edit Quote Modal */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { OrderMaterialFormData, RawMaterial } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
@@ -22,6 +22,7 @@ interface OrderMaterialFormProps {
   onCancel: () => void;
   rawMaterials: RawMaterial[];
   isSubmitting?: boolean;
+  hideButtons?: boolean;
 }
 
 // Helper functions for data transformation
@@ -55,13 +56,14 @@ const reconstructMaterials = (designs: FlattenedDesign[]): OrderMaterialFormData
   }];
 };
 
-const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
+const OrderMaterialForm = forwardRef<HTMLFormElement, OrderMaterialFormProps>(({
   initialData,
   onSubmit,
   onCancel,
   rawMaterials,
   isSubmitting = false,
-}) => {
+  hideButtons = false
+}, ref) => {
   const defaultFormData: OrderMaterialFormData = {
     materials: [
       {
@@ -345,7 +347,7 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} ref={ref}>
       <div className="space-y-6">
         <div className="mb-4">
           <div className="flex justify-between items-center">
@@ -900,7 +902,8 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
       )}
 
 
-      <div className="mt-6 flex justify-end space-x-3">
+      {!hideButtons && (
+      <div className="mt-6 flex justify-end space-x-3 sticky bottom-0 bg-white dark:bg-gray-900 py-4 border-t border-gray-200 dark:border-gray-700 -mx-6 px-6">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
@@ -908,8 +911,11 @@ const OrderMaterialForm: React.FC<OrderMaterialFormProps> = ({
           {initialData ? 'Actualizar Pedido' : 'Crear Pedido'}
         </Button>
       </div>
+    )}
     </form>
   );
-};
+});
+
+OrderMaterialForm.displayName = 'OrderMaterialForm';
 
 export default OrderMaterialForm;

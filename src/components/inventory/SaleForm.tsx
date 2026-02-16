@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { SaleFormData, Item, SaleItem, SaleExtra } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
@@ -13,15 +13,17 @@ interface SaleFormProps {
   onCancel: () => void;
   items: Item[];
   isSubmitting?: boolean;
+  hideButtons?: boolean;
 }
 
-const SaleForm: React.FC<SaleFormProps> = ({
+const SaleForm = forwardRef<HTMLFormElement, SaleFormProps>(({
   initialData,
   onSubmit,
   onCancel,
   items,
-  isSubmitting = false
-}) => {
+  isSubmitting = false,
+  hideButtons = false
+}, ref) => {
   const defaultFormData: SaleFormData = {
     name: '',
     status: 'pending',
@@ -269,7 +271,7 @@ const SaleForm: React.FC<SaleFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} ref={ref}>
       <div className="space-y-2">
         {/* Basic Information */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -680,24 +682,28 @@ const SaleForm: React.FC<SaleFormProps> = ({
         </div>
       )}
 
-      <div className="mt-6 flex justify-end space-x-3">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel}
-        >
-          Cancelar
-        </Button>
-        <Button 
-          type="submit" 
-          variant="primary" 
-          isLoading={isSubmitting}
-        >
-          {initialData ? 'Actualizar Venta' : 'Crear Venta'}
-        </Button>
-      </div>
+      {!hideButtons && (
+        <div className="mt-6 flex justify-end space-x-3 sticky bottom-0 bg-white dark:bg-gray-900 py-4 border-t border-gray-200 dark:border-gray-700 -mx-6 px-6">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            isLoading={isSubmitting}
+          >
+            {initialData ? 'Actualizar Venta' : 'Crear Venta'}
+          </Button>
+        </div>
+      )}
     </form>
   );
 };
+
+SaleForm.displayName = 'SaleForm';
 
 export default SaleForm;
