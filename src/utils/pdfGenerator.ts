@@ -127,8 +127,13 @@ export const generateQuotePDF = (
     const lineDiscount = Math.max(0, (quoteItem as any).discount || 0);
     const total = Math.max(0, lineSubtotal - lineDiscount);
 
-    // Check if we need a new page
-    if (yPosition > pageHeight - 40) {
+    // Handle multi-line description
+    const descriptionLines = doc.splitTextToSize(description, colWidths.description - 4);
+    const lineHeight = 5;
+    const descriptionHeight = descriptionLines.length * lineHeight;
+    
+    // Check if we need a new page for the entire row
+    if (yPosition + descriptionHeight > pageHeight - 25) { // Reduced from 35 to 25
       doc.addPage();
       yPosition = margin;
     }
@@ -136,17 +141,21 @@ export const generateQuotePDF = (
     // Row background (alternating)
     if (index % 2 === 0) {
       doc.setFillColor(245, 245, 245);
-      doc.rect(tableStartX, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+      doc.rect(tableStartX, yPosition - 5, pageWidth - 2 * margin, descriptionHeight + 3, 'F');
     }
 
-    doc.text(description, tableStartX + 2, yPosition, { maxWidth: colWidths.description - 4 });
+    // Draw description text (multi-line)
+    doc.text(descriptionLines, tableStartX + 2, yPosition);
+    
+    // Draw other columns aligned with first line of description
     doc.text(quoteItem.quantity.toString(), tableStartX + colWidths.description + 2, yPosition);
     doc.text(`$${quoteItem.unitPrice.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + 2, yPosition);
     // Discount column
     doc.text(`$${lineDiscount.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
     // Total column
     doc.text(`$${total.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.discount + 2, yPosition);
-    yPosition += 8;
+    
+    yPosition += descriptionHeight + 2; // Reduced from 3 to 2
   });
 
   // Extras
@@ -158,33 +167,43 @@ export const generateQuotePDF = (
 
     doc.setFont('helvetica', 'normal');
     quoteData.extras.forEach((extra, index) => {
-      if (yPosition > pageHeight - 40) {
+      const qty = (extra.quantity != null && extra.quantity > 0) ? extra.quantity : 1;
+      const extraLineSubtotal = extra.price * qty;
+      const extraLineDiscount = Math.max(0, (extra as any).discount || 0);
+      const extraTotal = Math.max(0, extraLineSubtotal - extraLineDiscount);
+
+      // Handle multi-line description for extras
+      const extraDescriptionLines = doc.splitTextToSize(extra.description, colWidths.description - 4);
+      const extraLineHeight = 5;
+      const extraDescriptionHeight = extraDescriptionLines.length * extraLineHeight;
+      
+      // Check if we need a new page for the entire extra row
+      if (yPosition + extraDescriptionHeight > pageHeight - 25) { // Reduced from 35 to 25
         doc.addPage();
         yPosition = margin;
       }
 
       if ((quoteData.items.length + index) % 2 === 0) {
         doc.setFillColor(245, 245, 245);
-        doc.rect(tableStartX, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+        doc.rect(tableStartX, yPosition - 5, pageWidth - 2 * margin, extraDescriptionHeight + 3, 'F');
       }
 
-      const qty = (extra.quantity != null && extra.quantity > 0) ? extra.quantity : 1;
-      const extraLineSubtotal = extra.price * qty;
-      const extraLineDiscount = Math.max(0, (extra as any).discount || 0);
-      const extraTotal = Math.max(0, extraLineSubtotal - extraLineDiscount);
-
-      doc.text(extra.description, tableStartX + 2, yPosition, { maxWidth: colWidths.description - 4 });
+      // Draw extra description text (multi-line)
+      doc.text(extraDescriptionLines, tableStartX + 2, yPosition);
+      
+      // Draw other columns aligned with first line of description
       doc.text(String(qty), tableStartX + colWidths.description + 2, yPosition);
       doc.text(`$${extra.price.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + 2, yPosition);
       // Discount column
       doc.text(`$${extraLineDiscount.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + 2, yPosition);
       // Total column
       doc.text(`$${extraTotal.toFixed(2)}`, tableStartX + colWidths.description + colWidths.quantity + colWidths.unitPrice + colWidths.discount + 2, yPosition);
-      yPosition += 8;
+      
+      yPosition += extraDescriptionHeight + 2; // Reduced from 3 to 2
     });
   }
 
-  yPosition += 10;
+  yPosition += 6; // Reduced from 8 to 6
 
   // Totals
   const totalsStartX = pageWidth - margin - 80;
@@ -243,8 +262,8 @@ export const generateQuotePDF = (
 
   // Notes
   if (quoteData.notes && quoteData.notes.trim()) {
-    yPosition += 20;
-    if (yPosition > pageHeight - 60) {
+    yPosition += 12; // Reduced from 15 to 12
+    if (yPosition > pageHeight - 30) { // Reduced from 40 to 30
       doc.addPage();
       yPosition = margin;
     }
@@ -259,12 +278,24 @@ export const generateQuotePDF = (
     doc.text(noteLines, margin, yPosition);
   }
 
-  // Footer
-  const footerY = pageHeight - 20;
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'italic');
-  doc.text('Esta cotización es válida hasta la fecha indicada. Los precios pueden estar sujetos a cambios.', 
-    pageWidth / 2, footerY, { align: 'center' });
+  // Footer - Dynamic positioning to avoid overlap
+  const minFooterSpace = 6; // Reduced from 8 to 6
+  const footerText = 'Esta cotización es válida hasta la fecha indicada. Los precios pueden estar sujetos a cambios.';
+  const footerY = Math.max(yPosition + minFooterSpace, pageHeight - 12); // Reduced from 15 to 12
+  
+  // Ensure footer doesn't go beyond page bottom
+  if (footerY > pageHeight - 6) { // Reduced from 8 to 6
+    doc.addPage();
+    // Recalculate footer position for new page
+    const newFooterY = pageHeight - 12; // Reduced from 15 to 12
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text(footerText, pageWidth / 2, newFooterY, { align: 'center' });
+  } else {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text(footerText, pageWidth / 2, footerY, { align: 'center' });
+  }
 
   // Save the PDF
   const fileName = `Cotizacion_${displayQuoteNumber}_${quoteData.clientName.replace(/\s+/g, '_')}.pdf`;
